@@ -1,0 +1,24 @@
+extends layout
+
+block content
+  .row
+    .col-xs-12
+      h2 Files
+      .alert.alert-danger.col-sm-offset-2.col-sm-8
+        h3 Collaboration active&nbsp;
+        p You may close this browser window and edit in Eclipse.
+      #files
+  script.
+    var shareURL = !{JSON.stringify(shareURL)};
+    var collabid = !{JSON.stringify(collabid)};
+  script(src='/static/share/share.uncompressed.js')
+  script(src='/static/share.js')
+  script.
+    socket.onopen = function() {
+      connection.createFetchQuery(collabid, {}, {}, function(err, docs) {
+        docs.forEach(function(doc) {
+          var a = $('<a>').attr('href', '/edit/' + encodeURIComponent(doc.name)).text(doc.name);
+          $('#files').append($('<h4>').append(a));
+        });
+      });
+    };

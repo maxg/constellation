@@ -1,0 +1,200 @@
+var bodyparser = require('body-parser');
+var crypto = require('crypto');
+var express = require('express');
+var events = require('events');
+var fs = require('fs');
+var http = require('http');
+var https = require('https');
+var jade = require('jade');
+var livedb = require('livedb');
+var mongodb = require('mongodb');
+var sharejs = require('share');
+var stream = require('stream');
+var ws = require('ws');
+
+var config = require('./config');
+var join = require('./join');
+
+var backend = livedb.client(livedb.memory());
+var share = sharejs.server.createClient({ backend: backend });
+var paired = new events.EventEmitter();
+
+/* web server */
+
+var app = express();
+
+app.set('view engine', 'jade');
+
+app.use('/static/share', express.static(sharejs.scriptsDir));
+app.use('/static', express.static(__dirname + '/static'));
+app.use(bodyparser.json());
+
+function authenticate(req, res, next) {
+  var cert = req.connection.getPeerCertificate();
+  if ( ! req.connection.authorized) {
+    return res.status(401).render('401', {
+      error: req.connection.authorizationError,
+      cert: cert
+    });
+  }
+  
+  res.locals.authusername = cert.subject.emailAddress.replace('@' + config.web.certDomain, '');
+  if (config.web.userFakery) {
+    res.locals.authusername += '+' +
+      crypto.createHash('md5').update(req.headers['user-agent']).digest('hex').substr(0,3);
+  }
+  res.locals.authstaff = config.staff.indexOf(res.locals.authusername) >= 0;
+  
+  res.locals.shareURL = 'wss://' + req.host + ':' + config.web.share;
+  next();
+}
+
+function collaboration(req, res, next) {
+  backend.fetch('users', res.locals.authusername, function(err, snapshot) {
+    res.locals.collabid = snapshot
+                          && snapshot.data
+                          && snapshot.data.collabids.length
+                          && snapshot.data.collabids[0];
+    next();
+  });
+}
+
+app.get('/', authenticate, collaboration, function(req, res, next) {
+  var port = config.web.http == 80 ? '' : ':' + config.web.http;
+  res.render('index', {
+    install: 'http://' + req.host + port + '/install'
+  });
+});
+
+
+app.get('/userid', function(req, res, next) {
+  res.send({ userid: mongodb.ObjectID().toString() });
+});
+
+app.get('/pair/:project/:id', authenticate, function(req, res, next) {
+  res.render('join', {
+    project: req.params.project,
+    joincode: join.code(req.params.project)
+  });
+});
+
+app.post('/pair/:project/:id', authenticate, function(req, res, next) {
+  join.rendezvous(req.body.me, req.body.partner, function(err, collabid) {
+    if (err) { return res.send(400, { error: err.message }); }
+    paired.emit(req.params.id, collabid);
+    
+    var empty = { collabids: [] };
+    var insert = { p: [ 'collabids', 0 ], li: collabid };
+    // create user if needed
+    backend.submit('users', res.locals.authusername, { create: { type: 'json0', data: empty } }, function(err, ver) {
+      // put new collabid at the front of the collabids list
+      backend.submit('users', res.locals.authusername, { op: [ insert ] }, function(err) {
+        res.send({ redirect: '/files' });
+      });
+    });
+  });
+});
+
+app.get('/collab/:project/:userid', function(req, res, next) {
+  var send = function(collabid) {
+    res.send({ collabid: collabid });
+  };
+  paired.once(req.params.userid, send);
+  setTimeout(function() {
+    paired.removeListener(req.params.userid, send);
+  }, 1000 * 60 * 5);
+});
+
+app.get('/files', authenticate, collaboration, function(req, res, next) {
+  if ( ! res.locals.collabid) {
+    return res.status(400).render('400', { error: 'No current collaboration' });
+  }
+  res.render('files');
+});
+
+app.get('/edit/:name', authenticate, collaboration, function(req, res, next) {
+  if ( ! res.locals.collabid) {
+    return res.status(400).render('400', { error: 'No current collaboration' });
+  }
+  res.render('edit', {
+    name: req.params.name
+  });
+});
+
+var webserver = https.createServer({
+  key: fs.readFileSync(__dirname + '/config/ssl-private-key.pem'),
+  cert: fs.readFileSync(__dirname + '/config/ssl-certificate.pem'),
+  ca: [ fs.readFileSync(__dirname + '/config/ssl-ca.pem') ],
+  requestCert: true
+}, app);
+
+webserver.listen(config.web.https, function() {
+  console.log('web server listening on', webserver.address());
+});
+
+/* share server */
+
+share.filter(function(collection, doc, data, next) {
+  if ([ 'users' ].indexOf(collection) >= 0) { return next('Access denied'); }
+  next();
+});
+
+var wsserver = https.createServer({
+  key: fs.readFileSync(__dirname + '/config/ssl-private-key.pem'),
+  cert: fs.readFileSync(__dirname + '/config/ssl-certificate.pem'),
+  ca: [ fs.readFileSync(__dirname + '/config/ssl-ca.pem') ]
+});
+
+new ws.Server({ server: wsserver }).on('connection', function(sock) {
+  var strm = new stream.Duplex({ objectMode: true });
+  strm._write = function(chunk, encoding, cb) {
+    if (sock.readyState != ws.CLOSED) { sock.send(JSON.stringify(chunk)); }
+    return cb();
+  };
+  strm._read = function() {};
+  sock.on('message', function(data) {
+    try { strm.push(JSON.parse(data)); } catch (e) { console.error('invalid message', data); }
+  });
+  sock.on('close', function(code) {
+    strm.push(null);
+    strm.emit('close');
+  });
+  
+  share.listen(strm);
+});
+
+wsserver.listen(config.web.share, function() {
+  console.log('websocket server listening on', wsserver.address());
+});
+
+/* update site server */
+
+var update = express();
+
+update.set('view engine', 'jade');
+
+update.use('/static', express.static(__dirname + '/static'));
+
+update.get('/install', function(req, res, next) {
+  var port = config.web.http == 80 ? '' : ':' + config.web.http;
+  res.render('install', { url: 'http://' + req.host + port + req.path });
+});
+update.use('/install', express.static(__dirname + '/install'))
+update.use('/install', function(req, res, next) {
+  res.send(404, 'Not found');
+});
+
+update.get('*', function(req, res, next) {
+  console.log('redirecting', req.path);
+  if ( ! req.headers.host) {
+    return res.send(400, 'Bad request: missing host');
+  }
+  var port = config.web.https == 443 ? '' : ':' + config.web.https;
+  res.redirect('https://' + req.host + port + req.path);
+});
+
+var updateserver = http.createServer(update);
+
+updateserver.listen(config.web.http, function() {
+  console.log('install server listening on', updateserver.address());
+});

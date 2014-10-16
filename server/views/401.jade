@@ -1,0 +1,8 @@
+extends layout
+
+block content
+  .row
+    .col-xs-12
+      h1 401 Unauthorized
+      h2= error
+      pre= JSON.stringify(cert, null, 2)

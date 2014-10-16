@@ -1,0 +1,37 @@
+#!/bin/bash
+
+#
+# Build Eclipse plug-in and generate update site.
+#
+
+set -e
+
+if [[ ! -d "$ECLIPSE" ]]; then
+  echo "Usage: ECLIPSE=/path/to/eclipse/dir $0"
+  exit 1
+fi
+
+# Find and clean the build directory
+BUILD=$(cd `dirname "$0"`/../build && pwd)
+
+rm -rf "$BUILD/output" && mkdir "$BUILD/output"
+
+# Copy feature & plug-in sources to build output dir
+# Renames e.g. plugin -> plugins/eclipseonut.plugin
+for d in feature plugin; do
+  COPYFILE_DISABLE=1 tar cv -T <(git ls-files -- $d) -s "%$d%~s/eclipseonut.~%" \
+                   | tar x -C "$BUILD/output"
+done
+
+# Run the headless PDE build
+java -jar "$ECLIPSE"/plugins/org.eclipse.equinox.launcher_1.3.0.*.jar \
+     -data "$BUILD/output/workspace" \
+     -application org.eclipse.ant.core.antRunner \
+     -buildfile "$ECLIPSE"/plugins/org.eclipse.pde.build_3.9.0.*/scripts/build.xml \
+     -Dbuilder="$BUILD" -DbaseLocation="$ECLIPSE" \
+     "$@"
+
+# Sanity-check the result
+for jar in "$BUILD"/output/site/*/*.jar; do
+  unzip -l "$jar"
+done

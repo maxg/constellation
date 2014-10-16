@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="toolbar:org.eclipse.ui.trim.status">
+         <toolbar
+               id="eclipseonut.statusbar">
+            <command
+                  commandId="eclipseonut.command.collaborate"
+                  label="%eclipseonut.command.collaborate.name"
+                  style="push">
+            </command>
+         </toolbar>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            id="eclipseonut.command.collaborate"
+            name="%eclipseonut.command.collaborate.name">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="eclipseonut.Collaborate"
+            commandId="eclipseonut.command.collaborate">
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            category="org.eclipse.team.ui.TeamPreferences"
+            class="eclipseonut.prefs.PreferencePage"
+            id="eclipseonut.prefs.page"
+            name="Eclipseonut">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="eclipseonut.prefs.Preferences">
+      </initializer>
+   </extension>
+
+</plugin>
