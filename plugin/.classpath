@@ -2,20 +2,20 @@
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="lib/jetty-io-9.1.5.v20140505.jar"/>
-	<classpathentry kind="lib" path="lib/jetty-util-9.1.5.v20140505.jar"/>
-	<classpathentry kind="lib" path="lib/jetty-util-ajax-9.1.5.v20140505.jar"/>
-	<classpathentry kind="lib" path="lib/websocket-api-9.1.5.v20140505.jar">
+	<classpathentry kind="lib" path="lib/jetty-io.jar"/>
+	<classpathentry kind="lib" path="lib/jetty-util.jar"/>
+	<classpathentry kind="lib" path="lib/jetty-util-ajax.jar"/>
+	<classpathentry kind="lib" path="lib/websocket-api.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="http://download.eclipse.org/jetty/stable-9/apidocs/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/websocket-client-9.1.5.v20140505.jar">
+	<classpathentry kind="lib" path="lib/websocket-client.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="http://download.eclipse.org/jetty/stable-9/apidocs/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/websocket-common-9.1.5.v20140505.jar">
+	<classpathentry kind="lib" path="lib/websocket-common.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="http://download.eclipse.org/jetty/stable-9/apidocs/"/>
 		</attributes>

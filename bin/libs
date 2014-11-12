@@ -1,0 +1,25 @@
+#!/bin/bash
+
+#
+# Download libraries from the Central Repository.
+# Requires Maven (apt-get install maven).
+#
+
+set -e
+
+cd `dirname "$0"`/../plugin/lib
+
+for deps in *-*.txt   # dependencies listed in text files
+do
+  spec=${deps%.txt}   # remove file extension
+  group=${spec%%-*}   # group ID before first dash
+  version=${spec#*-}  # version after first dash
+  
+  while read artifact # artifact ID on each line
+  do
+    mvn --quiet \
+        org.apache.maven.plugins:maven-dependency-plugin:2.9:copy -Dartifact=$group:$artifact:$version \
+                                                                  -DoutputDirectory=. \
+                                                                  -Dmdep.stripVersion=true
+  done < $deps
+done

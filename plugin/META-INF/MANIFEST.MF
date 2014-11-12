@@ -17,10 +17,10 @@ Bundle-Localization: plugin
 Import-Package: org.eclipse.jface.text,
  org.eclipse.ui,
  org.eclipse.ui.texteditor
-Bundle-ClassPath: lib/jetty-io-9.1.5.v20140505.jar,
- lib/jetty-util-9.1.5.v20140505.jar,
- lib/jetty-util-ajax-9.1.5.v20140505.jar,
- lib/websocket-api-9.1.5.v20140505.jar,
- lib/websocket-client-9.1.5.v20140505.jar,
- lib/websocket-common-9.1.5.v20140505.jar,
+Bundle-ClassPath: lib/jetty-io.jar,
+ lib/jetty-util.jar,
+ lib/jetty-util-ajax.jar,
+ lib/websocket-api.jar,
+ lib/websocket-client.jar,
+ lib/websocket-common.jar,
  .

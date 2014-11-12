@@ -17,9 +17,12 @@ BUILD=$(cd `dirname "$0"`/../build && pwd)
 rm -rf "$BUILD/output" && mkdir "$BUILD/output"
 
 # Copy feature & plug-in sources to build output dir
-# Renames e.g. plugin -> plugins/eclipseonut.plugin
+#  - includes untracked JARs
+#  - follows symlinks
+#  - renames e.g. plugin -> plugins/eclipseonut.plugin
 for d in feature plugin; do
-  COPYFILE_DISABLE=1 tar cv -T <(git ls-files -- $d) -s "%$d%~s/eclipseonut.~%" \
+  COPYFILE_DISABLE=1 tar cv -T <(git ls-files -- $d ; git ls-files --others --ignored --exclude=*.jar -- $d) \
+                            -L -s "%$d%~s/eclipseonut.~%" \
                    | tar x -C "$BUILD/output"
 done
 
