@@ -1,0 +1,36 @@
+#!/bin/bash
+
+#
+# Use Packer to generate a virtual machine image.
+#
+
+set -e
+
+revision=$1
+subdir='server'
+
+if [[ "$revision" == "--working" ]]; then
+  revision=`git rev-parse --short HEAD`-wip
+  echo "Packing working copy $revision"
+  # Only pack files that are tracked by Git
+  # COPYFILE_DISABLE disables the use of `._` files to store OS X xattrs & ACLs
+  tar="COPYFILE_DISABLE=1 tar c -T <(git ls-files)"
+
+elif git rev-parse --quiet --verify $revision > /dev/null; then
+  revision=`git rev-parse --short $revision`
+  echo "Packing revision $revision"
+  tar="git archive $revision"
+
+else
+  echo "First argument must be a revision or --working"
+  exit 1
+fi
+
+shift
+
+cmd="packer build -var-file=manifests/packer.conf.json \\
+             -var rev=$revision -var tar=<(cd $subdir && eval $tar) \\
+             ""$@"" \\
+             manifests/packer.json"
+echo "$cmd"
+eval "$cmd"

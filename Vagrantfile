@@ -1,6 +1,6 @@
 Vagrant.configure("2") do |config|
 
-  config.vm.box = "hashicorp/precise64"
+  config.vm.box = "ubuntu/trusty64"
 
   config.vm.network "private_network", ip: "10.18.6.121"
 
@@ -10,7 +10,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provision "puppet" do |puppet|
-    puppet.facter = { "app_path" => "/vagrant" }
+    puppet.facter = { "app_path" => "/vagrant/server" }
   end
 
 end

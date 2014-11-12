@@ -1,0 +1,63 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": "",
+    "aws_source_ami": "",
+    "aws_instance_type": "",
+    
+    "openstack_auth_url": "",
+    "openstack_username": "",
+    "openstack_password": "",
+    "openstack_tenant": "",
+    "openstack_source_image": "",
+    "openstack_flavor": "",
+    "openstack_secgroup": "",
+    
+    "rev": null,
+    "tar": null,
+    "app": null
+  },
+  
+  "builders": [ {
+    "type": "amazon-ebs",
+    "access_key": "{{user `aws_access_key`}}",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "region": "us-east-1",
+    "ami_name": "{{user `app`}}-{{timestamp}}-{{user `rev`}}",
+    "source_ami": "{{user `aws_source_ami`}}",
+    "instance_type": "{{user `aws_instance_type`}}",
+    "ssh_username": "ubuntu"
+  }, {
+    "type": "openstack",
+    "username": "{{user `openstack_username`}}",
+    "password": "{{user `openstack_password`}}",
+    "project": "{{user `openstack_tenant`}}",
+    "provider": "{{user `openstack_auth_url`}}",
+    "region": "RegionOne",
+    "image_name": "{{user `app`}}-{{timestamp}}-{{user `rev`}}",
+    "source_image": "{{user `openstack_source_image`}}",
+    "flavor": "{{user `openstack_flavor`}}",
+    "security_groups": "{{user `openstack_secgroup`}}",
+    "ssh_username": "ubuntu"
+  } ],
+  
+  "provisioners": [ {
+    "type": "file",
+    "source": "{{user `tar`}}",
+    "destination": "/tmp/{{user `app`}}.tar"
+  }, {
+    "type": "shell",
+    "script": "manifests/packer-pre.sh",
+    "environment_vars": [ "APP={{user `app`}}" ],
+    "execute_command": "{{.Vars}} ADMIN=`whoami` sudo -E sh {{.Path}}"
+  }, {
+    "type": "puppet-masterless",
+    "manifest_file": "manifests/default.pp",
+    "facter": { "app_path": "/var/{{user `app`}}" }
+  }, {
+    "type": "shell",
+    "script": "manifests/packer-post.sh",
+    "environment_vars": [ "APP={{user `app`}}" ],
+    "execute_command": "{{.Vars}} ADMIN=`whoami` sudo -E sh {{.Path}}"
+  } ]
+}
