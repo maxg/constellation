@@ -10,7 +10,7 @@
                id="eclipseonut.statusbar">
             <command
                   commandId="eclipseonut.command.collaborate"
-                  label="%eclipseonut.command.collaborate.name"
+                  label="%eclipseonut.command.collaborate.start"
                   style="push">
             </command>
          </toolbar>
@@ -20,7 +20,7 @@
          point="org.eclipse.ui.commands">
       <command
             id="eclipseonut.command.collaborate"
-            name="%eclipseonut.command.collaborate.name">
+            name="Collaborate">
       </command>
    </extension>
    <extension

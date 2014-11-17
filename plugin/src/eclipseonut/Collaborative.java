@@ -6,44 +6,34 @@ import java.util.concurrent.Future;
 
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.ui.IFileEditorInput;
-import org.eclipse.ui.IPartListener;
-import org.eclipse.ui.IPartService;
-import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 public class Collaborative {
     
-    private final ITextEditor editor;
-    private final IPartService site;
-    private ShareDoc doc;
+    private final Future<ShareDoc> doc;
     
     public Collaborative(ShareJS share, ITextEditor editor, IFileEditorInput input) {
-        this.editor = editor;
-        this.site = (IPartService)editor.getEditorSite().getService(IPartService.class);
         IDocument local = editor.getDocumentProvider().getDocument(input);
-        Future<ShareDoc> future = share.open(local, input.getFile());
+        this.doc = share.open(local, input.getFile());
         new Thread(() -> {
             try {
-                doc = future.get();
-                site.addPartListener(closeListener);
+                doc.get();
             } catch (CancellationException ce) {
                 // user declined to sync the doc for collaborative editing
                 editor.close(true);
             } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
+                Log.error("Error creating shared doc", e);
             }
         }).start();
     }
     
-    private final IPartListener closeListener = new IPartListener() {
-        public void partActivated(IWorkbenchPart part) { }
-        public void partBroughtToTop(IWorkbenchPart part) { }
-        public void partDeactivated(IWorkbenchPart part) { }
-        public void partClosed(IWorkbenchPart part) {
-            if ( ! (part == editor)) { return; }
-            site.removePartListener(this);
-            doc.close();
+    public void stop() {
+        try {
+            doc.get().close();
+        } catch (CancellationException ce) {
+            // nothing more to stop
+        } catch (InterruptedException | ExecutionException e) {
+            Log.error("No shared doc during collaboration stop", e);
         }
-        public void partOpened(IWorkbenchPart part) { }
-    };
+    }
 }

@@ -37,6 +37,7 @@ var open = function(collab, path, contents, callback) {
     
     var contextCallback = function() {
       var ctx = doc.createContext();
+      ctx._document = doc;
       callback(ctx, ctx.get().toString());
     };
     
@@ -58,6 +59,6 @@ var attach = function(ctx, sharedoc) {
   return ctx.get().toString();
 };
 
-var detach = function(ctx) {
-  ctx.destroy();
+var detach = function(ctx, sharedoc) {
+  ctx._document.destroy();
 };

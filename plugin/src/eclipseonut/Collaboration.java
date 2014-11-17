@@ -1,5 +1,8 @@
 package eclipseonut;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import javax.script.ScriptException;
 
 import org.eclipse.core.resources.IProject;
@@ -36,6 +39,7 @@ public class Collaboration {
     
     private final ShareJS share;
     private final IProject project;
+    private final Map<ITextEditor, Collaborative> editors = new ConcurrentHashMap<>();
     
     private Collaboration(ShareJS share, IProject project) throws ScriptException {
         this.share = share;
@@ -46,6 +50,25 @@ public class Collaboration {
         for (IWorkbenchWindow window : workbench.getWorkbenchWindows()) {
             windowListener.windowOpened(window);
         }
+    }
+    
+    public void stop() {
+        IWorkbench workbench = PlatformUI.getWorkbench();
+        workbench.removeWindowListener(windowListener);
+        for (IWorkbenchWindow window : workbench.getWorkbenchWindows()) {
+            window.removePageListener(pageListener);
+            for (IWorkbenchPage page : window.getPages()) {
+                page.removePartListener(partListener);
+                for (IEditorReference editor : page.getEditorReferences()) {
+                    partListener.partClosed(editor.getPart(false));
+                }
+            }
+        }
+        editors.forEach((editor, collab) -> {
+            Log.warn("Stopping leaked collaborative editor for " + editor.getTitle());
+            collab.stop();
+        });
+        editors.clear();
     }
     
     private final IWindowListener windowListener = new IWindowListener() {
@@ -82,7 +105,13 @@ public class Collaboration {
         public void partActivated(IWorkbenchPart part) { }
         public void partBroughtToTop(IWorkbenchPart part) { }
         public void partDeactivated(IWorkbenchPart part) { }
-        public void partClosed(IWorkbenchPart part) { }
+        public void partClosed(IWorkbenchPart part) {
+            if ( ! (part instanceof ITextEditor)) { return; }
+            editors.computeIfPresent((ITextEditor)part, (editor, collab) -> {
+                collab.stop();
+                return null; // remove from map
+            });
+        }
         public void partOpened(IWorkbenchPart part) {
             // only collaborate on text
             if ( ! (part instanceof ITextEditor)) { return; }
@@ -93,7 +122,7 @@ public class Collaboration {
             // only collaborate on files in selected project
             if ( ! (input.getFile().getProject().equals(project))) { return; }
             
-            new Collaborative(share, editor, input);
+            editors.put(editor, new Collaborative(share, editor, input));
         }
     };
 }
