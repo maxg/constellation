@@ -23,14 +23,14 @@ function keyFromCanonicalWords(words) {
   return words.map(function(word) { return canonical.indexOf(word); });
 }
 
-exports.code = function(project) {
+exports.code = function(data) {
   var count = 1;
   var iters = 0;
   do {
     if (iters++ > 10) { count += 1; }
     var key = randomKey(count);
   } while (Object.hasOwnProperty.call(active, key));
-  active[key] = project;
+  active[key] = data;
   setTimeout(function() { delete active[key]; }, 1000 * 60 * 90);
   return displayWordsFromKey(key);
 };
@@ -48,10 +48,11 @@ exports.rendezvous = function(me, partner, callback) {
   if (partner.indexOf(-1) >= 0) { return callback(new Error('Unknown partner joincode')); }
   if (me.toString() == partner) { return callback(new Error("Enter your partner's joincode")); }
   
-  if (active[me] != active[partner]) { return callback(new Error('Different projects selected')); }
+  if ( ! active[me]) { return callback(new Error('Inactive self joincode')); }
+  if ( ! active[partner]) { return callback(new Error('Inactive partner joincode')); }
   
   function join(id) {
-    callback(null, id);
+    callback(null, { id: id, me: active[me], partner: active[partner] });
     callback = null;
   }
   var id = mongodb.ObjectID().toString();

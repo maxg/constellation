@@ -31,7 +31,7 @@ var setTimeout = function(callback, delay) {
 };
 
 var open = function(collab, path, contents, callback) {
-  var doc = CONNECTION.get(collab, path);
+  var doc = CONNECTION.get('collab_' + collab, path);
   doc.subscribe();
   doc.whenReady(function() {
     

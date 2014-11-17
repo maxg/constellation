@@ -6,7 +6,6 @@ var fs = require('fs');
 var http = require('http');
 var https = require('https');
 var jade = require('jade');
-var livedb = require('livedb');
 var mongodb = require('mongodb');
 var sharejs = require('share');
 var stream = require('stream');
@@ -15,8 +14,17 @@ var ws = require('ws');
 var config = require('./config');
 var join = require('./join');
 
-var backend = livedb.client(livedb.memory());
-var share = sharejs.server.createClient({ backend: backend });
+/* backend */
+
+var db = require('./db').createBackend();
+
+db.backend.queryFetch('collabs', {}, {}, function(err, results) {
+  if (err) { throw err; }
+  console.log('database connected', { collabs: results.length });
+});
+
+var share = sharejs.server.createClient({ backend: db.backend });
+
 var paired = new events.EventEmitter();
 
 /* web server */
@@ -50,7 +58,7 @@ function authenticate(req, res, next) {
 }
 
 function collaboration(req, res, next) {
-  backend.fetch('users', res.locals.authusername, function(err, snapshot) {
+  db.fetchUser(res.locals.authusername, function(err, snapshot) {
     res.locals.collabid = snapshot
                           && snapshot.data
                           && snapshot.data.collabids.length
@@ -66,7 +74,6 @@ app.get('/', authenticate, collaboration, function(req, res, next) {
   });
 });
 
-
 app.get('/userid', function(req, res, next) {
   res.send({ userid: mongodb.ObjectID().toString() });
 });
@@ -74,23 +81,25 @@ app.get('/userid', function(req, res, next) {
 app.get('/pair/:project/:id', authenticate, function(req, res, next) {
   res.render('join', {
     project: req.params.project,
-    joincode: join.code(req.params.project)
+    joincode: join.code({ username: res.locals.authusername, project: req.params.project })
   });
 });
 
 app.post('/pair/:project/:id', authenticate, function(req, res, next) {
-  join.rendezvous(req.body.me, req.body.partner, function(err, collabid) {
+  join.rendezvous(req.body.me, req.body.partner, function(err, collab) {
     if (err) { return res.send(400, { error: err.message }); }
-    paired.emit(req.params.id, collabid);
     
-    var empty = { collabids: [] };
-    var insert = { p: [ 'collabids', 0 ], li: collabid };
-    // create user if needed
-    backend.submit('users', res.locals.authusername, { create: { type: 'json0', data: empty } }, function(err, ver) {
-      // put new collabid at the front of the collabids list
-      backend.submit('users', res.locals.authusername, { op: [ insert ] }, function(err) {
-        res.send({ redirect: '/files' });
-      });
+    if (res.locals.authusername == collab.partner.username) {
+      return res.send(400, { error: 'Cannot pair with yourself' });
+    }
+    if (collab.me.project != collab.partner.project) {
+      return res.send(400, { error: 'Different projects selected' });
+    }
+    
+    paired.emit(req.params.id, collab.id);
+    
+    db.addUserToCollaboration(res.locals.authusername, collab.id, function(err) {
+      res.send({ redirect: '/files' });
     });
   });
 });

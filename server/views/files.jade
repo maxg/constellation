@@ -15,7 +15,7 @@ block content
   script(src='/static/share.js')
   script.
     socket.onopen = function() {
-      connection.createFetchQuery(collabid, {}, {}, function(err, docs) {
+      connection.createFetchQuery('collab_' + collabid, {}, {}, function(err, docs) {
         docs.forEach(function(doc) {
           var a = $('<a>').attr('href', '/edit/' + encodeURIComponent(doc.name)).text(doc.name);
           $('#files').append($('<h4>').append(a));
