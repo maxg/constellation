@@ -42,7 +42,7 @@ public class Debug {
             }
             public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
                 if (chain[0].getSubjectDN().getName().contains("eclipseonut")) {
-                    System.err.println("Allowing untrusted server " + chain[0].getSubjectDN());
+                    Log.info("Allowing untrusted server " + chain[0].getSubjectDN());
                     return;
                 }
                 tm.checkServerTrusted(chain, authType);
@@ -60,7 +60,7 @@ public class Debug {
             public boolean verify(String hostname, SSLSession session) {
                 try {
                     if (session.getPeerPrincipal().getName().contains("eclipseonut")) {
-                        System.err.println("Allowing mismatched hostname " + hostname + " vs. " + session.getPeerHost());
+                        Log.info("Allowing mismatched hostname " + hostname + " vs. " + session.getPeerHost());
                         return true;
                     }
                 } catch (SSLPeerUnverifiedException e) { }

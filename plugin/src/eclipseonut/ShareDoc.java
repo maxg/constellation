@@ -50,7 +50,7 @@ public class ShareDoc implements IDocumentListener {
         try {
             local.replace(pos, 0, text);
         } catch (BadLocationException ble) {
-            ble.printStackTrace(); // XXX
+            Log.error("Bad location on remote insert " + pos + " (" + text.length() + ")", ble);
         }
         syncing = false;
     }
@@ -61,7 +61,7 @@ public class ShareDoc implements IDocumentListener {
         try {
             local.replace(pos, length, "");
         } catch (BadLocationException ble) {
-            ble.printStackTrace(); // XXX
+            Log.error("Bad location on remote remove " + pos + " " + length, ble);
         }
         syncing = false;
     }

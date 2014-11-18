@@ -28,6 +28,7 @@ public class JSWebSocket {
 
     @OnWebSocketConnect
     public void onConnect(Session session) {
+        Log.ok("JSWebSocket connected: " + session.getRemoteAddress());
         this.session = session;
         Bindings env = new SimpleBindings();
         env.put("fn", onopen);
@@ -47,6 +48,7 @@ public class JSWebSocket {
     
     @OnWebSocketClose
     public void onClose(int statusCode, String reason) {
+        Log.ok("JSWebSocket closed " + statusCode + ": " + reason);
         Bindings env = new SimpleBindings();
         env.put("fn", onclose);
         env.put("code", statusCode);
@@ -55,7 +57,7 @@ public class JSWebSocket {
     
     @OnWebSocketError
     public synchronized void onError(Throwable error) {
-        error.printStackTrace();
+        Log.error("JSWebSocket error", error);
     }
     
     public void send(Object data) {
