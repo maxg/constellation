@@ -34,7 +34,12 @@ java -jar "$ECLIPSE"/plugins/org.eclipse.equinox.launcher_1.3.0.*.jar \
      -Dbuilder="$BUILD" -DbaseLocation="$ECLIPSE" \
      "$@"
 
+sed -i '' -e "/<repository/s/'file:[^']*'/'Eclipseonut'/" "$BUILD"/output/site/*.xml
+
 # Sanity-check the result
 for jar in "$BUILD"/output/site/*/*.jar; do
   unzip -l "$jar"
+done
+for jar in "$BUILD"/output/site/plugins/*.jar; do
+  unzip -c "$jar" '*/defaults.properties'
 done
