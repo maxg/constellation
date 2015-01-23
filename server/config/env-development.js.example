@@ -1,0 +1,13 @@
+module.exports = {
+  staff: [ ... ],
+  web: {
+    http: 8080,
+    https: 4443,
+    share: 4444,
+    certDomain: 'MIT.EDU',
+    debugViews: true,
+    userFakery: true
+  },
+  livedb: 'memory',
+  mongodb: [ 'mongodb://USER:PASSWD@HOST:PORT/DB', { safe: true } ],
+};
