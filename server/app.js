@@ -53,7 +53,7 @@ function authenticate(req, res, next) {
   }
   res.locals.authstaff = config.staff.indexOf(res.locals.authusername) >= 0;
   
-  res.locals.shareURL = 'wss://' + req.host + ':' + config.web.share;
+  res.locals.shareURL = 'wss://' + req.hostname + ':' + config.web.share;
   next();
 }
 
@@ -70,7 +70,7 @@ function collaboration(req, res, next) {
 app.get('/', authenticate, collaboration, function(req, res, next) {
   var port = config.web.http == 80 ? '' : ':' + config.web.http;
   res.render('index', {
-    install: 'http://' + req.host + port + '/install'
+    install: 'http://' + req.hostname + port + '/install'
   });
 });
 
@@ -186,7 +186,7 @@ update.use('/static', express.static(__dirname + '/static'));
 
 update.get('/install', function(req, res, next) {
   var port = config.web.http == 80 ? '' : ':' + config.web.http;
-  res.render('install', { url: 'http://' + req.host + port + req.path });
+  res.render('install', { url: 'http://' + req.hostname + port + req.path });
 });
 update.use('/install', express.static(__dirname + '/install'))
 update.use('/install', function(req, res, next) {
@@ -199,7 +199,7 @@ update.get('*', function(req, res, next) {
     return res.send(400, 'Bad request: missing host');
   }
   var port = config.web.https == 443 ? '' : ':' + config.web.https;
-  res.redirect('https://' + req.host + port + req.path);
+  res.redirect('https://' + req.hostname + port + req.path);
 });
 
 var updateserver = http.createServer(update);
