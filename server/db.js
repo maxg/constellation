@@ -22,10 +22,10 @@ exports.createBackend = function() {
   }
   
   // add a user to a collaboration -> callback(err)
-  function addUserToCollaboration(username, collabid, callback) {
+  function addUserToCollaboration(username, project, collabid, callback) {
     async.auto({
       collab: function(done) {
-        var emptyCollab = { users: [], activity: {} };
+        var emptyCollab = { users: [], project: project, activity: {} };
         // create collab if needed
         backend.submit(COLLABS, collabid, { create: { type: 'json0', data: emptyCollab } }, function(err, ver) {
           // add user to users list

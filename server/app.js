@@ -98,7 +98,7 @@ app.post('/pair/:project/:id', authenticate, function(req, res, next) {
     
     paired.emit(req.params.id, collab.id);
     
-    db.addUserToCollaboration(res.locals.authusername, collab.id, function(err) {
+    db.addUserToCollaboration(res.locals.authusername, req.params.project, collab.id, function(err) {
       res.send({ redirect: '/files' });
     });
   });
