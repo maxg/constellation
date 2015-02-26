@@ -111,7 +111,7 @@ app.get('/collab/:project/:userid', function(req, res, next) {
   paired.once(req.params.userid, send);
   setTimeout(function() {
     paired.removeListener(req.params.userid, send);
-  }, 1000 * 60 * 5);
+  }, 1000 * 60 * 15);
 });
 
 app.get('/files', authenticate, collaboration, function(req, res, next) {
