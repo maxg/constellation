@@ -41,8 +41,7 @@ public class JSWebSocket {
         env.put("fn", onmessage);
         env.put("msg", new String(msg));
         js.exec(engine -> {
-            env.put("obj", engine.eval("JSON.parse(msg)", env));
-            engine.eval("fn(obj)", env);
+            engine.eval("fn({ data: msg })", env);
         });
     }
     
@@ -61,11 +60,8 @@ public class JSWebSocket {
     }
     
     public void send(Object data) {
-        Bindings env = new SimpleBindings();
-        env.put("data", data);
         js.exec(engine -> {
-            String json = engine.eval("JSON.stringify(data)", env).toString();
-            session.getRemote().sendString(json);
+            session.getRemote().sendString(data.toString());
         });
     }
 }
