@@ -87,13 +87,13 @@ app.get('/pair/:project/:id', authenticate, function(req, res, next) {
 
 app.post('/pair/:project/:id', authenticate, function(req, res, next) {
   join.rendezvous(req.body.me, req.body.partner, function(err, collab) {
-    if (err) { return res.send(400, { error: err.message }); }
+    if (err) { return res.status(400).send({ error: err.message }); }
     
     if (res.locals.authusername == collab.partner.username) {
-      return res.send(400, { error: 'Cannot pair with yourself' });
+      return res.status(400).send({ error: 'Cannot pair with yourself' });
     }
     if (collab.me.project != collab.partner.project) {
-      return res.send(400, { error: 'Different projects selected' });
+      return res.status(400).send({ error: 'Different projects selected' });
     }
     
     paired.emit(req.params.id, collab.id);
@@ -190,13 +190,13 @@ update.get('/install', function(req, res, next) {
 });
 update.use('/install', express.static(__dirname + '/install'))
 update.use('/install', function(req, res, next) {
-  res.send(404, 'Not found');
+  res.status(404).send('Not found');
 });
 
 update.get('*', function(req, res, next) {
   console.log('redirecting', req.path);
   if ( ! req.headers.host) {
-    return res.send(400, 'Bad request: missing host');
+    return res.status(400).send('Bad request: missing host');
   }
   var port = config.web.https == 443 ? '' : ':' + config.web.https;
   res.redirect('https://' + req.hostname + port + req.path);
