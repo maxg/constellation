@@ -185,8 +185,13 @@ update.set('view engine', 'jade');
 update.use('/static', express.static(__dirname + '/static'));
 
 update.get('/install', function(req, res, next) {
-  var port = config.web.http == 80 ? '' : ':' + config.web.http;
-  res.render('install', { url: 'http://' + req.hostname + port + req.path });
+  fs.readdir(__dirname + '/install', function(err, files) {
+    if ( ! files.some(function(name) { return /.*\.xml/.test(name); })) {
+      return res.render('400', { error: 'Install server not configured' });
+    }
+    var port = config.web.http == 80 ? '' : ':' + config.web.http;
+    res.render('install', { url: 'http://' + req.hostname + port + req.path });
+  });
 });
 update.use('/install', express.static(__dirname + '/install'))
 update.use('/install', function(req, res, next) {
