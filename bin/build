@@ -27,10 +27,10 @@ for d in feature plugin; do
 done
 
 # Run the headless PDE build
-java -jar "$ECLIPSE"/plugins/org.eclipse.equinox.launcher_1.3.0.*.jar \
+java -jar "$ECLIPSE"/plugins/org.eclipse.equinox.launcher_1.3.100.*.jar \
      -data "$BUILD/output/workspace" \
      -application org.eclipse.ant.core.antRunner \
-     -buildfile "$ECLIPSE"/plugins/org.eclipse.pde.build_3.9.0.*/scripts/build.xml \
+     -buildfile "$ECLIPSE"/plugins/org.eclipse.pde.build_3.9.100.*/scripts/build.xml \
      -Dbuilder="$BUILD" -DbaseLocation="$ECLIPSE" \
      "$@"
 

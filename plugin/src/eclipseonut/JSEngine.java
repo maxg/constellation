@@ -4,6 +4,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import javax.script.Bindings;
@@ -71,16 +72,35 @@ public class JSEngine {
      * Run code after a delay.
      * Evaluated async'ly on the UI thread.
      */
-    public void schedule(Task task, int delay) {
-        exec.schedule(() -> exec(task), delay, TimeUnit.MILLISECONDS);
+    public ScheduledFuture<?> schedule(Task task, int delay) {
+        return exec.schedule(() -> exec(task), delay, TimeUnit.MILLISECONDS);
+    }
+    
+    public ScheduledFuture<?> repeat(Task task, int interval) {
+        return exec.scheduleAtFixedRate(() -> exec(task), interval, interval, TimeUnit.MILLISECONDS);
     }
     
     public class Timers {
-        public void setTimeout(Object callback, int delay, Object arguments) {
+        public ScheduledFuture<?> setTimeout(Object callback, int delay, Object arguments) {
             Bindings env = new SimpleBindings();
             env.put("fn", callback);
             env.put("args", arguments);
-            schedule(engine -> engine.eval("fn.apply(null, args)", env), delay);
+            return schedule(engine -> engine.eval("fn.apply(null, args)", env), delay);
+        }
+        
+        public void clearTimeout(ScheduledFuture<?> future) {
+            future.cancel(false);
+        }
+        
+        public ScheduledFuture<?> setInterval(Object callback, int delay, Object arguments) {
+            Bindings env = new SimpleBindings();
+            env.put("fn", callback);
+            env.put("args", arguments);
+            return repeat(engine -> engine.eval("fn.apply(null, args)", env), delay);
+        }
+        
+        public void clearInterval(ScheduledFuture<?> future) {
+            future.cancel(false);
         }
     }
     

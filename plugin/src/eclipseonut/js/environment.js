@@ -27,7 +27,19 @@ var console = function() {
 }();
 
 var setTimeout = function(callback, delay) {
-  TIMERS.setTimeout(callback, delay, arguments);
+  return TIMERS.setTimeout(callback, delay, arguments);
+};
+
+var clearTimeout = function(future) {
+  if (future !== null) { TIMERS.clearTimeout(future); }
+};
+
+var setInterval = function(callback, delay) {
+  return TIMERS.setInterval(callback, delay, arguments);
+};
+
+var clearInterval = function(future) {
+  if (future !== null) { TIMERS.clearInterval(future); }
 };
 
 var open = function(collab, path, contents, callback) {
