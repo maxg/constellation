@@ -2,7 +2,7 @@ var events = require('events');
 var fs = require('fs');
 var mongodb = require('mongodb');
 
-var display = fs.readFileSync(__dirname + '/config/words.txt', { encoding: 'utf8' }).trim().split('\n');
+var display = fs.readFileSync(__dirname + '/config/words.txt', { encoding: 'utf8' }).trim().split(/\r?\n/);
 var canonical = display.map(function(word) { return word.toLowerCase(); });
 
 var active = {};
