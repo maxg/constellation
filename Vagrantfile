@@ -9,8 +9,6 @@ Vagrant.configure("2") do |config|
                    "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1" ]
   end
 
-  config.vm.provision "puppet" do |puppet|
-    puppet.facter = { "app_path" => "/vagrant/server" }
-  end
+  config.vm.provision "shell", path: "manifests/setup.sh", args: [ "/vagrant", "server" ]
 
 end

@@ -12,8 +12,7 @@ block content
     var shareURL = !{JSON.stringify(shareURL)};
     var collabid = !{JSON.stringify(collabid)};
     var filename = !{JSON.stringify(name)};
-  script(src='/static/share/text.js')
-  script(src='/static/share/share.uncompressed.js')
+  script(src='/static/share/share.js')
   script(src='/static/share.js')
   script.
     socket.onopen = function() {

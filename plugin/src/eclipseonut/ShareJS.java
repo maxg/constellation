@@ -87,7 +87,7 @@ public class ShareJS {
         WebSocketClient client = new WebSocketClient(new SslContextFactory(true)); // XXX trust!
         client.start();
         
-        js.execScript("share.uncompressed");
+        js.execScript("share");
         js.exec((engine) -> {
             engine.put("SOCKET", socket);
             engine.eval("var CONNECTION = new window.sharejs.Connection(SOCKET);");

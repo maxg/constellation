@@ -1,1 +1,1 @@
-../../../../server/node_modules/share/webclient/share.js
+../../../../server/node_modules/share/dist/share.js
