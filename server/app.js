@@ -10,6 +10,7 @@ var mongodb = require('mongodb');
 var sharejs = require('share');
 var stream = require('stream');
 var ws = require('ws');
+var x509 = require('x509');
 
 var config = require('./config');
 var join = require('./join');
@@ -38,10 +39,16 @@ app.use('/static', express.static(__dirname + '/static'));
 app.use(bodyparser.json());
 
 function authenticate(req, res, next) {
-  var cert = req.connection.getPeerCertificate();
+  var cert = req.connection.getPeerCertificate(true);
   if ( ! req.connection.authorized) {
     return res.status(401).render('401', {
       error: req.connection.authorizationError,
+      cert: cert
+    });
+  }
+  if (cert.issuerCertificate.fingerprint !== issuer) {
+    return res.status(401).render('401', {
+      error: 'unexpected issuer',
       cert: cert
     });
   }
@@ -131,11 +138,12 @@ app.get('/edit/:name', authenticate, collaboration, function(req, res, next) {
 });
 
 var webserver = https.createServer({
-  key: fs.readFileSync(__dirname + '/config/ssl-private-key.pem'),
-  cert: fs.readFileSync(__dirname + '/config/ssl-certificate.pem'),
-  ca: [ fs.readFileSync(__dirname + '/config/ssl-ca.pem') ],
+  key: config.readConfFileSync('ssl-private-key.pem'),
+  cert: config.readConfFileSync('ssl-certificate.pem'),
+  ca: config.listConfFilesSync(/ssl-(ca|intermediate).*.pem/).map(config.readConfFileSync),
   requestCert: true
 }, app);
+var issuer = x509.parseCert(config.readConfFileSync('ssl-ca.pem')).fingerPrint;
 
 webserver.listen(config.web.https, function() {
   console.log('web server listening on', webserver.address());
@@ -149,9 +157,9 @@ share.filter(function(collection, doc, data, next) {
 });
 
 var wsserver = https.createServer({
-  key: fs.readFileSync(__dirname + '/config/ssl-private-key.pem'),
-  cert: fs.readFileSync(__dirname + '/config/ssl-certificate.pem'),
-  ca: [ fs.readFileSync(__dirname + '/config/ssl-ca.pem') ]
+  key: config.readConfFileSync('ssl-private-key.pem'),
+  cert: config.readConfFileSync('ssl-certificate.pem'),
+  ca: config.listConfFilesSync(/ssl-intermediate.*.pem/).map(config.readConfFileSync),
 });
 
 new ws.Server({ server: wsserver }).on('connection', function(sock) {

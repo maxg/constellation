@@ -11,7 +11,8 @@
     "livedb-mongo": "^0.4.1",
     "mongodb": "^1.4.39",
     "share": "^0.7.40",
-    "ws": "^0.7.2"
+    "ws": "^0.7.2",
+    "x509": "^0.2.3"
   },
   "devDependencies": {},
   "engines": {
