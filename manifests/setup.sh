@@ -29,7 +29,7 @@ apt-get install -y nodejs build-essential g++ make python-software-properties
   [ -f ssl-ca.pem ] || wget -q -O - http://ca.mit.edu/mitClient.crt | openssl x509 -inform der -out ssl-ca.pem
   # Generate self-signed certificate
   [ -f ssl-private-key.pem ] || openssl genrsa -out ssl-private-key.pem 2048
-  [ -f ssl-certificate.pem ] || openssl req -new -key ssl-private-key.pem -config ../setup/openssl.conf | openssl x509 -req -signkey ssl-private-key.pem -out ssl-certificate.pem
+  [ -f ssl-certificate.pem ] || openssl req -new -key ssl-private-key.pem -config ssl.conf | openssl x509 -req -signkey ssl-private-key.pem -out ssl-certificate.pem
 )
 
 # Time zone
