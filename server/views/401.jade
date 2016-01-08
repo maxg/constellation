@@ -5,4 +5,4 @@ block content
     .col-xs-12
       h1 401 Unauthorized
       h2= error
-      pre= JSON.stringify(cert, null, 2)
+      pre= JSON.stringify(cert, function(key, val) { return [ 'issuerCertificate', 'raw' ].indexOf(key) >= 0 ? undefined : val; }, 2)
