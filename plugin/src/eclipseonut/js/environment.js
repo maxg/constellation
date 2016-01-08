@@ -46,11 +46,25 @@ var open = function(collab, path, contents, callback) {
   var doc = CONNECTION.get('collab_' + collab, path);
   doc.subscribe();
   doc.whenReady(function() {
-    
     var contextCallback = function() {
+      // Contexts is technically misnamed because it is used to store
+      // the JSON doc for cursors as well. If the JSON API for share.js
+      // ever works, using the cursor context is preferable to the doc.
+      var contexts = {};
       var ctx = doc.createContext();
       ctx._document = doc;
-      callback(ctx, ctx.get().toString());
+      contexts.text = ctx;
+
+      // set up cursor document and contexts
+      var cursors = CONNECTION.get('collab_' + collab, path + '_cursors');
+      cursors.subscribe();
+      cursors.whenReady(function() {
+        if (!cursors.type) {
+          cursors.create('json0', {}, undefined);
+        }
+        contexts.cursors = cursors;
+        callback(contexts, ctx.get().toString());
+      });
     };
     
     if ( ! doc.type) {
@@ -61,16 +75,24 @@ var open = function(collab, path, contents, callback) {
   });
 };
 
-var attach = function(ctx, sharedoc) {
-  ctx.onInsert = function(pos, text) {
+var attach = function(contexts, sharedoc) {
+  contexts.text.onInsert = function(pos, text) {
     sharedoc.onRemoteInsert(pos, text);
   };
-  ctx.onRemove = function(pos, len) {
+  contexts.text.onRemove = function(pos, len) {
     sharedoc.onRemoteRemove(pos, len);
   };
-  return ctx.get().toString();
+  contexts.cursors.on('after op', function(op, context) {
+    var userId = op[0].p[0];
+    var remoteOffset = op[0].oi.offset;
+    sharedoc.onRemoteCaretMove(userId, remoteOffset);
+  });
+  contexts.cursors.caretMoved = function(userId, offset) {
+    contexts.cursors.submitOp({p:[userId], oi:{offset: offset}});
+  };
+  return contexts.text.get().toString();
 };
 
-var detach = function(ctx, sharedoc) {
-  ctx._document.destroy();
+var detach = function(contexts, sharedoc) {
+  contexts.text._document.destroy();
 };

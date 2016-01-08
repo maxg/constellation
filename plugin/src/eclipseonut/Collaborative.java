@@ -16,7 +16,7 @@ public class Collaborative {
     
     public Collaborative(ShareJS share, ITextEditor editor, IFileEditorInput input) {
         IDocument local = editor.getDocumentProvider().getDocument(input);
-        this.doc = share.open(local, input.getFile());
+        this.doc = share.open(local, input.getFile(), editor);
         new Thread(() -> {
             try {
                 doc.get();

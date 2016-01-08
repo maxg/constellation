@@ -26,6 +26,7 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.texteditor.ITextEditor;
 
 import eclipseonut.prefs.Preferences;
 
@@ -95,7 +96,7 @@ public class ShareJS {
         });
     }
     
-    public Future<ShareDoc> open(final IDocument local, final IFile file) {
+    public Future<ShareDoc> open(final IDocument local, final IFile file, final ITextEditor editor) {
         final CompletableFuture<ShareDoc> doc = new CompletableFuture<>();
         
         final Bindings env = new SimpleBindings();
@@ -104,9 +105,9 @@ public class ShareJS {
         env.put("contents", local.get());
         
         // callback for open gets context and current contents
-        env.put("callback", (BiConsumer<Object, String>)(ctx, remote) -> {
+        env.put("callback", (BiConsumer<Object, String>)(contexts, remote) -> {
             Runnable ok = () -> {
-                doc.complete(new ShareDoc(js, local, ctx));
+                doc.complete(new ShareDoc(js, local, contexts, editor));
             };
             Runnable cancel = () -> {
                 doc.cancel(true);
