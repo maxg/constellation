@@ -1,5 +1,7 @@
 package eclipseonut;
 
+import java.util.HashMap;
+
 import javax.script.Bindings;
 import javax.script.SimpleBindings;
 
@@ -8,7 +10,17 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
+import org.eclipse.jface.text.IPainter;
+import org.eclipse.jface.text.ITextOperationTarget;
 import org.eclipse.jface.text.ITextSelection;
+import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.Position;
+import org.eclipse.jface.text.source.Annotation;
+import org.eclipse.jface.text.source.AnnotationPainter;
+import org.eclipse.jface.text.source.AnnotationPainter.IDrawingStrategy;
+import org.eclipse.jface.text.source.IAnnotationAccess;
+import org.eclipse.jface.text.source.IAnnotationModel;
+import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ISelectionProvider;
@@ -16,6 +28,9 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.custom.CaretEvent;
 import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.texteditor.ITextEditor;
@@ -26,12 +41,66 @@ public class ShareDoc implements IDocumentListener {
     private final IDocument local;
     private final Bindings env = new SimpleBindings();
     private boolean syncing = false;
+    private final IAnnotationModel annotationModel;
+    private final HashMap<Integer, Position> cursorMap = new HashMap<>();
+    private final AnnotationPainter painter;
     
     public ShareDoc(JSEngine js, IDocument local, Object contexts, ITextEditor editor) {
         this.js = js;
         this.local = local;
         env.put("contexts", contexts);
         env.put("sharedoc", this);
+        
+        // Set up the caret drawer for remote caret moves
+        ITextViewer viewer = (ITextViewer)editor.getAdapter(ITextOperationTarget.class);
+        AnnotationPainter painter = new AnnotationPainter((ISourceViewer) viewer, new IAnnotationAccess() {
+            @Override
+            public boolean isTemporary(Annotation annotation) {
+                return annotation.isPersistent();
+            }
+            
+            @Override
+            public boolean isMultiLine(Annotation annotation) {
+                return true;
+            }
+            
+            @Override
+            public Object getType(Annotation annotation) {
+                return annotation.getType();
+            }
+        });
+        this.painter = painter;
+        painter.addAnnotationType("caret", "caret");
+        painter.addDrawingStrategy("caret", new IDrawingStrategy() {
+            private static final int CURSOR_WIDTH = 2;
+            @Override
+            public void draw(Annotation annotation, GC gc, StyledText textWidget, int offset, int length, Color color) {
+                Point cursor = textWidget.getLocationAtOffset(offset);
+                if (gc == null) {
+                    textWidget.redraw(cursor.x - CURSOR_WIDTH / 2,
+                        cursor.y, CURSOR_WIDTH + 1,
+                        textWidget.getLineHeight(), false);
+                    return;
+                }
+
+                final Color foreground = gc.getForeground();
+                // instead of setting foreground to the color passed in, we use red to
+                // indicate remotely called cursors.
+                final Color cursorColor = new Color(gc.getDevice(), 255, 0, 0);
+                gc.setForeground(cursorColor);
+                gc.setLineWidth(CURSOR_WIDTH);
+                gc.drawLine(cursor.x, cursor.y,
+                    cursor.x,
+                    cursor.y + textWidget.getLineHeight());
+                gc.setForeground(foreground);
+                foreground.dispose();
+                cursorColor.dispose();
+            }
+        });
+        
+        painter.setAnnotationTypeColor("caret", viewer.getTextWidget().getForeground());
+        painter.paint(IPainter.CONFIGURATION);
+        this.annotationModel = ((ISourceViewer) viewer).getAnnotationModel();
         
         ISelectionProvider selectionProvider = editor.getSelectionProvider();
         selectionProvider.addSelectionChangedListener(new ISelectionChangedListener() {
@@ -111,7 +180,19 @@ public class ShareDoc implements IDocumentListener {
         Assert.isNotNull(Display.getCurrent());
         // TODO: modify this userId check to actually use id, see above usage of hashcode
         if (userId != this.hashCode()) {
-            System.out.println("remote caret moved to " + remoteOffset);
+            // the AnnotationPainter API does not appear to offer a better way to remove
+            // previously drawn cursors, so we call decativate(true) to do so.
+            painter.deactivate(true);
+            System.out.println("Remote offset " + remoteOffset);
+            if (cursorMap.containsKey(userId)) {
+                cursorMap.get(userId).setOffset(remoteOffset);
+            } else {
+                Annotation annotation = new Annotation("caret", true, "");
+                Position position = new Position(remoteOffset);
+                annotationModel.addAnnotation(annotation, position);
+                cursorMap.put(userId, position);
+            }
+            painter.paint(IPainter.CONFIGURATION);
         }
     }
     
