@@ -82,13 +82,49 @@ var attach = function(contexts, sharedoc) {
   contexts.text.onRemove = function(pos, len) {
     sharedoc.onRemoteRemove(pos, len);
   };
-  contexts.cursors.on('after op', function(op, context) {
-    var userId = op[0].p[0];
-    var remoteOffset = op[0].oi.offset;
-    sharedoc.onRemoteCaretMove(userId, remoteOffset);
+  contexts.cursors.on('after op', function(ops, context) {
+    ops.forEach(function(currentValue, index, array) {
+      var userId = currentValue.p[0];
+      var key = currentValue.p[1];
+      var userData = contexts.cursors.snapshot[userId];
+      if (key == 'cursor') {
+        var offset = userData[key].offset;
+        sharedoc.onRemoteCaretMove(userId, offset);
+      } else if (key == 'selection') {
+        var offset = userData[key].offset;
+        var length = userData[key].len;
+        sharedoc.onRemoteSelection(userId, offset, length);
+      } else {
+        // Do nothing on an instantiation op.
+      }
+    });
   });
+  var instantiateUser = function(userId) {
+    if (!contexts.cursors.snapshot[userId]) {
+      contexts.cursors.submitOp({
+        p:[userId],
+        oi: {},
+      });
+    }
+  };
   contexts.cursors.caretMoved = function(userId, offset) {
-    contexts.cursors.submitOp({p:[userId], oi:{offset: offset}});
+    instantiateUser(userId);
+    contexts.cursors.submitOp({
+      p: [userId, 'cursor'],
+      oi: {
+        offset: offset,
+      },
+    });
+  };
+  contexts.cursors.selectionChanged = function(userId, offset, length) {
+    instantiateUser(userId);
+    contexts.cursors.submitOp({
+      p: [userId, 'selection'],
+      oi: {
+        offset: offset,
+        len: length,
+      },
+    });
   };
   return contexts.text.get().toString();
 };

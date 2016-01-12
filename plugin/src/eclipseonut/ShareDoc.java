@@ -21,6 +21,7 @@ import org.eclipse.jface.text.source.AnnotationPainter.IDrawingStrategy;
 import org.eclipse.jface.text.source.IAnnotationAccess;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.text.source.ISourceViewer;
+import org.eclipse.jface.text.source.SourceViewer;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ISelectionProvider;
@@ -31,6 +32,7 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.texteditor.ITextEditor;
@@ -43,7 +45,11 @@ public class ShareDoc implements IDocumentListener {
     private boolean syncing = false;
     private final IAnnotationModel annotationModel;
     private final HashMap<Integer, Position> cursorMap = new HashMap<>();
+    private final HashMap<Integer, Position> selectionMap = new HashMap<>();
     private final AnnotationPainter painter;
+    private final StyledText styledText;
+    private static final RGB REMOTE_CURSOR_RGB = new RGB(181, 118, 117);
+    private static final RGB REMOTE_SELECTION_RGB = new RGB(242, 222, 222);
     
     public ShareDoc(JSEngine js, IDocument local, Object contexts, ITextEditor editor) {
         this.js = js;
@@ -70,6 +76,9 @@ public class ShareDoc implements IDocumentListener {
             }
         });
         this.painter = painter;
+        ((SourceViewer)viewer).addTextPresentationListener(painter);
+        painter.addHighlightAnnotationType("selection");
+        painter.setAnnotationTypeColor("selection", new Color(Display.getDefault(), REMOTE_SELECTION_RGB));
         painter.addAnnotationType("caret", "caret");
         painter.addDrawingStrategy("caret", new IDrawingStrategy() {
             private static final int CURSOR_WIDTH = 2;
@@ -84,24 +93,24 @@ public class ShareDoc implements IDocumentListener {
                 }
 
                 final Color foreground = gc.getForeground();
-                // instead of setting foreground to the color passed in, we use red to
-                // indicate remotely called cursors.
-                final Color cursorColor = new Color(gc.getDevice(), 255, 0, 0);
-                gc.setForeground(cursorColor);
+                gc.setForeground(color);
                 gc.setLineWidth(CURSOR_WIDTH);
                 gc.drawLine(cursor.x, cursor.y,
                     cursor.x,
                     cursor.y + textWidget.getLineHeight());
                 gc.setForeground(foreground);
                 foreground.dispose();
-                cursorColor.dispose();
             }
         });
-        
-        painter.setAnnotationTypeColor("caret", viewer.getTextWidget().getForeground());
+        painter.setAnnotationTypeColor("caret", new Color(Display.getDefault(), REMOTE_CURSOR_RGB));
         painter.paint(IPainter.CONFIGURATION);
         this.annotationModel = ((ISourceViewer) viewer).getAnnotationModel();
         
+        // XXX: used as part of interim user ID below. Needs to be here to avoid
+        // scoping issues with "this".
+        int hashCode = this.hashCode();
+        
+        // XXX: Consider using selection listeners provided by styled text
         ISelectionProvider selectionProvider = editor.getSelectionProvider();
         selectionProvider.addSelectionChangedListener(new ISelectionChangedListener() {
             @Override
@@ -110,20 +119,25 @@ public class ShareDoc implements IDocumentListener {
                 if (selection instanceof ITextSelection) {
                     ITextSelection textSelection = (ITextSelection)selection;
                     int offset = textSelection.getOffset();
-                    System.out.println("Selection Offset: " + offset);
+                    int length = textSelection.getLength();
+
+                    js.exec((engine) -> {
+                        // XXX: temporarily use ShareDoc's hashcode to ID users uniquely
+                        // Need to fetch userID from ShareJS class.
+                        env.put("offset", offset);
+                        env.put("length", length);
+                        env.put("userId", hashCode);
+                        engine.eval("contexts.cursors.selectionChanged(userId, offset, length)", env);
+                    });
                 }
             }
         });
         
-        // XXX: used as part of interim user ID below. Needs to be here to avoid
-        // scoping issues with "this".
-        int hashCode = this.hashCode();
-        
         StyledText text = (StyledText)editor.getAdapter(Control.class);
+        this.styledText = text;
         text.addCaretListener(new CaretListener() {
             @Override
             public void caretMoved(CaretEvent event) {
-                System.out.println("Caret Offset: " + event.caretOffset);
                 js.exec((engine) -> {
                     // XXX: temporarily use ShareDoc's hashcode to ID users uniquely
                     // Need to fetch userID from ShareJS class.
@@ -204,6 +218,24 @@ public class ShareDoc implements IDocumentListener {
                 Position position = new Position(offset);
                 annotationModel.addAnnotation(annotation, position);
                 cursorMap.put(userId, position);
+            }
+            painter.paint(IPainter.CONFIGURATION);
+        }
+    }
+    
+    public void onRemoteSelection(int userId, int offset, int length) {
+        Assert.isNotNull(Display.getCurrent());
+        if (userId != this.hashCode()) {
+            painter.deactivate(true);
+            if (selectionMap.containsKey(userId)) {
+                Position position = selectionMap.get(userId);
+                position.setOffset(offset);
+                position.setLength(length);
+            } else {
+                Annotation annotation = new Annotation("selection", true, "");
+                Position position = new Position(offset, length);
+                annotationModel.addAnnotation(annotation, position);
+                selectionMap.put(userId, position);
             }
             painter.paint(IPainter.CONFIGURATION);
         }
