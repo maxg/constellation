@@ -158,7 +158,14 @@ public class ShareDoc implements IDocumentListener {
         Assert.isNotNull(Display.getCurrent());
         syncing = true;
         try {
+            Point selection = styledText.getSelection();
+            int offset = styledText.getCaretOffset();
             local.replace(pos, 0, text);
+            if (selection.x == offset) {
+                // reverse the selection to correctly anchor it.
+                Point newSelection = styledText.getSelection();
+                styledText.setSelection(newSelection.y, newSelection.x);
+            }
         } catch (BadLocationException ble) {
             Log.error("Bad location on remote insert " + pos + " (" + text.length() + ")", ble);
         }
@@ -169,26 +176,32 @@ public class ShareDoc implements IDocumentListener {
         Assert.isNotNull(Display.getCurrent());
         syncing = true;
         try {
+            Point selection = styledText.getSelection();
+            int offset = styledText.getCaretOffset();
             local.replace(pos, length, "");
+            if (selection.x == offset) {
+                // reverse the selection to correctly anchor it.
+                Point newSelection = styledText.getSelection();
+                styledText.setSelection(newSelection.y, newSelection.x);
+            }
         } catch (BadLocationException ble) {
             Log.error("Bad location on remote remove " + pos + " " + length, ble);
         }
         syncing = false;
     }
     
-    public void onRemoteCaretMove(int userId, int remoteOffset) {
+    public void onRemoteCaretMove(int userId, int offset) {
         Assert.isNotNull(Display.getCurrent());
         // TODO: modify this userId check to actually use id, see above usage of hashcode
         if (userId != this.hashCode()) {
             // the AnnotationPainter API does not appear to offer a better way to remove
             // previously drawn cursors, so we call decativate(true) to do so.
             painter.deactivate(true);
-            System.out.println("Remote offset " + remoteOffset);
             if (cursorMap.containsKey(userId)) {
-                cursorMap.get(userId).setOffset(remoteOffset);
+                cursorMap.get(userId).setOffset(offset);
             } else {
                 Annotation annotation = new Annotation("caret", true, "");
-                Position position = new Position(remoteOffset);
+                Position position = new Position(offset);
                 annotationModel.addAnnotation(annotation, position);
                 cursorMap.put(userId, position);
             }
