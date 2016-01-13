@@ -9,6 +9,7 @@
     "openstack_username": "",
     "openstack_password": "",
     "openstack_tenant": "",
+    "openstack_region": "",
     "openstack_source_image": "",
     "openstack_flavor": "",
     "openstack_secgroup": "",
@@ -31,9 +32,9 @@
     "type": "openstack",
     "username": "{{user `openstack_username`}}",
     "password": "{{user `openstack_password`}}",
-    "project": "{{user `openstack_tenant`}}",
-    "provider": "{{user `openstack_auth_url`}}",
-    "region": "RegionOne",
+    "tenant_name": "{{user `openstack_tenant`}}",
+    "identity_endpoint": "{{user `openstack_auth_url`}}",
+    "region": "{{user `openstack_region`}}",
     "image_name": "{{user `app`}}-{{timestamp}}-{{user `rev`}}",
     "source_image": "{{user `openstack_source_image`}}",
     "flavor": "{{user `openstack_flavor`}}",
@@ -46,18 +47,13 @@
     "source": "{{user `tar`}}",
     "destination": "/tmp/{{user `app`}}.tar"
   }, {
-    "type": "shell",
-    "script": "manifests/packer-pre.sh",
-    "environment_vars": [ "APP={{user `app`}}" ],
-    "execute_command": "{{.Vars}} ADMIN=`whoami` sudo -E sh {{.Path}}"
-  }, {
-    "type": "puppet-masterless",
-    "manifest_file": "manifests/default.pp",
-    "facter": { "app_path": "/var/{{user `app`}}" }
+    "type": "file",
+    "source": "manifests/setup.sh",
+    "destination": "/tmp/{{user `app`}}-setup.sh"
   }, {
     "type": "shell",
-    "script": "manifests/packer-post.sh",
+    "script": "manifests/provision.sh",
     "environment_vars": [ "APP={{user `app`}}" ],
-    "execute_command": "{{.Vars}} ADMIN=`whoami` sudo -E sh {{.Path}}"
+    "execute_command": "{{.Vars}} ADMIN=`whoami` sudo -E bash {{.Path}}"
   } ]
 }

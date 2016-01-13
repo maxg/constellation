@@ -1,0 +1,118 @@
+#!/bin/bash
+
+#
+# Run OpenStack commands.
+# Requires: pip install python-novaclient python-cinderclient
+#
+
+set -e
+
+eval `sed -n 's/ *"\(.*\)": *"\(.*\)",*/\1 \2/p' < manifests/packer.conf.json | \
+      awk '{print $1"="$2}'`
+export OS_AUTH_URL="$openstack_auth_url"
+export OS_USERNAME="$openstack_username"
+export OS_PASSWORD="$openstack_password"
+export OS_TENANT_NAME="$openstack_tenant"
+
+cmd="$1"
+
+if [[ -z "$cmd" ]]; then
+  echo "Usage: $0 <cmd>..."
+  exit 1
+fi
+
+tablegrep() {
+  grep "\($1\|^+\|^| ID\)"
+}
+
+tablepick() {
+  field=$1
+  idx=$(($2+1))
+  grep "| *$field *|" | awk -F' *\\| *' "{print \$$idx}"
+}
+
+tableclean() {
+  fgrep -v '+----'
+}
+
+case "$cmd" in
+  
+  launch)
+    hostname="${2:?hostname required}"
+    name=${hostname%%.*}
+    
+    imagename="${3:?image name required}"
+    imageid=`nova image-show $imagename | tablepick id 2`
+    [ -z "$imageid" ] && exit
+    
+    ipaddr=`dig +short $hostname | tail -1`
+    [ -z "$ipaddr" ] && network=""
+    [ -n "$ipaddr" ] && network="--nic net-id=`nova network-list | tablepick inet 1`,v4-fixed-ip=$ipaddr"
+    
+    echo "Booting $name (${ipaddr:-dynamic IP}) from $imagename ($imageid)"
+    
+    volsize=16
+    
+    volcmd="cinder create --image-id $imageid
+              --display-name $name-`date +%s` --display-description $imagename
+              $volsize"
+    echo "$volcmd"
+    volid=`$volcmd | tablepick id 2`
+    [ -z "$volid" ] && exit
+    echo "Volume: $volid"
+    
+    until [[ "$volstatus" == "available" ]]; do
+      sleep 2
+      volstatus=`cinder show $volid | tablepick status 2`
+      echo -n .
+    done
+    echo
+    
+    instcmd="nova boot --flavor $openstack_flavor
+          --key-name $deploy_openstack_key --security-groups $openstack_secgroup
+          --boot-volume $volid $network
+          $name"
+    echo "$instcmd"
+    instid=`$instcmd | tablepick id 2`
+    [ -z "$instid" ] && exit
+    echo "Instance: $instid"
+    
+    until [[ "$inetaddr" ]]; do
+      sleep 2
+      inetaddr=`nova show $instid | tablepick 'inet network' 2`
+      echo -n .
+    done
+    echo
+    
+    echo "IP addr: $inetaddr"
+    ;;
+    
+  flavors)
+    nova flavor-list | tablegrep 'ups\.'
+    ;;
+    
+  source-images)
+    nova image-list | tablegrep '[Uu]buntu.*LTS'
+    ;;
+    
+  images)
+    nova image-list | tablegrep $app
+    ;;
+    
+  secgroups)
+    nova secgroup-list
+    ;;
+    
+  keys)
+    nova keypair-list
+    ;;
+    
+  instances)
+    nova list --name $app
+    ;;
+    
+  *)
+    "$@"
+    ;;
+    
+esac
