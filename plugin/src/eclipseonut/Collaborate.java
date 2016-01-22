@@ -167,6 +167,7 @@ public class Collaborate extends AbstractHandler implements IElementUpdater {
     
     public void updateElement(UIElement element, @SuppressWarnings("rawtypes") Map parameters) {
         element.setText(Activator.getString("command.collaborate." + (started() ? "stop" : "start")));
+        element.setChecked(started());
     }
     
     private boolean started() {
