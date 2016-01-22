@@ -14,6 +14,7 @@ import org.eclipse.jface.text.IPainter;
 import org.eclipse.jface.text.ITextOperationTarget;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.ITextViewerExtension5;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.AnnotationPainter;
@@ -141,8 +142,14 @@ public class ShareDoc implements IDocumentListener {
                 js.exec((engine) -> {
                     // XXX: temporarily use ShareDoc's hashcode to ID users uniquely
                     // Need to fetch userID from ShareJS class.
+                    int offset = event.caretOffset;
+                    if (viewer instanceof ITextViewerExtension5) {
+                        ITextViewerExtension5 extension = (ITextViewerExtension5) viewer;
+                        offset = extension.widgetOffset2ModelOffset(offset);
+                    }
+                    
                     env.put("userId", hashCode);
-                    env.put("offset", event.caretOffset);
+                    env.put("offset", offset);
                     engine.eval("contexts.cursors.caretMoved(userId, offset)", env);
                 });
             }
