@@ -8,6 +8,7 @@
   "openstack_username": "...",
   "openstack_password": "...",
   "openstack_tenant": "PROJECT_NAME",
+  "openstack_region": "REGION_NAME",
   "openstack_source_image": "IMAGE_ID",
   "openstack_flavor": "FLAVOR_ID",
   "openstack_secgroup": "SECGROUP_NAME",
