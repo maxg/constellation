@@ -6,12 +6,17 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
@@ -34,6 +39,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.dialogs.ElementTreeSelectionDialog;
+import org.eclipse.ui.dialogs.ISelectionStatusValidator;
 import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.wizards.datatransfer.FileSystemStructureProvider;
@@ -45,35 +51,45 @@ import org.xml.sax.SAXException;
 
 /**
  * An extension of ElementTreeSelectionDialog designed to work for project selection to 
- * collaborate on. This extension is necessary for three reasons.
+ * collaborate on. This extension is necessary for two reasons.
  *   1. ElementTreeSelectionDialog caches whether the input is originally empty, which 
  *      results in undesirable behavior when mutating the input.
  *   2. The "quick clone" functionality requires creating a new button for the button
  *      bar.
  */
 public class EclipseonutDialog extends ElementTreeSelectionDialog {
+    private final ISelectionStatusValidator validator =
+            selection -> selection.length == 1 && selection[0] instanceof IProject
+            ? new Status(IStatus.OK, Activator.PLUGIN_ID, "")
+            : new Status(IStatus.ERROR, Activator.PLUGIN_ID, "Select a project"); 
+    
     public EclipseonutDialog(Shell parent) {
         super(parent, new WorkbenchLabelProvider(), new BaseWorkbenchContentProvider() {
             @Override public boolean hasChildren(Object element) { return false; }
         });
+        setValidator(validator);
     }
     
     private void cloneButtonDialog() {
         Clipboard clipboard = new Clipboard(Display.getCurrent());
         TextTransfer textTransfer = TextTransfer.getInstance();
-        Object contents = clipboard.getContents(textTransfer);
+        String contents = clipboard.getContents(textTransfer).toString().trim();
         String initial = "";
-        if (contents != null && contents.toString().endsWith(".git")) {
-            initial = contents.toString();
+        if (checkGitString(contents)) {
+            initial = contents;
         }
 
         InputDialog inputDialog = new InputDialog(getShell(), "Clone a Repository", "Input a remote URL to clone from.", initial, null);
         inputDialog.open();
         String result = inputDialog.getValue();
-        if (result != null && result.endsWith(".git")) {
+        if (checkGitString(result)) {
             String projectName = cloneAndImport(result);
             refreshProjects(projectName);
         }
+    }
+    
+    private boolean checkGitString(String uri) {
+        return uri != null && uri.contains("://") && uri.endsWith(".git");
     }
 
     @Override
@@ -104,9 +120,10 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
 
     private void refreshProjects(String projectName) {
         TreeViewer treeViewer = getTreeViewer();
-        treeViewer.refresh();
         Tree tree = treeViewer.getTree();
         TreeItem[] projects = tree.getItems();
+        
+        treeViewer.refresh();
         TreeItem newSelection = null;
         for (TreeItem project : projects) {
             if (!(project.getData() instanceof IProject)) {
@@ -121,9 +138,18 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
             throw new RuntimeException("Project not correctly imported.");
         }
         tree.setEnabled(true);
+        List<Object> sel = new ArrayList<>();
+        sel.add(newSelection.getData());
         tree.setSelection(newSelection);
+        setResult(sel);
+        
         updateOKStatus();
-        // TODO: Make sure that the validator lets you click ok after quick clone
+        getOkButton().setFocus();
+    }
+    
+    @Override
+    protected void updateOKStatus() {
+        updateStatus(validator.validate(getResult()));
     }
     
     /**
@@ -134,7 +160,6 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
      */
     private String cloneAndImport(String remoteURL) {
         // e.g. https://github.com/mit6005/fa15-ex26-music-language.git
-        //TODO: make the progress monitor keep track of the clone too
         Path tempPath = null;
         try {
             tempPath = Files.createTempDirectory("eclipseonut-");
@@ -143,6 +168,31 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
             ioe.printStackTrace();
         }
         File tempFile = tempPath.toFile();
+        
+        try {
+            new ProgressMonitorDialog(null).run(true, true, (monitor) -> {
+                SubMonitor progress = SubMonitor.convert(monitor, "Clone and Import", 10);
+                clone(remoteURL, tempFile, progress.newChild(5));
+                String projectName = getProjectName(tempFile);
+                
+                ImportOperation importOp = new ImportOperation(org.eclipse.core.runtime.Path.fromOSString(projectName),
+                        tempFile, FileSystemStructureProvider.INSTANCE, null);
+                importOp.setCreateContainerStructure(false);
+                importOp.run(progress.newChild(5));
+            });
+        } catch (InvocationTargetException ite) {
+            ite.printStackTrace();
+        } catch (InterruptedException ie) {
+            ie.printStackTrace();
+        }
+        String projectName = getProjectName(tempFile);
+        deleteDirectoryOnExit(tempFile);
+        return projectName;
+    }
+    
+    private void clone(String remoteURL, File tempFile, SubMonitor progress) {
+        progress.setWorkRemaining(1);
+        progress.subTask("Cloning repository.");
         try {
             Git git = Git.cloneRepository().setURI(remoteURL).setDirectory(tempFile).call();
             // Although the jgit documentation suggests that git.close() should close
@@ -156,23 +206,8 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
         } catch (GitAPIException gae) {
             gae.printStackTrace();
         }
-        
-        String projectName = getProjectName(tempFile);
-        ImportOperation importOp = new ImportOperation(org.eclipse.core.runtime.Path.fromOSString(projectName), 
-                tempFile, FileSystemStructureProvider.INSTANCE, null);
-        importOp.setCreateContainerStructure(false);
-        try {
-            new ProgressMonitorDialog(null).run(true, true, (monitor) -> {
-                importOp.run(monitor);
-            });
-        } catch (InvocationTargetException ite) {
-            ite.printStackTrace();
-        } catch (InterruptedException ie) {
-            ie.printStackTrace();
-        }
-        deleteDirectory(tempFile);
-        return projectName;
-    }
+        progress.worked(1);
+}
     
 
     
@@ -181,19 +216,19 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
      * for directories.
      * @param directory File to be deleted. If it is not a directory, will be deleted anyway.
      */
-    private void deleteDirectory(File directory) {
+    private void deleteDirectoryOnExit(File directory) {
         File[] files = directory.listFiles();
+        directory.deleteOnExit();
         if (files != null) {
             // if files is null, directory is a file so no recursion happens
             for (File child : files) {
                 if (child.isDirectory()) {
-                    deleteDirectory(child);
+                    deleteDirectoryOnExit(child);
                 } else {
-                    child.delete();
+                    child.deleteOnExit();
                 }
             }
         }
-        directory.delete();
     }
     
     /**
