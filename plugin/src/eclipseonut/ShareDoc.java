@@ -48,7 +48,10 @@ public class ShareDoc implements IDocumentListener {
     private final HashMap<Integer, Position> cursorMap = new HashMap<>();
     private final HashMap<Integer, Position> selectionMap = new HashMap<>();
     private final AnnotationPainter painter;
+    private final ITextEditor editor;
     private final StyledText styledText;
+    private final ISelectionChangedListener selectionListener;
+    private final CaretListener caretListener;
     private static final RGB REMOTE_CURSOR_RGB = new RGB(181, 118, 117);
     private static final RGB REMOTE_SELECTION_RGB = new RGB(242, 222, 222);
     
@@ -76,8 +79,10 @@ public class ShareDoc implements IDocumentListener {
                 return annotation.getType();
             }
         });
+        this.editor = editor;
         this.painter = painter;
         ((SourceViewer)viewer).addTextPresentationListener(painter);
+
         painter.addHighlightAnnotationType("selection");
         painter.setAnnotationTypeColor("selection", new Color(Display.getDefault(), REMOTE_SELECTION_RGB));
         painter.addAnnotationType("caret", "caret");
@@ -107,13 +112,14 @@ public class ShareDoc implements IDocumentListener {
         painter.paint(IPainter.CONFIGURATION);
         this.annotationModel = ((ISourceViewer) viewer).getAnnotationModel();
         
-        // XXX: used as part of interim user ID below. Needs to be here to avoid
+        // TODO: used as part of interim user ID below. Needs to be here to avoid
         // scoping issues with "this".
         int hashCode = this.hashCode();
         
-        // XXX: Consider using selection listeners provided by styled text
+        // The Selection Provider uses offset values that are not affected by code folding
+        // so we use this listener instead of StyledText.
         ISelectionProvider selectionProvider = editor.getSelectionProvider();
-        selectionProvider.addSelectionChangedListener(new ISelectionChangedListener() {
+        selectionListener = new ISelectionChangedListener() {
             @Override
             public void selectionChanged(SelectionChangedEvent event) {
                 ISelection selection = selectionProvider.getSelection();
@@ -132,11 +138,12 @@ public class ShareDoc implements IDocumentListener {
                     });
                 }
             }
-        });
+        };
+        selectionProvider.addSelectionChangedListener(selectionListener);
         
         StyledText text = (StyledText)editor.getAdapter(Control.class);
         this.styledText = text;
-        text.addCaretListener(new CaretListener() {
+        caretListener = new CaretListener() {
             @Override
             public void caretMoved(CaretEvent event) {
                 js.exec((engine) -> {
@@ -145,6 +152,7 @@ public class ShareDoc implements IDocumentListener {
                     int offset = event.caretOffset;
                     if (viewer instanceof ITextViewerExtension5) {
                         ITextViewerExtension5 extension = (ITextViewerExtension5) viewer;
+                        // TODO: check that this output is not -1, or make it 0 instead or something
                         offset = extension.widgetOffset2ModelOffset(offset);
                     }
                     
@@ -153,7 +161,8 @@ public class ShareDoc implements IDocumentListener {
                     engine.eval("contexts.cursors.caretMoved(userId, offset)", env);
                 });
             }
-        });
+        };
+        text.addCaretListener(caretListener);
         
         js.exec((engine) -> {
             env.put("attach", engine.get("attach"));
@@ -167,7 +176,12 @@ public class ShareDoc implements IDocumentListener {
     }
 
     public void close() {
+        // TODO: Check that removing these listeners are sufficient
         local.removeDocumentListener(this);
+        painter.deactivate(true);
+        styledText.removeCaretListener(caretListener);
+        ISelectionProvider selectionProvider = editor.getSelectionProvider();
+        selectionProvider.removeSelectionChangedListener(selectionListener);
         
         js.exec((engine) -> {
             env.put("detach", engine.get("detach"));
