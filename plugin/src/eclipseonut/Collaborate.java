@@ -12,8 +12,6 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
@@ -38,10 +36,11 @@ public class Collaborate extends AbstractHandler implements IElementUpdater {
     public Object execute(ExecutionEvent event) throws ExecutionException {
         // TODO: handle disconnects => dialog box, possible red button
         // TODO: halt the server or something more clever
+        // TODO: check SSH
         // Perhaps drop a hook to the websocket and just close it
         // and figure out how to respond
         // Think about closing laptops and reopening in class
-        // TODO: check whether server can maintain connections
+        // TODO: check whether server can maintain connections - can Version Numbers be added to the protocol?
         // TODO: visibility that Collaboration is happening
         // TODO: Collapsed stuff gets counted wrong
         // TODO: make more interesting test files
@@ -95,9 +94,6 @@ public class Collaborate extends AbstractHandler implements IElementUpdater {
         
         EclipseonutDialog dialog = new EclipseonutDialog(shell);
         dialog.setInput(root);
-        dialog.setValidator(selection -> selection.length == 1 && selection[0] instanceof IProject
-                ? new Status(IStatus.OK, Activator.PLUGIN_ID, "")
-                : new Status(IStatus.ERROR, Activator.PLUGIN_ID, "Select a project"));
         dialog.setAllowMultiple(false);
         dialog.open();
         
