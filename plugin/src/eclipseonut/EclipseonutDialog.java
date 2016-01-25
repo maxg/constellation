@@ -63,11 +63,13 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
             ? new Status(IStatus.OK, Activator.PLUGIN_ID, "")
             : new Status(IStatus.ERROR, Activator.PLUGIN_ID, "Select a project"); 
     
-    public EclipseonutDialog(Shell parent) {
+    public EclipseonutDialog(Shell parent, Object input) {
         super(parent, new WorkbenchLabelProvider(), new BaseWorkbenchContentProvider() {
             @Override public boolean hasChildren(Object element) { return false; }
         });
+        setInput(input);
         setValidator(validator);
+        setAllowMultiple(false);
     }
     
     private void cloneButtonDialog() {
@@ -83,8 +85,7 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
         inputDialog.open();
         String result = inputDialog.getValue();
         if (checkGitString(result)) {
-            String projectName = cloneAndImport(result);
-            refreshProjects(projectName);
+            cloneAndImport(result);
         }
     }
     
@@ -120,10 +121,11 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
 
     private void refreshProjects(String projectName) {
         TreeViewer treeViewer = getTreeViewer();
+        treeViewer.refresh();
+        
         Tree tree = treeViewer.getTree();
         TreeItem[] projects = tree.getItems();
         
-        treeViewer.refresh();
         TreeItem newSelection = null;
         for (TreeItem project : projects) {
             if (!(project.getData() instanceof IProject)) {
@@ -158,12 +160,11 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
      * @param remoteURL
      * @return String containing the name of the imported project
      */
-    private String cloneAndImport(String remoteURL) {
+    private void cloneAndImport(String remoteURL) {
         // e.g. https://github.com/mit6005/fa15-ex26-music-language.git
         Path tempPath = null;
         try {
             tempPath = Files.createTempDirectory("eclipseonut-");
-            System.out.println(tempPath);
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
@@ -186,8 +187,8 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
             ie.printStackTrace();
         }
         String projectName = getProjectName(tempFile);
+        refreshProjects(projectName);
         deleteDirectoryOnExit(tempFile);
-        return projectName;
     }
     
     private void clone(String remoteURL, File tempFile, SubMonitor progress) {

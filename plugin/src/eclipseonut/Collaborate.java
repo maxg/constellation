@@ -36,13 +36,11 @@ public class Collaborate extends AbstractHandler implements IElementUpdater {
     public Object execute(ExecutionEvent event) throws ExecutionException {
         // TODO: handle disconnects => dialog box, possible red button
         // TODO: halt the server or something more clever
-        // TODO: check SSH
         // Perhaps drop a hook to the websocket and just close it
         // and figure out how to respond
         // Think about closing laptops and reopening in class
         // TODO: check whether server can maintain connections - can Version Numbers be added to the protocol?
         // TODO: visibility that Collaboration is happening
-        // TODO: Collapsed stuff gets counted wrong
         // TODO: make more interesting test files
         
         this.setBaseEnabled(false);
@@ -92,9 +90,7 @@ public class Collaborate extends AbstractHandler implements IElementUpdater {
         IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
         Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
         
-        EclipseonutDialog dialog = new EclipseonutDialog(shell);
-        dialog.setInput(root);
-        dialog.setAllowMultiple(false);
+        EclipseonutDialog dialog = new EclipseonutDialog(shell, root);
         dialog.open();
         
         Object[] projects = dialog.getResult();
@@ -115,6 +111,4 @@ public class Collaborate extends AbstractHandler implements IElementUpdater {
             throw new InvocationTargetException(e, e.getMessage());
         }
     }
-    
-    
 }
