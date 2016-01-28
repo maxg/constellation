@@ -34,18 +34,11 @@ public class Collaborate extends AbstractHandler implements IElementUpdater {
     private Optional<Collaboration> collab = Optional.empty();
     
     public Object execute(ExecutionEvent event) throws ExecutionException {
-        // TODO: handle disconnects => dialog box, possible red button
-        // TODO: halt the server or something more clever
-        // Perhaps drop a hook to the websocket and just close it
-        // and figure out how to respond
-        // Think about closing laptops and reopening in class
-        // TODO: check whether server can maintain connections - can Version Numbers be added to the protocol?
         // TODO: make more interesting test files
         // TODO: show indicator on the file icon a-la git to see connection status
         // TODO: saving/saved indicator a-la Google Docs
         // TODO: send collaborate state to the remote server
         // TODO: send manual stop collaboration to make remote also stop collaborating
-        
         
         this.setBaseEnabled(false);
         if (started()) {
@@ -108,6 +101,10 @@ public class Collaborate extends AbstractHandler implements IElementUpdater {
         try {
             SubMonitor progress = SubMonitor.convert(monitor, "Eclipseonut", 10);
             Settings settings = ShareJS.getSettings(project, progress.newChild(7));
+            // TODO: change this to an optional
+            if (settings == null) {
+                return;
+            }
             collab = Optional.of(Collaboration.start(settings, progress.newChild(3)));
             Reconnect.collabCache = Optional.of(collab.get());
         } catch (InterruptedException ie) {

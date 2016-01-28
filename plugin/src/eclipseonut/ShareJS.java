@@ -17,6 +17,7 @@ import javax.script.SimpleBindings;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jetty.util.UrlEncoded;
 import org.eclipse.jetty.util.ajax.JSON;
@@ -38,9 +39,17 @@ public class ShareJS {
         progress.setWorkRemaining(3);
         
         progress.subTask("Authenticating");
+        String version = Platform.getBundle("eclipseonut.plugin").getHeaders().get("Bundle-Version");
         String userid = new Cancelable<>(progress, () -> {
-            return get("/userid");
+            return get("/userid/" + version);
         }).get().get("userid");
+        if (userid.equals("Out-of-date")) {
+            System.out.println(version);
+            browse("/update/" + version);
+            
+            progress.setCanceled(true);
+            return null;
+        }
         progress.worked(1);
         
         String projectName = UrlEncoded.encodeString(project.getName());

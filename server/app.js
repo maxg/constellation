@@ -81,8 +81,18 @@ app.get('/', authenticate, collaboration, function(req, res, next) {
   });
 });
 
-app.get('/userid', function(req, res, next) {
-  res.send({ userid: mongodb.ObjectID().toString() });
+app.get('/userid/:version', function(req, res, next) {
+  if (req.params.version == config.version) {
+    res.send({ userid: mongodb.ObjectID().toString() });
+  } else {
+    res.send({ userid: 'Out-of-date'});
+  }
+});
+
+app.get('/update/:version', function(req, res, next) {
+  res.render('update', {
+    version: req.params.version,
+  });
 });
 
 app.get('/pair/:project/:id', authenticate, function(req, res, next) {

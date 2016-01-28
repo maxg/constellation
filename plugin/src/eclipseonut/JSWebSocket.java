@@ -64,8 +64,6 @@ public class JSWebSocket {
         js.exec(engine -> engine.eval("fn(code)", env));
         
         if (statusCode != StatusCode.NORMAL) {
-            // TODO: handle abnormal closes correctly
-            // TODO: Replace null with proper shell parent
             Display.getDefault().asyncExec(() -> {
                 Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
                 MessageDialog dialog = new MessageDialog(shell, "Reconnect?", null,
