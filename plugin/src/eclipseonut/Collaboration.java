@@ -36,7 +36,7 @@ public class Collaboration {
         progress.worked(1);
         
         progress.subTask("Setting up collaboration");
-        Collaboration collab = new Collaboration(share, settings.project);
+        Collaboration collab = new Collaboration(share, settings.project, settings.userid);
         progress.worked(1);
         
         return collab;
@@ -44,11 +44,13 @@ public class Collaboration {
     
     private final ShareJS share;
     private final IProject project;
+    private final String userid;
     private final Map<ITextEditor, Collaborative> editors = new ConcurrentHashMap<>();
     
-    private Collaboration(ShareJS share, IProject project) throws ScriptException {
+    private Collaboration(ShareJS share, IProject project, String userid) throws ScriptException {
         this.share = share;
         this.project = project;
+        this.userid = userid;
         
         start();
     }
@@ -141,7 +143,7 @@ public class Collaboration {
             // only collaborate on files in selected project
             if ( ! (input.getFile().getProject().equals(project))) { return; }
             
-            editors.put(editor, new Collaborative(share, editor, input));
+            editors.put(editor, new Collaborative(share, userid, editor, input));
         }
     };
 }

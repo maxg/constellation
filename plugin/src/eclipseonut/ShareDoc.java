@@ -45,19 +45,21 @@ public class ShareDoc implements IDocumentListener {
     private final Bindings env = new SimpleBindings();
     private boolean syncing = false;
     private final IAnnotationModel annotationModel;
-    private final HashMap<Integer, Position> cursorMap = new HashMap<>();
-    private final HashMap<Integer, Position> selectionMap = new HashMap<>();
+    private final HashMap<String, Position> cursorMap = new HashMap<>();
+    private final HashMap<String, Position> selectionMap = new HashMap<>();
     private final AnnotationPainter painter;
     private final ITextEditor editor;
+    private final String userid;
     private final StyledText styledText;
     private final ISelectionChangedListener selectionListener;
     private final CaretListener caretListener;
     private static final RGB REMOTE_CURSOR_RGB = new RGB(181, 118, 117);
     private static final RGB REMOTE_SELECTION_RGB = new RGB(242, 222, 222);
     
-    public ShareDoc(JSEngine js, IDocument local, Object contexts, ITextEditor editor) {
+    public ShareDoc(JSEngine js, IDocument local, String userid, Object contexts, ITextEditor editor) {
         this.js = js;
         this.local = local;
+        this.userid = userid;
         env.put("contexts", contexts);
         env.put("sharedoc", this);
         
@@ -112,10 +114,6 @@ public class ShareDoc implements IDocumentListener {
         painter.paint(IPainter.CONFIGURATION);
         this.annotationModel = ((ISourceViewer) viewer).getAnnotationModel();
         
-        // TODO: used as part of interim user ID below. Needs to be here to avoid
-        // scoping issues with "this".
-        int hashCode = this.hashCode();
-        
         // The Selection Provider uses offset values that are not affected by code folding
         // so we use this listener instead of StyledText.
         ISelectionProvider selectionProvider = editor.getSelectionProvider();
@@ -129,11 +127,9 @@ public class ShareDoc implements IDocumentListener {
                     int length = textSelection.getLength();
 
                     js.exec((engine) -> {
-                        // XXX: temporarily use ShareDoc's hashcode to ID users uniquely
-                        // Need to fetch userID from ShareJS class.
                         env.put("offset", offset);
                         env.put("length", length);
-                        env.put("userId", hashCode);
+                        env.put("userId", userid);
                         engine.eval("contexts.cursors.selectionChanged(userId, offset, length)", env);
                     });
                 }
@@ -147,16 +143,17 @@ public class ShareDoc implements IDocumentListener {
             @Override
             public void caretMoved(CaretEvent event) {
                 js.exec((engine) -> {
-                    // XXX: temporarily use ShareDoc's hashcode to ID users uniquely
-                    // Need to fetch userID from ShareJS class.
                     int offset = event.caretOffset;
                     if (viewer instanceof ITextViewerExtension5) {
                         ITextViewerExtension5 extension = (ITextViewerExtension5) viewer;
-                        // TODO: check that this output is not -1, or make it 0 instead or something
                         offset = extension.widgetOffset2ModelOffset(offset);
+                        if (offset == -1) {
+                            // the previous conversion failed, set new offset to 0 to avoid exceptions.
+                            offset = 0;
+                        }
                     }
                     
-                    env.put("userId", hashCode);
+                    env.put("userId", userid);
                     env.put("offset", offset);
                     engine.eval("contexts.cursors.caretMoved(userId, offset)", env);
                 });
@@ -225,38 +222,37 @@ public class ShareDoc implements IDocumentListener {
         syncing = false;
     }
     
-    public void onRemoteCaretMove(int userId, int offset) {
+    public void onRemoteCaretMove(String userid, int offset) {
         Assert.isNotNull(Display.getCurrent());
-        // TODO: modify this userId check to actually use id, see above usage of hashcode
-        if (userId != this.hashCode()) {
+        if (!userid.equals(this.userid)) {
             // the AnnotationPainter API does not appear to offer a better way to remove
             // previously drawn cursors, so we call deactivate(true) to do so.
             painter.deactivate(true);
-            if (cursorMap.containsKey(userId)) {
-                cursorMap.get(userId).setOffset(offset);
+            if (cursorMap.containsKey(userid)) {
+                cursorMap.get(userid).setOffset(offset);
             } else {
                 Annotation annotation = new Annotation("caret", true, "");
                 Position position = new Position(offset);
                 annotationModel.addAnnotation(annotation, position);
-                cursorMap.put(userId, position);
+                cursorMap.put(userid, position);
             }
             painter.paint(IPainter.CONFIGURATION);
         }
     }
     
-    public void onRemoteSelection(int userId, int offset, int length) {
+    public void onRemoteSelection(String userid, int offset, int length) {
         Assert.isNotNull(Display.getCurrent());
-        if (userId != this.hashCode()) {
+        if (!userid.equals(this.userid)) {
             painter.deactivate(true);
-            if (selectionMap.containsKey(userId)) {
-                Position position = selectionMap.get(userId);
+            if (selectionMap.containsKey(userid)) {
+                Position position = selectionMap.get(userid);
                 position.setOffset(offset);
                 position.setLength(length);
             } else {
                 Annotation annotation = new Annotation("selection", true, "");
                 Position position = new Position(offset, length);
                 annotationModel.addAnnotation(annotation, position);
-                selectionMap.put(userId, position);
+                selectionMap.put(userid, position);
             }
             painter.paint(IPainter.CONFIGURATION);
         }

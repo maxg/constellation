@@ -14,9 +14,9 @@ public class Collaborative {
     
     private final Future<ShareDoc> doc;
     
-    public Collaborative(ShareJS share, ITextEditor editor, IFileEditorInput input) {
+    public Collaborative(ShareJS share, String userid, ITextEditor editor, IFileEditorInput input) {
         IDocument local = editor.getDocumentProvider().getDocument(input);
-        this.doc = share.open(local, input.getFile(), editor);
+        this.doc = share.open(local, userid, input.getFile(), editor);
         new Thread(() -> {
             try {
                 doc.get();

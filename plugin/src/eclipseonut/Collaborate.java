@@ -40,7 +40,6 @@ public class Collaborate extends AbstractHandler implements IElementUpdater {
         // and figure out how to respond
         // Think about closing laptops and reopening in class
         // TODO: check whether server can maintain connections - can Version Numbers be added to the protocol?
-        // TODO: visibility that Collaboration is happening
         // TODO: make more interesting test files
         // TODO: show indicator on the file icon a-la git to see connection status
         // TODO: saving/saved indicator a-la Google Docs

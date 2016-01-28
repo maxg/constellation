@@ -51,7 +51,7 @@ public class ShareJS {
         progress.subTask("Waiting for pair...");
         Settings settings = new Settings(project, new Cancelable<>(progress, () -> {
             return get("/collab/" + projectName + "/" + userid);
-        }).get());
+        }).get(), userid);
         progress.worked(1);
         
         return settings;
@@ -61,10 +61,12 @@ public class ShareJS {
         
         public final IProject project;
         public final String collabid;
+        public final String userid;
         
-        Settings(IProject project, Map<String, String> settings) {
+        Settings(IProject project, Map<String, String> settings, String userid) {
             this.project = project;
             this.collabid = settings.get("collabid");
+            this.userid = userid;
         }
     }
     
@@ -103,7 +105,7 @@ public class ShareJS {
         });
     }
     
-    public Future<ShareDoc> open(final IDocument local, final IFile file, final ITextEditor editor) {
+    public Future<ShareDoc> open(final IDocument local, final String userid, final IFile file, final ITextEditor editor) {
         final CompletableFuture<ShareDoc> doc = new CompletableFuture<>();
         
         final Bindings env = new SimpleBindings();
@@ -114,7 +116,7 @@ public class ShareJS {
         // callback for open gets context and current contents
         env.put("callback", (BiConsumer<Object, String>)(contexts, remote) -> {
             Runnable ok = () -> {
-                doc.complete(new ShareDoc(js, local, contexts, editor));
+                doc.complete(new ShareDoc(js, local, userid, contexts, editor));
             };
             Runnable cancel = () -> {
                 doc.cancel(true);
