@@ -230,7 +230,7 @@ public class ShareDoc implements IDocumentListener {
         // TODO: modify this userId check to actually use id, see above usage of hashcode
         if (userId != this.hashCode()) {
             // the AnnotationPainter API does not appear to offer a better way to remove
-            // previously drawn cursors, so we call decativate(true) to do so.
+            // previously drawn cursors, so we call deactivate(true) to do so.
             painter.deactivate(true);
             if (cursorMap.containsKey(userId)) {
                 cursorMap.get(userId).setOffset(offset);

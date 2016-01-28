@@ -28,6 +28,11 @@ public class Collaboration {
         
         progress.subTask("Connecting");
         ShareJS share = new ShareJS(new JSEngine(), settings.collabid);
+        try {
+            share.connect();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         progress.worked(1);
         
         progress.subTask("Setting up collaboration");
@@ -45,11 +50,24 @@ public class Collaboration {
         this.share = share;
         this.project = project;
         
+        start();
+    }
+    
+    public void start() {
         IWorkbench workbench = PlatformUI.getWorkbench();
         workbench.addWindowListener(windowListener);
         for (IWorkbenchWindow window : workbench.getWorkbenchWindows()) {
             windowListener.windowOpened(window);
         }
+    }
+    
+    public void restart() {
+        try {
+            share.connect();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        start();
     }
     
     public void stop() {
@@ -69,6 +87,7 @@ public class Collaboration {
             collab.stop();
         });
         editors.clear();
+        share.close();
     }
     
     private final IWindowListener windowListener = new IWindowListener() {

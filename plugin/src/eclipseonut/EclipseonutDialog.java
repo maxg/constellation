@@ -95,7 +95,7 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
 
     @Override
     protected void createButtonsForButtonBar(Composite parent) {
-        Button clone = createButton(parent, IDialogConstants.NO_ID, "Clone New", false);
+        Button clone = createButton(parent, IDialogConstants.NO_ID, "Quick Clone", false);
         clone.addMouseListener(new MouseListener() {
             @Override
             public void mouseUp(MouseEvent e) {

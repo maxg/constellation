@@ -42,6 +42,11 @@ public class Collaborate extends AbstractHandler implements IElementUpdater {
         // TODO: check whether server can maintain connections - can Version Numbers be added to the protocol?
         // TODO: visibility that Collaboration is happening
         // TODO: make more interesting test files
+        // TODO: show indicator on the file icon a-la git to see connection status
+        // TODO: saving/saved indicator a-la Google Docs
+        // TODO: send collaborate state to the remote server
+        // TODO: send manual stop collaboration to make remote also stop collaborating
+        
         
         this.setBaseEnabled(false);
         if (started()) {
@@ -105,6 +110,7 @@ public class Collaborate extends AbstractHandler implements IElementUpdater {
             SubMonitor progress = SubMonitor.convert(monitor, "Eclipseonut", 10);
             Settings settings = ShareJS.getSettings(project, progress.newChild(7));
             collab = Optional.of(Collaboration.start(settings, progress.newChild(3)));
+            Reconnect.collabCache = Optional.of(collab.get());
         } catch (InterruptedException ie) {
             throw ie;
         } catch (Exception e) {

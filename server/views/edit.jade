@@ -16,7 +16,7 @@ block content
   script(src='/static/share.js')
   script.
     socket.onopen = function() {
-      var doc = connection.get('collab_' + collabid, filename);
+      var doc = connection.get('files_' + collabid, filename);
       doc.subscribe();
       doc.whenReady(function() {
         if ( ! doc.type) { throw new Error('missing document'); }

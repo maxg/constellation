@@ -21,6 +21,8 @@ import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jetty.util.UrlEncoded;
 import org.eclipse.jetty.util.ajax.JSON;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.StatusCode;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eclipse.jface.text.IDocument;
@@ -79,20 +81,25 @@ public class ShareJS {
     
     private final JSEngine js;
     private final String collab;
+    private JSWebSocket socket;
+    private WebSocketClient client;
+    private Future<Session> session;
     
     public ShareJS(JSEngine js, String collab) throws Exception {
         this.js = js;
         this.collab = collab;
-        JSWebSocket socket = new JSWebSocket(js);
-        
-        WebSocketClient client = new WebSocketClient(new SslContextFactory(true)); // XXX trust!
+    }
+    
+    public void connect() throws Exception {
+        socket = new JSWebSocket(js);
+        client = new WebSocketClient(new SslContextFactory(true)); // XXX trust!
         client.start();
         
         js.execScript("share");
         js.exec((engine) -> {
             engine.put("SOCKET", socket);
             engine.eval("var CONNECTION = new window.sharejs.Connection(SOCKET);");
-            client.connect(socket, new URI(Preferences.ws()), new ClientUpgradeRequest());
+            session = client.connect(socket, new URI(Preferences.ws()), new ClientUpgradeRequest());
         });
     }
     
@@ -126,5 +133,18 @@ public class ShareJS {
         });
         
         return doc;
+    }
+    
+    public void close() {
+        try {
+            session.get().close(StatusCode.NORMAL, "Button pressed.");
+            client.stop();
+        } catch (InterruptedException ie) {
+            ie.printStackTrace();
+        } catch (ExecutionException ee) {
+            ee.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

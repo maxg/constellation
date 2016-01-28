@@ -22,12 +22,20 @@
             id="eclipseonut.command.collaborate"
             name="Collaborate">
       </command>
+      <command
+            id="eclipseonut.command.reconnect"
+            name="Reconnect">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.handlers">
       <handler
             class="eclipseonut.Collaborate"
             commandId="eclipseonut.command.collaborate">
+      </handler>
+      <handler
+            class="eclipseonut.Reconnect"
+            commandId="eclipseonut.command.reconnect">
       </handler>
    </extension>
    <extension

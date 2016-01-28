@@ -43,7 +43,7 @@ var clearInterval = function(future) {
 };
 
 var open = function(collab, path, contents, callback) {
-  var doc = CONNECTION.get('collab_' + collab, path);
+  var doc = CONNECTION.get('files_' + collab, path);
   doc.subscribe();
   doc.whenReady(function() {
     var contextCallback = function() {
@@ -56,7 +56,7 @@ var open = function(collab, path, contents, callback) {
       contexts.text = ctx;
 
       // set up cursor document and contexts
-      var cursors = CONNECTION.get('collab_' + collab, path + '_cursors');
+      var cursors = CONNECTION.get('cursors_' + collab, path);
       cursors.subscribe();
       cursors.whenReady(function() {
         if (!cursors.type) {
@@ -131,4 +131,5 @@ var attach = function(contexts, sharedoc) {
 
 var detach = function(contexts, sharedoc) {
   contexts.text._document.destroy();
+  // TODO: destroy json document
 };
