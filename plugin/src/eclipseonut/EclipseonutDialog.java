@@ -19,8 +19,10 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.InputDialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.window.Window;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
@@ -58,6 +60,13 @@ import org.xml.sax.SAXException;
  *      bar.
  */
 public class EclipseonutDialog extends ElementTreeSelectionDialog {
+    private static final String NONECLIPSE_ERROR_MESSAGE = "Cloned repository is missing a"
+            + " .project file. To use it in Eclipse, clone it in a terminal then use the"
+            + " import wizard.";
+    private static final String NONGIT_ERROR_MESSAGE = "Repository URL must end with .git"
+            + " and use http or https.";
+    private static final String TEMP_DIR_PREFIX = "eclipseonut-";
+    
     private final ISelectionStatusValidator validator =
             selection -> selection.length == 1 && selection[0] instanceof IProject
             ? new Status(IStatus.OK, Activator.PLUGIN_ID, "")
@@ -70,6 +79,8 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
         setInput(input);
         setValidator(validator);
         setAllowMultiple(false);
+        setTitle("Eclipseonut for 6.005");
+        setMessage("Select a project to collaborate on.");
     }
     
     private void cloneButtonDialog() {
@@ -82,10 +93,16 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
         }
 
         InputDialog inputDialog = new InputDialog(getShell(), "Clone a Repository", "Input a remote URL to clone from.", initial, null);
-        inputDialog.open();
+        int returnCode = inputDialog.open();
         String result = inputDialog.getValue();
-        if (checkGitString(result)) {
-            cloneAndImport(result);
+        // Check returnCode == OK instead of result != null, because returnCode correctly
+        // recognizes the Esc key, whereas result does not.
+        if (returnCode == Window.OK) {
+            if (checkGitString(result)) {
+                cloneAndImport(result);
+            } else {
+                error(NONGIT_ERROR_MESSAGE);
+            }
         }
     }
     
@@ -164,12 +181,11 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
         // e.g. https://github.com/mit6005/fa15-ex26-music-language.git
         Path tempPath = null;
         try {
-            tempPath = Files.createTempDirectory("eclipseonut-");
+            tempPath = Files.createTempDirectory(TEMP_DIR_PREFIX);
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
         File tempFile = tempPath.toFile();
-        
         try {
             new ProgressMonitorDialog(null).run(true, true, (monitor) -> {
                 SubMonitor progress = SubMonitor.convert(monitor, "Clone and Import", 10);
@@ -188,7 +204,7 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
         }
         String projectName = getProjectName(tempFile);
         refreshProjects(projectName);
-        deleteDirectoryOnExit(tempFile);
+        deleteDirectory(tempFile);
     }
     
     private void clone(String remoteURL, File tempFile, SubMonitor progress) {
@@ -217,30 +233,33 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
      * for directories.
      * @param directory File to be deleted. If it is not a directory, will be deleted anyway.
      */
-    private void deleteDirectoryOnExit(File directory) {
+    private void deleteDirectory(File directory) {
         File[] files = directory.listFiles();
-        directory.deleteOnExit();
         if (files != null) {
             // if files is null, directory is a file so no recursion happens
             for (File child : files) {
                 if (child.isDirectory()) {
-                    deleteDirectoryOnExit(child);
+                    deleteDirectory(child);
                 } else {
-                    child.deleteOnExit();
+                    child.delete();
                 }
             }
         }
+        directory.delete();
     }
     
     /**
      * Given a directory which contains an Eclipse project (i.e. has a .project
      * file in the directory), returns its project name.
+     * If the directory is missing the .project file, opens an error dialog.
      * @param projectDir
      * @return
      */
     private String getProjectName(File projectDir) {
         File project = new File(projectDir, ".project");
         if (!project.exists()) {
+            error(NONECLIPSE_ERROR_MESSAGE);
+            deleteDirectory(projectDir);
             throw new IllegalArgumentException("Git URL yielded a non-eclipse repo");
         }
         String projectName = "";
@@ -267,5 +286,11 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
             ioe.printStackTrace();
         }
         return projectName;
+    }
+    
+    private void error(String message) {
+        MessageDialog dialog = new MessageDialog(this.getShell(), "Error", null, message,
+                MessageDialog.ERROR, new String[] {"OK"}, 0);
+        dialog.open();
     }
 }
