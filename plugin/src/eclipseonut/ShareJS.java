@@ -6,6 +6,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -34,8 +35,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import eclipseonut.prefs.Preferences;
 
 public class ShareJS {
-    
-    public static Settings getSettings(IProject project, SubMonitor progress) throws IOException, PartInitException, InterruptedException, ExecutionException {
+    public static Optional<Settings> getSettings(IProject project, SubMonitor progress) throws IOException, PartInitException, InterruptedException, ExecutionException {
         progress.setWorkRemaining(3);
         
         progress.subTask("Authenticating");
@@ -48,7 +48,7 @@ public class ShareJS {
             browse("/update/" + version);
             
             progress.setCanceled(true);
-            return null;
+            return Optional.empty();
         }
         progress.worked(1);
         
@@ -63,7 +63,7 @@ public class ShareJS {
         }).get(), userid);
         progress.worked(1);
         
-        return settings;
+        return Optional.of(settings);
     }
     
     public static class Settings {

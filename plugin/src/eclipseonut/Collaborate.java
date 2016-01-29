@@ -100,11 +100,11 @@ public class Collaborate extends AbstractHandler implements IElementUpdater {
     private void startCollaboration(IProject project, IProgressMonitor monitor) throws InterruptedException, InvocationTargetException {
         try {
             SubMonitor progress = SubMonitor.convert(monitor, "Eclipseonut", 10);
-            Settings settings = ShareJS.getSettings(project, progress.newChild(7));
-            // TODO: change this to an optional
-            if (settings == null) {
+            Optional<Settings> optSettings = ShareJS.getSettings(project, progress.newChild(7));
+            if (!optSettings.isPresent()) {
                 return;
             }
+            Settings settings = optSettings.get();
             collab = Optional.of(Collaboration.start(settings, progress.newChild(3)));
             Reconnect.collabCache = Optional.of(collab.get());
         } catch (InterruptedException ie) {
