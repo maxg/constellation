@@ -82,11 +82,10 @@ app.get('/', authenticate, collaboration, function(req, res, next) {
 });
 
 app.get('/userid/:version', function(req, res, next) {
-  if (req.params.version == config.version) {
-    res.send({ userid: mongodb.ObjectID().toString() });
-  } else {
-    res.send({ userid: 'Out-of-date'});
-  }
+  res.send({
+    userid: mongodb.ObjectID().toString(),
+    update: (req.params.version != config.version).toString(),
+  });
 });
 
 app.get('/update/:version', function(req, res, next) {

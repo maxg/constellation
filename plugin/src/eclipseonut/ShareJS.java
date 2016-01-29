@@ -35,18 +35,20 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import eclipseonut.prefs.Preferences;
 
 public class ShareJS {
+    
     public static Optional<Settings> getSettings(IProject project, SubMonitor progress) throws IOException, PartInitException, InterruptedException, ExecutionException {
         progress.setWorkRemaining(3);
         
         progress.subTask("Authenticating");
         String version = Platform.getBundle("eclipseonut.plugin").getHeaders().get("Bundle-Version");
-        String userid = new Cancelable<>(progress, () -> {
+        Map<String, String> metadata = new Cancelable<>(progress, () -> {
             return get("/userid/" + version);
-        }).get().get("userid");
-        if (userid.equals("Out-of-date")) {
-            System.out.println(version);
+        }).get();
+        
+        String userid = metadata.get("userid");
+        System.out.println(userid);
+        if (Boolean.valueOf(metadata.get("update"))) {
             browse("/update/" + version);
-            
             progress.setCanceled(true);
             return Optional.empty();
         }
