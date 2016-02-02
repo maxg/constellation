@@ -14,6 +14,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
@@ -65,6 +66,8 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
             + " import wizard.";
     private static final String NONGIT_ERROR_MESSAGE = "Repository URL must end with .git"
             + " and use http or https.";
+    private static final String PROJECT_EXISTS_MESSAGE = "Workspace already contains a project"
+            + " with the same name as imported project.";
     private static final String TEMP_DIR_PREFIX = "eclipseonut-";
     
     private final ISelectionStatusValidator validator =
@@ -191,7 +194,10 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
                 SubMonitor progress = SubMonitor.convert(monitor, "Clone and Import", 10);
                 clone(remoteURL, tempFile, progress.newChild(5));
                 String projectName = getProjectName(tempFile);
-                
+                if (checkExists(projectName)) {
+                    progress.setCanceled(true);
+                    progress.done();
+                }
                 ImportOperation importOp = new ImportOperation(org.eclipse.core.runtime.Path.fromOSString(projectName),
                         tempFile, FileSystemStructureProvider.INSTANCE, null);
                 importOp.setCreateContainerStructure(false);
@@ -203,8 +209,21 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
             ie.printStackTrace();
         }
         String projectName = getProjectName(tempFile);
+        if (checkExists(projectName)) {
+            error(PROJECT_EXISTS_MESSAGE);
+        }
         refreshProjects(projectName);
         deleteDirectory(tempFile);
+    }
+    
+    private boolean checkExists(String projectName) {
+        IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+        for (IProject project : projects) {
+            if (project.getName().equals(projectName)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     private void clone(String remoteURL, File tempFile, SubMonitor progress) {
