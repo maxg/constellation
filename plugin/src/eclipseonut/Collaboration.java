@@ -27,7 +27,7 @@ public class Collaboration {
         progress.setWorkRemaining(2);
         
         progress.subTask("Connecting");
-        ShareJS share = new ShareJS(new JSEngine(), settings.collabid);
+        ShareJS share = new ShareJS(new JSEngine(), settings.collabid, settings.userid);
         try {
             share.connect();
         } catch (Exception e) {
@@ -63,12 +63,8 @@ public class Collaboration {
         }
     }
     
-    public void restart() {
-        try {
-            share.connect();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public void restart() throws Exception {
+        share.connect();
         start();
     }
     

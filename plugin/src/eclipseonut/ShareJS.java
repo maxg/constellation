@@ -97,10 +97,13 @@ public class ShareJS {
     private JSWebSocket socket;
     private WebSocketClient client;
     private Future<Session> session;
+    private final String user;
+//    private Object metadata;
     
-    public ShareJS(JSEngine js, String collab) throws Exception {
+    public ShareJS(JSEngine js, String collab, String user) throws Exception {
         this.js = js;
         this.collab = collab;
+        this.user = user;
     }
     
     public void connect() throws Exception {
@@ -114,7 +117,20 @@ public class ShareJS {
             engine.eval("var CONNECTION = new window.sharejs.Connection(SOCKET);");
             session = client.connect(socket, new URI(Preferences.ws()), new ClientUpgradeRequest());
         });
+        /*
+        final Bindings env = new SimpleBindings();
+        js.exec((engine) -> {
+            env.put("connect", engine.get("connect"));
+            env.put("collab", collab);
+            env.put("user", user);
+            env.put("share", this);
+            metadata = engine.eval("connect(collab, user, share)", env);
+        });*/
     }
+    
+    /*public void onRemoteDisconnect(String remoteUser) {
+        System.out.println("Remote disconnect detected.");
+    }*/
     
     public Future<ShareDoc> open(final IDocument local, final String userid, final IFile file, final ITextEditor editor) {
         final CompletableFuture<ShareDoc> doc = new CompletableFuture<>();
@@ -149,15 +165,28 @@ public class ShareJS {
     }
     
     public void close() {
+        /*
+            final Bindings env = new SimpleBindings();
+            js.exec((engine) -> {
+                env.put("disconnect", engine.get("disconnect"));
+                env.put("meta", metadata);
+                env.put("user", user);
+                engine.eval("disconnect(meta, user)", env);
+            });*/
         try {
             session.get().close(StatusCode.NORMAL, "Button pressed.");
-            client.stop();
-        } catch (InterruptedException ie) {
-            ie.printStackTrace();
-        } catch (ExecutionException ee) {
-            ee.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (InterruptedException e1) {
+            e1.printStackTrace();
+        } catch (ExecutionException e1) {
+            e1.printStackTrace();
         }
+        new Thread(() -> {
+            try {
+                client.stop();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+         
     }
 }

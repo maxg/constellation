@@ -39,6 +39,9 @@ public class Collaborate extends AbstractHandler implements IElementUpdater {
         // TODO: saving/saved indicator a-la Google Docs
         // TODO: send collaborate state to the remote server
         // TODO: send manual stop collaboration to make remote also stop collaborating
+        // TODO: make version numbers an array on the server variable so that for
+        // semver, we can specify which numbers to do comparisons on for okayness
+        // TODO: automatic retry for reconnect with exponential backoff
         
         this.setBaseEnabled(false);
         if (started()) {

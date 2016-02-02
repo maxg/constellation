@@ -45,7 +45,7 @@ public class ShareDoc implements IDocumentListener {
     private final Bindings env = new SimpleBindings();
     private boolean syncing = false;
     private final IAnnotationModel annotationModel;
-    private final HashMap<String, Position> cursorMap = new HashMap<>();
+    private final HashMap<String, Annotation> cursorMap = new HashMap<>();
     private final HashMap<String, Position> selectionMap = new HashMap<>();
     private final AnnotationPainter painter;
     private final ITextEditor editor;
@@ -62,7 +62,6 @@ public class ShareDoc implements IDocumentListener {
         this.userid = userid;
         env.put("contexts", contexts);
         env.put("sharedoc", this);
-        
         // Set up the caret drawer for remote caret moves
         ITextViewer viewer = (ITextViewer)editor.getAdapter(ITextOperationTarget.class);
         AnnotationPainter painter = new AnnotationPainter((ISourceViewer) viewer, new IAnnotationAccess() {
@@ -229,15 +228,24 @@ public class ShareDoc implements IDocumentListener {
             // previously drawn cursors, so we call deactivate(true) to do so.
             painter.deactivate(true);
             if (cursorMap.containsKey(userid)) {
-                cursorMap.get(userid).setOffset(offset);
+                Annotation annotation = cursorMap.get(userid);
+                if (annotation.isMarkedDeleted()) {
+                    addCursor(userid, offset);
+                } else {
+                    annotationModel.getPosition(annotation).setOffset(offset);
+                }
             } else {
-                Annotation annotation = new Annotation("caret", true, "");
-                Position position = new Position(offset);
-                annotationModel.addAnnotation(annotation, position);
-                cursorMap.put(userid, position);
+                addCursor(userid, offset);
             }
             painter.paint(IPainter.CONFIGURATION);
         }
+    }
+    
+    private void addCursor(String userid, int offset) {
+        Annotation annotation = new Annotation("caret", true, "");
+        Position position = new Position(offset);
+        annotationModel.addAnnotation(annotation, position);
+        cursorMap.put(userid, annotation);
     }
     
     public void onRemoteSelection(String userid, int offset, int length) {
