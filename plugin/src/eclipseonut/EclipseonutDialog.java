@@ -98,6 +98,7 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
         InputDialog inputDialog = new InputDialog(getShell(), "Clone a Repository", "Input a remote URL to clone from.", initial, null);
         int returnCode = inputDialog.open();
         String result = inputDialog.getValue();
+        result.trim();
         // Check returnCode == OK instead of result != null, because returnCode correctly
         // recognizes the Esc key, whereas result does not.
         if (returnCode == Window.OK) {
@@ -197,6 +198,7 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
                 if (checkExists(projectName)) {
                     progress.setCanceled(true);
                     progress.done();
+                    throw new ProjectExistsException();
                 }
                 ImportOperation importOp = new ImportOperation(org.eclipse.core.runtime.Path.fromOSString(projectName),
                         tempFile, FileSystemStructureProvider.INSTANCE, null);
@@ -204,14 +206,15 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
                 importOp.run(progress.newChild(5));
             });
         } catch (InvocationTargetException ite) {
-            ite.printStackTrace();
+            System.out.println(ite.getTargetException());
+            if (ite.getTargetException().getClass() == ProjectExistsException.class) {
+                error(PROJECT_EXISTS_MESSAGE);
+            }
+            //ite.printStackTrace();
         } catch (InterruptedException ie) {
             ie.printStackTrace();
         }
         String projectName = getProjectName(tempFile);
-        if (checkExists(projectName)) {
-            error(PROJECT_EXISTS_MESSAGE);
-        }
         refreshProjects(projectName);
         deleteDirectory(tempFile);
     }
@@ -311,5 +314,9 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
         MessageDialog dialog = new MessageDialog(this.getShell(), "Error", null, message,
                 MessageDialog.ERROR, new String[] {"OK"}, 0);
         dialog.open();
+    }
+    
+    private class ProjectExistsException extends RuntimeException {
+        
     }
 }
