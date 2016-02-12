@@ -89,16 +89,19 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
     private void cloneButtonDialog() {
         Clipboard clipboard = new Clipboard(Display.getCurrent());
         TextTransfer textTransfer = TextTransfer.getInstance();
-        String contents = clipboard.getContents(textTransfer).toString().trim();
+        Object contentObject = clipboard.getContents(textTransfer);
         String initial = "";
-        if (checkGitString(contents)) {
-            initial = contents;
+        if (contentObject != null) {
+            String contents = contentObject.toString().trim();
+            if (checkGitString(contents)) {
+                initial = contents;
+            }
         }
 
         InputDialog inputDialog = new InputDialog(getShell(), "Clone a Repository", "Input a remote URL to clone from.", initial, null);
         int returnCode = inputDialog.open();
-        String result = inputDialog.getValue();
-        result.trim();
+        String result = inputDialog.getValue().trim();
+        
         // Check returnCode == OK instead of result != null, because returnCode correctly
         // recognizes the Esc key, whereas result does not.
         if (returnCode == Window.OK) {
@@ -317,6 +320,10 @@ public class EclipseonutDialog extends ElementTreeSelectionDialog {
     }
     
     private class ProjectExistsException extends RuntimeException {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 6404450167374779382L;
         
     }
 }
