@@ -17,9 +17,12 @@ do
   
   while read artifact # artifact ID on each line
   do
-    mvn --quiet \
-        org.apache.maven.plugins:maven-dependency-plugin:2.9:copy -Dartifact=$group:$artifact:$version \
-                                                                  -DoutputDirectory=. \
-                                                                  -Dmdep.stripVersion=true
+    for class in '' 'javadoc' 'sources'
+    do
+      mvn --quiet \
+          org.apache.maven.plugins:maven-dependency-plugin:2.10:copy -Dartifact=$group:$artifact:$version:jar:$class \
+                                                                     -DoutputDirectory=./$class \
+                                                                     -Dmdep.stripVersion=true
+    done
   done < $deps
 done

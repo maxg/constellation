@@ -2,12 +2,12 @@
 
 #
 # Run OpenStack commands.
-# Requires: pip install python-novaclient python-cinderclient
+# Requires: pip install python-novaclient python-cinderclient python-glanceclient
 #
 
 set -e
 
-eval `sed -n 's/ *"\(.*\)": *"\(.*\)",*/\1 \2/p' < manifests/packer.conf.json | \
+eval `sed -n 's/ *"\(.*\)": *"\(.*\)",*/\1 \2/p' < setup/packer.conf.json | \
       awk '{print $1"="$2}'`
 export OS_AUTH_URL="$openstack_auth_url"
 export OS_USERNAME="$openstack_username"
@@ -42,7 +42,7 @@ case "$cmd" in
     name=${hostname%%.*}
     
     imagename="${3:?image name required}"
-    imageid=`nova image-show $imagename | tablepick id 2`
+    imageid=`$0 image-named "$imagename"`
     [ -z "$imageid" ] && exit
     
     ipaddr=`dig +short $hostname | tail -1`
@@ -51,7 +51,7 @@ case "$cmd" in
     
     echo "Booting $name (${ipaddr:-dynamic IP}) from $imagename ($imageid)"
     
-    volsize=16
+    volsize=8
     
     volcmd="cinder create --image-id $imageid
               --display-name $name-`date +%s` --display-description $imagename
@@ -68,7 +68,7 @@ case "$cmd" in
     done
     echo
     
-    instcmd="nova boot --flavor $openstack_flavor
+    instcmd="nova boot --flavor $deploy_openstack_flavor
           --key-name $deploy_openstack_key --security-groups $openstack_secgroup
           --boot-volume $volid $network
           $name"
@@ -85,6 +85,16 @@ case "$cmd" in
     echo
     
     echo "IP addr: $inetaddr"
+    
+    until [[ "$fingerprints" ]]; do
+      sleep 2
+      fingerprints=`$0 fingerprints $instid`
+      echo -n .
+    done
+    echo
+    
+    echo "SSH:"
+    echo "$fingerprints"
     ;;
     
   flavors)
@@ -92,11 +102,15 @@ case "$cmd" in
     ;;
     
   source-images)
-    nova image-list | tablegrep '[Uu]buntu.*LTS'
+    glance image-list | tablegrep '[Uu]buntu.*LTS'
     ;;
     
   images)
-    nova image-list | tablegrep $app
+    glance image-list | tablegrep $app
+    ;;
+    
+  image-named)
+    glance image-list --property-filter name="$2" | tablepick "$2" 1
     ;;
     
   secgroups)
@@ -109,6 +123,10 @@ case "$cmd" in
     
   instances)
     nova list --name $app
+    ;;
+    
+  fingerprints)
+    nova console-log "$2" | sed '/BEGIN SSH HOST KEY/,/END SSH HOST KEY/!d;//d'
     ;;
     
   *)

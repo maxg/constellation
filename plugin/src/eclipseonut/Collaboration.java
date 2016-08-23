@@ -1,128 +1,183 @@
 package eclipseonut;
 
+import static eclipseonut.Collaboration.State.CONNECTED;
+import static eclipseonut.Collaboration.State.CONNECTING;
+import static eclipseonut.Collaboration.State.DISCONNECTED;
+import static eclipseonut.Collaboration.State.RECONNECTING;
+import static eclipseonut.Util.assertNotNull;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
 
-import javax.script.ScriptException;
-
+import org.eclipse.compare.CompareUI;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.SubMonitor;
-import org.eclipse.ui.IEditorReference;
-import org.eclipse.ui.IFileEditorInput;
-import org.eclipse.ui.IPageListener;
-import org.eclipse.ui.IPartListener;
-import org.eclipse.ui.IWindowListener;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.jetty.util.UrlEncoded;
+import org.eclipse.jetty.util.ajax.JSON;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.osgi.framework.Version;
 
-import eclipseonut.ShareJS.Settings;
+import eclipseonut.prefs.Preferences;
 
 public class Collaboration {
     
-    public static Collaboration start(Settings settings, SubMonitor progress) throws Exception {
-        progress.setWorkRemaining(2);
-        
-        progress.subTask("Connecting");
-        ShareJS share = new ShareJS(new JSEngine(), settings.collabid);
-        progress.worked(1);
-        
-        progress.subTask("Setting up collaboration");
-        Collaboration collab = new Collaboration(share, settings.project);
-        progress.worked(1);
-        
-        return collab;
+    public static enum State {
+        NONE, CONNECTING, CONNECTED, RECONNECTING, ALONE, DISCONNECTED;
     }
     
-    private final ShareJS share;
-    private final IProject project;
-    private final Map<ITextEditor, Collaborative> editors = new ConcurrentHashMap<>();
+    public static Collaboration connect(IProject project, CollaborationListener listener, SubMonitor progress)
+            throws InterruptedException, ExecutionException, IOException, PartInitException {
+        progress.setWorkRemaining(2);
+        Map<String,String> settings = pair(project, progress.split(1));
+        return new Collaboration(project, settings, listener, progress.split(1));
+    }
     
-    private Collaboration(ShareJS share, IProject project) throws ScriptException {
-        this.share = share;
-        this.project = project;
+    private static Map<String,String> pair(IProject project, SubMonitor progress)
+            throws InterruptedException, ExecutionException, IOException, PartInitException {
+        progress.setWorkRemaining(3);
         
-        IWorkbench workbench = PlatformUI.getWorkbench();
-        workbench.addWindowListener(windowListener);
-        for (IWorkbenchWindow window : workbench.getWorkbenchWindows()) {
-            windowListener.windowOpened(window);
+        progress.subTask("Authenticating");
+        Version version = Activator.getDefault().bundle().getVersion();
+        Map<String, String> metadata = new Cancelable<>(progress, () -> get("/hello/" + version)).get();
+        
+        if (metadata.containsKey("update")) {
+            browse("/update/" + version);
+            throw new IOException("Please update to the latest version of Eclipseonut");
         }
+        
+        String userid = metadata.get("userid");
+        progress.worked(1);
+        
+        String projectName = UrlEncoded.encodeString(project.getName());
+        browse("/pair/" + projectName + "/" + userid);
+        progress.worked(1);
+        
+        progress.subTask("Waiting for pair...");
+        Map<String, String> settings = new Cancelable<>(progress, () -> get("/await-collaboration/" + userid)).get();
+        progress.worked(1);
+        
+        return settings;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private static Map<String, String> get(String path) throws IOException {
+        URL url = new URL(Preferences.http() + path);
+        return assertNotNull((Map<String, String>)JSON.parse(new InputStreamReader(url.openStream())),
+                "Error parsing JSON");
+    }
+    
+    private static void browse(String path) throws MalformedURLException, PartInitException {
+        URL url = new URL(Preferences.http() + path);
+        PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(url);
+    }
+    
+    public final IProject project;
+    public final String collabid;
+    public final String me, partner;
+    public final JSEngine jse;
+    public final JSWebSocket socket;
+    
+    private State state = CONNECTING;
+    private final CollaborationListener listener;
+    private final EditorManager manager;
+    
+    private Collaboration(IProject project, Map<String, String> settings, CollaborationListener listener, SubMonitor progress)
+            throws IOException, InterruptedException, ExecutionException {
+        Debug.trace();
+        progress.setWorkRemaining(4);
+        
+        this.project = project;
+        this.collabid = settings.get("collabid");
+        this.me = settings.get("me");
+        this.partner = settings.get("partner");
+        try {
+            jse = new JSEngine();
+            socket = new JSWebSocket(jse, new URI(Preferences.ws()));
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+        this.listener = listener;
+        this.manager = new EditorManager(this);
+        
+        progress.subTask("Setting up");
+        InputStream script = new Cancelable<>(progress, () -> {
+            return new URL(Preferences.http() + "/public/sharedb.js").openStream();
+        }).get();
+        progress.worked(1);
+        jse.execScript(new InputStreamReader(script));
+        progress.worked(1);
+        
+        jse.exec(js -> js.engine.put("CollaborationInstance", this));
+        jse.execScript("sharedb");
+        progress.worked(1);
+        
+        progress.subTask("Connecting");
+        jse.exec(js -> socket.connect());
+        progress.worked(1);
+    }
+    
+    public State state() {
+        return state;
+    }
+    
+    public void onConnectionState(String newState, String reason) {
+        Debug.trace(newState, reason);
+        switch (newState) {
+        case "connected":
+            state = CONNECTED; break;
+        case "disconnected":
+            state = RECONNECTING; break;
+        case "closed":
+        case "stopped":
+            state = DISCONNECTED; break;
+        default:
+            return;
+        }
+        listener.onCollaborationState();
+    }
+    
+    public void start() {
+        Debug.trace();
+        manager.start();
     }
     
     public void stop() {
-        IWorkbench workbench = PlatformUI.getWorkbench();
-        workbench.removeWindowListener(windowListener);
-        for (IWorkbenchWindow window : workbench.getWorkbenchWindows()) {
-            window.removePageListener(pageListener);
-            for (IWorkbenchPage page : window.getPages()) {
-                page.removePartListener(partListener);
-                for (IEditorReference editor : page.getEditorReferences()) {
-                    partListener.partClosed(editor.getPart(false));
-                }
-            }
-        }
-        editors.forEach((editor, collab) -> {
-            Log.warn("Stopping leaked collaborative editor for " + editor.getTitle());
-            collab.stop();
-        });
-        editors.clear();
+        Debug.trace();
+        manager.stop();
+        Runnable callback = jse::stop;
+        jse.exec(js -> js.invocable.invokeFunction("disconnect", callback));
     }
     
-    private final IWindowListener windowListener = new IWindowListener() {
+    public Future<ShareDoc> open(IDocument local, IFile file, ITextEditor editor) {
+        Debug.trace(file.getFullPath());
+        CompletableFuture<ShareDoc> doc = new CompletableFuture<>();
         
-        public void windowActivated(IWorkbenchWindow window) { }
-        public void windowDeactivated(IWorkbenchWindow window) { }
-        public void windowClosed(IWorkbenchWindow window) {
-            window.removePageListener(pageListener);
-        }
-        public void windowOpened(IWorkbenchWindow window) {
-            window.addPageListener(pageListener);
-            for (IWorkbenchPage page : window.getPages()) {
-                pageListener.pageOpened(page);
-            }
-        }
-    };
-    
-    private final IPageListener pageListener = new IPageListener() {
+        jse.exec(js -> {
+            BiConsumer<Object, String> callback = (sharedbdoc, remote) -> {
+                Runnable ok = () -> doc.complete(new ShareDoc(this, sharedbdoc, local, editor));
+                if (local.get().equals(remote)) {
+                    ok.run();
+                } else {
+                    Runnable cancel = () -> doc.cancel(true);
+                    CompareUI.openCompareDialog(new LocalRemoteCompare(file, local, remote, ok, cancel));
+                }
+            };
+            js.invocable.invokeFunction("open", file.getProjectRelativePath().toPortableString(), local.get(), callback);
+        });
         
-        public void pageActivated(IWorkbenchPage page) { }
-        public void pageClosed(IWorkbenchPage page) {
-            page.removePartListener(partListener);
-        }
-        public void pageOpened(IWorkbenchPage page) {
-            page.addPartListener(partListener);
-            for (IEditorReference editor : page.getEditorReferences()) {
-                partListener.partOpened(editor.getPart(false));
-            }
-        }
-    };
-    
-    private final IPartListener partListener = new IPartListener() {
-        
-        public void partActivated(IWorkbenchPart part) { }
-        public void partBroughtToTop(IWorkbenchPart part) { }
-        public void partDeactivated(IWorkbenchPart part) { }
-        public void partClosed(IWorkbenchPart part) {
-            if ( ! (part instanceof ITextEditor)) { return; }
-            editors.computeIfPresent((ITextEditor)part, (editor, collab) -> {
-                collab.stop();
-                return null; // remove from map
-            });
-        }
-        public void partOpened(IWorkbenchPart part) {
-            // only collaborate on text
-            if ( ! (part instanceof ITextEditor)) { return; }
-            ITextEditor editor = (ITextEditor)part;
-            if ( ! (editor.getEditorInput() instanceof IFileEditorInput)) { return; }
-            IFileEditorInput input = (IFileEditorInput)editor.getEditorInput();
-            
-            // only collaborate on files in selected project
-            if ( ! (input.getFile().getProject().equals(project))) { return; }
-            
-            editors.put(editor, new Collaborative(share, editor, input));
-        }
-    };
+        return doc;
+    }
 }

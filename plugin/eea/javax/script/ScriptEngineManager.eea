@@ -1,0 +1,4 @@
+class javax/script/ScriptEngineManager
+getEngineByName
+ (Ljava/lang/String;)Ljavax/script/ScriptEngine;
+ (Ljava/lang/String;)L0javax/script/ScriptEngine;

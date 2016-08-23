@@ -1,0 +1,4 @@
+class org/eclipse/ui/IFileEditorInput
+getFile
+ ()Lorg/eclipse/core/resources/IFile;
+ ()L1org/eclipse/core/resources/IFile;

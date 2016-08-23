@@ -1,0 +1,4 @@
+class org/eclipse/jface/dialogs/ProgressMonitorDialog
+run
+ (ZZLorg/eclipse/jface/operation/IRunnableWithProgress;)V
+ (ZZL1org/eclipse/jface/operation/IRunnableWithProgress;)V

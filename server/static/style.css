@@ -9,6 +9,9 @@ body {
   top: 10px;
   right: 10px;
 }
+#user.staff {
+  background-color: #f0ad4e;
+}
 
 #big-logo {
   position: absolute;
@@ -36,6 +39,15 @@ h3 span.glyphicon {
 
 .alert > :first-child {
   margin-top: 0;
+}
+
+#error:empty {
+  display: none;
+}
+
+#error::before {
+  font-weight: bold;
+  content: 'Error: ';
 }
 
 textarea {

@@ -1,0 +1,10 @@
+class org/eclipse/jetty/websocket/client/WebSocketClient
+connect
+ (Ljava/lang/Object;Ljava/net/URI;)Ljava/util/concurrent/Future<Lorg/eclipse/jetty/websocket/api/Session;>;
+ (Ljava/lang/Object;Ljava/net/URI;)L1java/util/concurrent/Future<L1org/eclipse/jetty/websocket/api/Session;>;
+connect
+ (Ljava/lang/Object;Ljava/net/URI;Lorg/eclipse/jetty/websocket/client/ClientUpgradeRequest;)Ljava/util/concurrent/Future<Lorg/eclipse/jetty/websocket/api/Session;>;
+ (Ljava/lang/Object;Ljava/net/URI;Lorg/eclipse/jetty/websocket/client/ClientUpgradeRequest;)L1java/util/concurrent/Future<L1org/eclipse/jetty/websocket/api/Session;>;
+connect
+ (Ljava/lang/Object;Ljava/net/URI;Lorg/eclipse/jetty/websocket/client/ClientUpgradeRequest;Lorg/eclipse/jetty/websocket/client/io/UpgradeListener;)Ljava/util/concurrent/Future<Lorg/eclipse/jetty/websocket/api/Session;>;
+ (Ljava/lang/Object;Ljava/net/URI;Lorg/eclipse/jetty/websocket/client/ClientUpgradeRequest;Lorg/eclipse/jetty/websocket/client/io/UpgradeListener;)L1java/util/concurrent/Future<L1org/eclipse/jetty/websocket/api/Session;>;

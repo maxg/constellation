@@ -1,0 +1,27 @@
+extends layout
+
+append head
+  title Install Plug-in - Eclipseonut
+
+block content
+  .row: .col-xs-12
+    h1 Install Eclipseonut #[small version #{version}]
+    ol
+      li: h2 Eclipse #[span.glyphicon.glyphicon-arrow-right] Help menu #[span.glyphicon.glyphicon-arrow-right] Install New Software...
+      li: h2 In the &ldquo;Work with&rdquo; text box:
+        br
+        | paste #[span.bg-danger= url]
+        br
+        | and press enter (don&rsquo;t click Add...)
+      li: h2 Check #[span.glyphicon.glyphicon-check] Eclipseonut
+      li: h2 Click Next
+      li: h2 Click Next
+      li: h2 Select #[span.glyphicon.glyphicon-record] I accept the terms
+      li: h2 Click Finish
+      li: h2 #[span.glyphicon.glyphicon-time] ... wait
+      li: h2 &ldquo;Warning: installing unsigned content&rdquo;
+        br
+        | Click OK
+      li: h2 &ldquo;Would you like to restart now?&rdquo;
+        br
+        | Click Yes

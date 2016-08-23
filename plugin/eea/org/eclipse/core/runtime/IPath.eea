@@ -1,0 +1,4 @@
+class org/eclipse/core/runtime/IPath
+getFileExtension
+ ()Ljava/lang/String;
+ ()L0java/lang/String;

@@ -1,6 +1,6 @@
-var window = {};
+window = {};
 
-var console = function() {
+console = function() {
   function format() {
     var msg = arguments[0] ? String(arguments[0]) : "";
     var pattern = /%[sdifo]/;
@@ -11,66 +11,27 @@ var console = function() {
     return msg;
   }
   
-  var console = {};
+  var System = Java.type('java.lang.System');
   
-  console.log = function() {
-    java.lang.System.out.println(format.apply(null, arguments));
+  return {
+    log: function log() { System.out.println(format.apply(null, arguments)); },
+    warn: function log() { System.out.println(format.apply(null, arguments)); },
+    error: function log() { System.err.println(format.apply(null, arguments)); },
   };
-  console.warn = function() {
-    java.lang.System.out.println(format.apply(null, arguments));
-  };
-  console.error = function() {
-    java.lang.System.err.println(format.apply(null, arguments));
-  };
-  
-  return console;
 }();
 
-var setTimeout = function(callback, delay) {
-  return TIMERS.setTimeout(callback, delay, arguments);
+setTimeout = function setTimeout(callback, delay) {
+  return JSEngineBindings.setTimeout(callback.bind(null, arguments), delay);
 };
 
-var clearTimeout = function(future) {
-  if (future !== null) { TIMERS.clearTimeout(future); }
+clearTimeout = function clearTimeout(future) {
+  if (future != null) { future.cancel(false); }
 };
 
-var setInterval = function(callback, delay) {
-  return TIMERS.setInterval(callback, delay, arguments);
+setInterval = function setInterval(callback, delay) {
+  return JSEngineBindings.setInterval(callback.bind(null, arguments), delay);
 };
 
-var clearInterval = function(future) {
-  if (future !== null) { TIMERS.clearInterval(future); }
-};
-
-var open = function(collab, path, contents, callback) {
-  var doc = CONNECTION.get('collab_' + collab, path);
-  doc.subscribe();
-  doc.whenReady(function() {
-    
-    var contextCallback = function() {
-      var ctx = doc.createContext();
-      ctx._document = doc;
-      callback(ctx, ctx.get().toString());
-    };
-    
-    if ( ! doc.type) {
-      doc.create('text', contents, undefined, contextCallback);
-    } else {
-      contextCallback();
-    }
-  });
-};
-
-var attach = function(ctx, sharedoc) {
-  ctx.onInsert = function(pos, text) {
-    sharedoc.onRemoteInsert(pos, text);
-  };
-  ctx.onRemove = function(pos, len) {
-    sharedoc.onRemoteRemove(pos, len);
-  };
-  return ctx.get().toString();
-};
-
-var detach = function(ctx, sharedoc) {
-  ctx._document.destroy();
+clearInterval = function clearInterval(future) {
+  if (future != null) { future.cancel(false); }
 };

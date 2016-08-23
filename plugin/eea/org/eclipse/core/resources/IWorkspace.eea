@@ -1,0 +1,4 @@
+class org/eclipse/core/resources/IWorkspace
+getRoot
+ ()Lorg/eclipse/core/resources/IWorkspaceRoot;
+ ()L1org/eclipse/core/resources/IWorkspaceRoot;

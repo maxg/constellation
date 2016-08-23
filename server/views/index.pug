@@ -1,0 +1,32 @@
+extends layout
+
+append head
+  title Eclipseonut
+
+block content
+  //
+    Palm Tree designed by Rachel Healey from the Noun Project.
+    Creative Commons - Attribution (CC BY 3.0)
+    http://thenounproject.com/term/palm-tree/10397/
+    
+    Eclipse logo copyright (c) 2014 Eclipse Foundation, Inc. All Rights Reserved.
+    http://www.eclipse.org/artwork/
+    
+  svg#big-logo(xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 100 100" preserveAspectRatio="xMinYMax")
+    image(x="0" y="0" height="100" width="100" xlink:href="/static/palmtree.svg"
+          transform="translate(-10 2)")
+    image(x="0", y="0", height="35" width="35" xlink:href="/static/eclipse.svg"
+          transform="translate(26.4 12.6)")
+    image(x="0", y="0", height="35" width="35" xlink:href="/static/eclipse.svg"
+          transform="translate(31.356 10.452)")
+    image(x="0", y="0", height="35" width="35" xlink:href="/static/eclipse.svg"
+          transform="translate(30.716 15.288)")
+  
+  #big-text.text-center
+    if collabid
+      p You are in a collaboration
+      p: a.btn.btn-large.btn-primary(href='/edit') Edit files on the web
+    h2 Eclipseonut
+    p Collaborative coding for small examples &mdash; in Eclipse
+    p: a.btn.btn-large(class=collabid ? 'btn-default' : 'btn-primary', href='/install')
+      | Install the <br> Eclipseonut plug-in

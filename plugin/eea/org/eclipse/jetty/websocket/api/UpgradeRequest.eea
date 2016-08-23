@@ -1,0 +1,4 @@
+class org/eclipse/jetty/websocket/api/UpgradeRequest
+getRequestURI
+ ()Ljava/net/URI;
+ ()L0java/net/URI;

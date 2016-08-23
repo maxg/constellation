@@ -1,0 +1,13 @@
+class java/util/Optional
+empty
+ <T:Ljava/lang/Object;>()Ljava/util/Optional<TT;>;
+ <T:Ljava/lang/Object;>()L1java/util/Optional<TT;>;
+ifPresent
+ (Ljava/util/function/Consumer<-TT;>;)V
+ (L1java/util/function/Consumer<-T1T;>;)V
+of
+ <T:Ljava/lang/Object;>(TT;)Ljava/util/Optional<TT;>;
+ <T:Ljava/lang/Object;>(TT;)L1java/util/Optional<TT;>;
+ofNullable
+ <T:Ljava/lang/Object;>(TT;)Ljava/util/Optional<TT;>;
+ <T:Ljava/lang/Object;>(TT;)L1java/util/Optional<TT;>;

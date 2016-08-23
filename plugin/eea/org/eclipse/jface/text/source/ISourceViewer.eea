@@ -1,0 +1,4 @@
+class org/eclipse/jface/text/source/ISourceViewer
+getAnnotationModel
+ ()Lorg/eclipse/jface/text/source/IAnnotationModel;
+ ()L0org/eclipse/jface/text/source/IAnnotationModel;

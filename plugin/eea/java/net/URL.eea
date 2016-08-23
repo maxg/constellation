@@ -1,0 +1,4 @@
+class java/net/URL
+openStream
+ ()Ljava/io/InputStream;
+ ()L1java/io/InputStream;

@@ -1,0 +1,4 @@
+class org/eclipse/core/resources/IResource
+getName
+ ()Ljava/lang/String;
+ ()L1java/lang/String;

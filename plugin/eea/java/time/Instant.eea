@@ -1,0 +1,4 @@
+class java/time/Instant
+now
+ ()Ljava/time/Instant;
+ ()L1java/time/Instant;

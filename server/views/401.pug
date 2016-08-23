@@ -1,0 +1,13 @@
+extends layout
+
+append head
+  title Unauthorized - Eclipseonut
+
+block content
+  .row: .col-xs-12
+    h1 401 Unauthorized
+    h2= error
+    pre= JSON.stringify(cert.subject, null, 1)
+    p Expires:
+    pre= cert.valid_to
+    p If your certificate has not expired, quitting and restarting the browser usually resolves authorization problems.

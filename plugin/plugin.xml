@@ -7,10 +7,13 @@
             allPopups="false"
             locationURI="toolbar:org.eclipse.ui.trim.status">
          <toolbar
-               id="eclipseonut.statusbar">
+               id="eclipseonut.statusbar"
+               label="Eclipseonut">
             <command
                   commandId="eclipseonut.command.collaborate"
-                  label="%eclipseonut.command.collaborate.start"
+                  icon="icons/collab-stopped.png"
+                  label="%command.collaborate.none"
+                  mode="FORCE_TEXT"
                   style="push">
             </command>
          </toolbar>
@@ -26,7 +29,7 @@
    <extension
          point="org.eclipse.ui.handlers">
       <handler
-            class="eclipseonut.Collaborate"
+            class="eclipseonut.CollaborateCmdHandler"
             commandId="eclipseonut.command.collaborate">
       </handler>
    </extension>
@@ -45,5 +48,4 @@
             class="eclipseonut.prefs.Preferences">
       </initializer>
    </extension>
-
 </plugin>

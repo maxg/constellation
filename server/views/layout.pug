@@ -1,0 +1,15 @@
+doctype
+html
+  head
+    block head
+      link(rel='stylesheet', href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.1.1/css/bootstrap.min.css')
+      link(rel='stylesheet', href='/static/style.css')
+      script(src='//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js')
+      script(src='//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js')
+  body
+    .container
+      span#user.badge(class=authstaff ? 'staff' : null)= locals.authusername
+      block content
+    
+    script.
+      var authusername = !{JSON.stringify(locals.authusername || null)};

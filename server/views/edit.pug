@@ -1,0 +1,28 @@
+extends layout
+
+append head
+  title Edit #{filepath} - Eclipseonut
+
+block content
+  .row: .col-xs-12
+    h2 #[span#project]/#{filepath}
+      small #[br]editing with #[span#partners]
+  
+  .row: .col-xs-12: #error.alert.alert-danger
+  
+  .row: .col-xs-12
+    textarea#text.form-control(rows=20)
+  
+  if config.env == 'development'
+    .row: .col-xs-12: div#debug.navbar.navbar-default: .container-fluid
+      .navbar-header: .navbar-brand: .text-warning debug
+      .navbar-form.navbar-left: .btn-group
+        button#chatter.btn.btn-warning chatter
+        button#select.btn.btn-warning select
+  
+  script.
+    var shareURL = !{JSON.stringify(shareURL)};
+    var collabid = !{JSON.stringify(collabid)};
+    var filepath = !{JSON.stringify(filepath)};
+  script(src='/public/sharedb.js')
+  script(src='/static/edit.js')

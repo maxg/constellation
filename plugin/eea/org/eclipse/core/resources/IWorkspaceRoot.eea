@@ -1,0 +1,7 @@
+class org/eclipse/core/resources/IWorkspaceRoot
+getFileForLocation
+ (Lorg/eclipse/core/runtime/IPath;)Lorg/eclipse/core/resources/IFile;
+ (Lorg/eclipse/core/runtime/IPath;)L0org/eclipse/core/resources/IFile;
+getProject
+ (Ljava/lang/String;)Lorg/eclipse/core/resources/IProject;
+ (Ljava/lang/String;)L1org/eclipse/core/resources/IProject;

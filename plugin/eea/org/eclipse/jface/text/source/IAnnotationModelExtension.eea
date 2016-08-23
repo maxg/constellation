@@ -1,0 +1,7 @@
+class org/eclipse/jface/text/source/IAnnotationModelExtension
+getAnnotationModel
+ (Ljava/lang/Object;)Lorg/eclipse/jface/text/source/IAnnotationModel;
+ (Ljava/lang/Object;)L0org/eclipse/jface/text/source/IAnnotationModel;
+removeAnnotationModel
+ (Ljava/lang/Object;)Lorg/eclipse/jface/text/source/IAnnotationModel;
+ (Ljava/lang/Object;)L0org/eclipse/jface/text/source/IAnnotationModel;

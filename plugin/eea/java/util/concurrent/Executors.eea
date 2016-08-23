@@ -1,0 +1,4 @@
+class java/util/concurrent/Executors
+newSingleThreadScheduledExecutor
+ ()Ljava/util/concurrent/ScheduledExecutorService;
+ ()L1java/util/concurrent/ScheduledExecutorService;

@@ -1,0 +1,10 @@
+class org/eclipse/ui/dialogs/SelectionDialog
+createButtonsForButtonBar
+ (Lorg/eclipse/swt/widgets/Composite;)V
+ (L1org/eclipse/swt/widgets/Composite;)V
+getResult
+ ()[Ljava/lang/Object;
+ ()[0Ljava/lang/Object;
+setSelectionResult
+ ([Ljava/lang/Object;)V
+ ([0Ljava/lang/Object;)V

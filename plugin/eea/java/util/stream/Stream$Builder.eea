@@ -1,0 +1,4 @@
+class java/util/stream/Stream$Builder
+build
+ ()Ljava/util/stream/Stream<TT;>;
+ ()L1java/util/stream/Stream<TT;>;

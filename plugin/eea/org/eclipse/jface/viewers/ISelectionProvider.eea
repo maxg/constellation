@@ -1,0 +1,4 @@
+class org/eclipse/jface/viewers/ISelectionProvider
+addSelectionChangedListener
+ (Lorg/eclipse/jface/viewers/ISelectionChangedListener;)V
+ (L1org/eclipse/jface/viewers/ISelectionChangedListener;)V

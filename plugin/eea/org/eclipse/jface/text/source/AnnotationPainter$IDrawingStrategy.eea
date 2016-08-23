@@ -1,0 +1,4 @@
+class org/eclipse/jface/text/source/AnnotationPainter$IDrawingStrategy
+draw
+ (Lorg/eclipse/jface/text/source/Annotation;Lorg/eclipse/swt/graphics/GC;Lorg/eclipse/swt/custom/StyledText;IILorg/eclipse/swt/graphics/Color;)V
+ (L1org/eclipse/jface/text/source/Annotation;L0org/eclipse/swt/graphics/GC;L1org/eclipse/swt/custom/StyledText;IIL1org/eclipse/swt/graphics/Color;)V

@@ -1,0 +1,22 @@
+class java/time/Duration
+ofDays
+ (J)Ljava/time/Duration;
+ (J)L1java/time/Duration;
+ofHours
+ (J)Ljava/time/Duration;
+ (J)L1java/time/Duration;
+ofMillis
+ (J)Ljava/time/Duration;
+ (J)L1java/time/Duration;
+ofMinutes
+ (J)Ljava/time/Duration;
+ (J)L1java/time/Duration;
+ofNanos
+ (J)Ljava/time/Duration;
+ (J)L1java/time/Duration;
+ofSeconds
+ (J)Ljava/time/Duration;
+ (J)L1java/time/Duration;
+ofSeconds
+ (JJ)Ljava/time/Duration;
+ (JJ)L1java/time/Duration;

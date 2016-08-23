@@ -1,0 +1,7 @@
+class org/eclipse/jface/text/DocumentEvent
+DocumentEvent
+ (Lorg/eclipse/jface/text/IDocument;IILjava/lang/String;)V
+ (L1org/eclipse/jface/text/IDocument;IIL1java/lang/String;)V
+getText
+ ()Ljava/lang/String;
+ ()L1java/lang/String;

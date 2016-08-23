@@ -1,5 +1,8 @@
 package eclipseonut;
 
+import static eclipseonut.Util.assertNotNull;
+import static eclipseonut.Util.streamOnly;
+
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -8,32 +11,80 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
-import javax.net.ssl.*;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 public class Debug {
+    
+    private static final boolean TRACING = "true".equals(Platform.getDebugOption(Activator.PLUGIN_ID + "/tracing"));
+    
+    private static @Nullable SSLContext INSECURE_SSL = null;
+    
+    /**
+     * Announce the current method.
+     */
+    public static void trace(Object... args) {
+        if ( ! TRACING) { return; }
+        
+        @NonNull StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+        System.out.println(clean(stack[2]) + (stack.length > 3 ? " <- " + clean(stack[3]): ""));
+        if (args.length == 0) { return; }
+        System.out.print("    " + args[0]);
+        for (int ii = 1; ii < args.length; ii++) {
+            System.out.print(", " + args[ii]);
+        }
+        System.out.println();
+    }
+    
+    private static String clean(StackTraceElement point) {
+        return point.toString()
+                .replaceAll(Debug.class.getPackage().getName() + "(\\.[a-z]+)*\\.", "")
+                .replaceAll("jdk.nashorn.internal.scripts.Script\\$(\\w+\\$)*", "[JavaScript]");
+    }
     
     /**
      * Enable SSL connections using a snake-oil certificate.
      */
     public static void enableInsecureSSL() throws NoSuchAlgorithmException, KeyStoreException {
+        Log.info("Enabling insecure SSL");
         TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         tmf.init((KeyStore)null);
-        Arrays.stream(tmf.getTrustManagers()).filter(tm -> tm instanceof X509TrustManager).findFirst().ifPresent(tm -> {
+        Arrays.stream(tmf.getTrustManagers()).flatMap(streamOnly(X509TrustManager.class)).findFirst().ifPresent(tm -> {
             try {
-                setInsecureTrustManager((X509TrustManager)tm);
+                SSLContext ssl = assertNotNull(INSECURE_SSL = SSLContext.getInstance("SSL"),
+                        "No SSL support");
+                ssl.init(null, new TrustManager[] { getInsecureTrustManager(tm) }, null);
+                HttpsURLConnection.setDefaultSSLSocketFactory(ssl.getSocketFactory());
             } catch (NoSuchAlgorithmException | KeyManagementException e) { }
         });
-        setInsecureHostnameVerifier();
+        HttpsURLConnection.setDefaultHostnameVerifier(getInsecureHostnameVerifier());
     }
     
     /**
-     * Install a trust manager that accepts snake-oil certificate as valid.
+     * Enable WebSocket SSL connections using snake-oil certificate.
+     */
+    public static void enableInsecureSSL(SslContextFactory ssl) {
+        Log.info("Enabling insecure WebSocket SSL");
+        ssl.setSslContext(INSECURE_SSL);
+    }
+    
+    /**
+     * Create a trust manager that accepts snake-oil certificate as valid.
      * @param tm delegate to the given trust manager for all other decisions
      */
-    private static void setInsecureTrustManager(X509TrustManager tm) throws NoSuchAlgorithmException, KeyManagementException {
-        SSLContext ssl;
-        ssl = SSLContext.getInstance("SSL");
-        ssl.init(null, new TrustManager[] { new X509TrustManager() {
+    private static X509TrustManager getInsecureTrustManager(X509TrustManager tm) {
+        return new X509TrustManager() {
             public X509Certificate[] getAcceptedIssuers() {
                 return tm.getAcceptedIssuers();
             }
@@ -47,15 +98,14 @@ public class Debug {
                 }
                 tm.checkServerTrusted(chain, authType);
             }
-        } }, null);
-        HttpsURLConnection.setDefaultSSLSocketFactory(ssl.getSocketFactory());
+        };
     }
     
     /**
-     * Install a hostname verifier that accepts snake-oil certificate for any host.
+     * Create a hostname verifier that accepts snake-oil certificate for any host.
      */
-    private static void setInsecureHostnameVerifier() {
-        HostnameVerifier verify = new HostnameVerifier() {
+    private static HostnameVerifier getInsecureHostnameVerifier() {
+        return new HostnameVerifier() {
             private final HostnameVerifier verify = HttpsURLConnection.getDefaultHostnameVerifier();
             public boolean verify(String hostname, SSLSession session) {
                 try {
@@ -67,6 +117,5 @@ public class Debug {
                 return verify.verify(hostname, session);
             }
         };
-        HttpsURLConnection.setDefaultHostnameVerifier(verify);
     }
 }

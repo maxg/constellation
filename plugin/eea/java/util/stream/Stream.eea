@@ -1,0 +1,10 @@
+class java/util/stream/Stream
+empty
+ <T:Ljava/lang/Object;>()Ljava/util/stream/Stream<TT;>;
+ <T:Ljava/lang/Object;>()L1java/util/stream/Stream<TT;>;
+findFirst
+ ()Ljava/util/Optional<TT;>;
+ ()L1java/util/Optional<T1T;>;
+of
+ <T:Ljava/lang/Object;>(TT;)Ljava/util/stream/Stream<TT;>;
+ <T:Ljava/lang/Object;>(TT;)L1java/util/stream/Stream<TT;>;

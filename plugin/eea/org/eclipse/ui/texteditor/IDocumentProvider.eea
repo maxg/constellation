@@ -1,0 +1,13 @@
+class org/eclipse/ui/texteditor/IDocumentProvider
+disconnect
+ (Ljava/lang/Object;)V
+ (L1java/lang/Object;)V
+getDocument
+ (Ljava/lang/Object;)Lorg/eclipse/jface/text/IDocument;
+ (Ljava/lang/Object;)L0org/eclipse/jface/text/IDocument;
+resetDocument
+ (Ljava/lang/Object;)V
+ (L0java/lang/Object;)V
+saveDocument
+ (Lorg/eclipse/core/runtime/IProgressMonitor;Ljava/lang/Object;Lorg/eclipse/jface/text/IDocument;Z)V
+ (L0org/eclipse/core/runtime/IProgressMonitor;L0java/lang/Object;Lorg/eclipse/jface/text/IDocument;Z)V

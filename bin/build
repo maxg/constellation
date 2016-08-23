@@ -11,35 +11,56 @@ if [[ ! -d "$ECLIPSE" ]]; then
   exit 1
 fi
 
+# Find the headless PDE buildfile
+launcher=org.eclipse.equinox.launcher_1.3
+pde_build=org.eclipse.pde.build_3.9
+scripts=({"$ECLIPSE"/plugins/$pde_build.*,~/.p2/pool/plugins/$pde_build.*}/scripts/build.xml)
+found=(${scripts[@]##*\**}) # filter paths with unexpanded wildcard
+buildfile="${found[0]}"     # take the first one
+
 # Find and clean the build directory
 BUILD=$(cd `dirname "$0"`/../build && pwd)
 
 rm -rf "$BUILD/output" && mkdir "$BUILD/output"
 
 # Copy feature & plug-in sources to build output dir
-#  - includes untracked JARs
-#  - follows symlinks
-#  - renames e.g. plugin -> plugins/eclipseonut.plugin
-for d in feature plugin; do
-  COPYFILE_DISABLE=1 tar cv -T <(git ls-files -- $d ; git ls-files --others --ignored --exclude=*.jar -- $d) \
-                            -L -s "%$d%~s/eclipseonut.~%" \
-                   | tar x -C "$BUILD/output"
-done
+#  - include library JARs
+#  - rename e.g. plugin -> plugins/eclipseonut.plugin
+COPYFILE_DISABLE=1 tar cv -T <(git ls-files -- feature
+                               git ls-files -- plugin | fgrep -v plugin/eea/
+                               ls plugin/lib/*.jar) \
+                          -s '%^\(feature\)*\(plugin\)*%~s/eclipseonut.~%' |
+                   tar x -C "$BUILD/output"
+
+# Replace default settings
+cp "$BUILD/defaults.properties" "$BUILD/output/plugins/eclipseonut.plugin/src/eclipseonut/prefs/"
 
 # Run the headless PDE build
-java -jar "$ECLIPSE"/plugins/org.eclipse.equinox.launcher_1.3.100.*.jar \
+java -jar "$ECLIPSE"/plugins/$launcher.*.jar \
      -data "$BUILD/output/workspace" \
      -application org.eclipse.ant.core.antRunner \
-     -buildfile "$ECLIPSE"/plugins/org.eclipse.pde.build_3.9.100.*/scripts/build.xml \
+     -buildfile "$buildfile" \
      -Dbuilder="$BUILD" -DbaseLocation="$ECLIPSE" \
      "$@"
 
+# Fix site name
 sed -i '' -e "/<repository/s/'file:[^']*'/'Eclipseonut'/" "$BUILD"/output/site/*.xml
 
+# Record version number
+fgrep .feature= "$BUILD/output/finalFeaturesVersions.properties" | cut -f2 -d= > "$BUILD/output/site/version.txt"
+
 # Sanity-check the result
+
+echo $'\n'Versions:
+"`dirname "$0"`/version"
+
+echo $'\n'Contents:
 for jar in "$BUILD"/output/site/*/*.jar; do
-  unzip -l "$jar"
+  echo $jar
+  unzip -qql "$jar" | awk '{ print $4 }' | grep -v '/$' | sort
 done
+
+echo $'\n'Config:
 for jar in "$BUILD"/output/site/plugins/*.jar; do
-  unzip -c "$jar" '*/defaults.properties'
+  unzip -qqc "$jar" '*/defaults.properties'
 done

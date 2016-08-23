@@ -1,0 +1,4 @@
+class org/eclipse/ui/IWorkbenchWindow
+getPages
+ ()[Lorg/eclipse/ui/IWorkbenchPage;
+ ()[L1org/eclipse/ui/IWorkbenchPage;

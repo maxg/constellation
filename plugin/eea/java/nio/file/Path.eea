@@ -1,0 +1,4 @@
+class java/nio/file/Path
+toFile
+ ()Ljava/io/File;
+ ()L1java/io/File;

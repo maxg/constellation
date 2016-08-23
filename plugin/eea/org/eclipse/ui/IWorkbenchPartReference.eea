@@ -1,0 +1,4 @@
+class org/eclipse/ui/IWorkbenchPartReference
+getPart
+ (Z)Lorg/eclipse/ui/IWorkbenchPart;
+ (Z)L0org/eclipse/ui/IWorkbenchPart;

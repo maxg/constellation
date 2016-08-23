@@ -1,0 +1,7 @@
+class java/lang/Thread
+currentThread
+ ()Ljava/lang/Thread;
+ ()L1java/lang/Thread;
+getStackTrace
+ ()[Ljava/lang/StackTraceElement;
+ ()[1L1java/lang/StackTraceElement;

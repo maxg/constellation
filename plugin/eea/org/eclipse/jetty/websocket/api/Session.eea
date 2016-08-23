@@ -1,0 +1,4 @@
+class org/eclipse/jetty/websocket/api/Session
+getUpgradeRequest
+ ()Lorg/eclipse/jetty/websocket/api/UpgradeRequest;
+ ()L0org/eclipse/jetty/websocket/api/UpgradeRequest;

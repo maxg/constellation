@@ -1,0 +1,7 @@
+class org/eclipse/swt/events/SelectionListener
+widgetDefaultSelected
+ (Lorg/eclipse/swt/events/SelectionEvent;)V
+ (L1org/eclipse/swt/events/SelectionEvent;)V
+widgetSelected
+ (Lorg/eclipse/swt/events/SelectionEvent;)V
+ (L1org/eclipse/swt/events/SelectionEvent;)V

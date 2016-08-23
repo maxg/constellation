@@ -1,0 +1,34 @@
+class java/lang/String
+getBytes
+ ()[B
+ ()[1B
+getBytes
+ (Ljava/lang/String;)[B
+ (Ljava/lang/String;)[1B
+getBytes
+ (Ljava/nio/charset/Charset;)[B
+ (Ljava/nio/charset/Charset;)[1B
+join
+ (Ljava/lang/CharSequence;[Ljava/lang/CharSequence;)Ljava/lang/String;
+ (L1java/lang/CharSequence;[1Ljava/lang/CharSequence;)L1java/lang/String;
+replace
+ (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+ (Ljava/lang/CharSequence;Ljava/lang/CharSequence;)L1java/lang/String;
+replaceAll
+ (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ (Ljava/lang/String;Ljava/lang/String;)L1java/lang/String;
+split
+ (Ljava/lang/String;)[Ljava/lang/String;
+ (Ljava/lang/String;)[1L1java/lang/String;
+split
+ (Ljava/lang/String;I)[Ljava/lang/String;
+ (Ljava/lang/String;I)[1L1java/lang/String;
+substring
+ (I)Ljava/lang/String;
+ (I)L1java/lang/String;
+substring
+ (II)Ljava/lang/String;
+ (II)L1java/lang/String;
+trim
+ ()Ljava/lang/String;
+ ()L1java/lang/String;

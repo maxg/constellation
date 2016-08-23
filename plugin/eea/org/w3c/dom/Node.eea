@@ -1,0 +1,4 @@
+class org/w3c/dom/Node
+getTextContent
+ ()Ljava/lang/String;
+ ()L0java/lang/String;

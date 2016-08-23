@@ -1,0 +1,4 @@
+class javax/net/ssl/HttpsURLConnection
+getDefaultHostnameVerifier
+ ()Ljavax/net/ssl/HostnameVerifier;
+ ()L1javax/net/ssl/HostnameVerifier;

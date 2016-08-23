@@ -1,0 +1,4 @@
+class org/eclipse/core/runtime/Platform
+getResourceString
+ (Lorg/osgi/framework/Bundle;Ljava/lang/String;)Ljava/lang/String;
+ (L1org/osgi/framework/Bundle;L1java/lang/String;)L1java/lang/String;

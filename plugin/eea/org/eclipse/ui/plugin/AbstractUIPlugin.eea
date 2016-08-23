@@ -1,0 +1,10 @@
+class org/eclipse/ui/plugin/AbstractUIPlugin
+imageDescriptorFromPlugin
+ (Ljava/lang/String;Ljava/lang/String;)Lorg/eclipse/jface/resource/ImageDescriptor;
+ (Ljava/lang/String;Ljava/lang/String;)L0org/eclipse/jface/resource/ImageDescriptor;
+start
+ (Lorg/osgi/framework/BundleContext;)V
+ (L1org/osgi/framework/BundleContext;)V
+stop
+ (Lorg/osgi/framework/BundleContext;)V
+ (L1org/osgi/framework/BundleContext;)V

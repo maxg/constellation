@@ -1,0 +1,4 @@
+class org/eclipse/ui/menus/UIElement
+getServiceLocator
+ ()Lorg/eclipse/ui/services/IServiceLocator;
+ ()L1org/eclipse/ui/services/IServiceLocator;

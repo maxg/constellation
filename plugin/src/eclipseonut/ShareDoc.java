@@ -1,97 +1,193 @@
 package eclipseonut;
 
-import javax.script.Bindings;
-import javax.script.SimpleBindings;
+import static eclipseonut.Util.startThread;
+
+import java.util.EventObject;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
+import org.eclipse.jface.text.ITextOperationTarget;
+import org.eclipse.jface.text.ITextViewerExtension5;
+import org.eclipse.jface.text.source.ISourceViewer;
+import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.texteditor.ITextEditor;
 
-public class ShareDoc implements IDocumentListener {
+public class ShareDoc {
     
-    private final JSEngine js;
+    private static final int CURSOR_DEBOUNCE_DELAY = 1500;
+    
+    private final Collaboration collab;
+    private final Object sharedbDoc;
     private final IDocument local;
-    private final Bindings env = new SimpleBindings();
+    private final ITextEditor editor;
+    private final StyledText styledText;
+    private final ISourceViewer viewer;
+    
+    private final ShareCursorAnnotations cursors;
+    
+    private final IDocumentListener documentListener;
+    private final BlockingQueue<EventObject> cursorEvents = new LinkedBlockingQueue<>();
+    private final Thread cursorEventThread;
+    
     private boolean syncing = false;
     
-    public ShareDoc(JSEngine js, IDocument local, Object ctx) {
-        this.js = js;
+    public ShareDoc(Collaboration collab, Object sharedbDoc, IDocument local, ITextEditor editor) {
+        Debug.trace();
+        this.collab = collab;
+        this.sharedbDoc = sharedbDoc;
         this.local = local;
+        this.editor = editor;
+        this.styledText = (StyledText)editor.getAdapter(Control.class);
+        this.viewer = (ISourceViewer)editor.getAdapter(ITextOperationTarget.class);
         
-        env.put("ctx", ctx);
-        env.put("sharedoc", this);
+        this.cursors = new ShareCursorAnnotations(viewer);
         
-        js.exec((engine) -> {
-            env.put("attach", engine.get("attach"));
-            String current = (String)engine.eval("attach(ctx, sharedoc)", env);
+        collab.jse.exec(js -> {
+            String current = (String)js.invocable.invokeFunction("attach", sharedbDoc, this);
             if ( ! local.get().equals(current)) {
                 local.set(current);
             }
         });
         
-        local.addDocumentListener(this);
-    }
-
-    public void close() {
-        local.removeDocumentListener(this);
+        local.addDocumentListener(this.documentListener = new IDocumentListener() {
+            public void documentAboutToBeChanged(DocumentEvent event) { }
+            public void documentChanged(DocumentEvent event) {
+                if (syncing) { return; }
+                if (event.getLength() > 0) {
+                    onLocalRemove(event.getOffset(), event.getLength());
+                }
+                if ( ! event.getText().isEmpty()) {
+                    onLocalInsert(event.getOffset(), event.getText());
+                }
+            }
+        });
         
-        js.exec((engine) -> {
-            env.put("detach", engine.get("detach"));
-            engine.eval("detach(ctx, sharedoc)", env);
+        editor.getSelectionProvider().addSelectionChangedListener(cursorEvents::add);
+        styledText.addCaretListener(cursorEvents::add);
+        
+        this.cursorEventThread = startThread(() -> {
+            try {
+                while ( ! Thread.interrupted()) {
+                    cursorEvents.take();
+                    PlatformUI.getWorkbench().getDisplay().syncExec(this::onLocalCursorChange);
+                    cursorEvents.clear();
+                    Thread.sleep(CURSOR_DEBOUNCE_DELAY);
+                }
+            } catch (InterruptedException ie) {}
         });
     }
     
-    public void onRemoteInsert(int pos, String text) {
+    public void close() {
+        Debug.trace();
+        cursors.close();
+        
+        collab.jse.exec(js -> js.invocable.invokeFunction("close", sharedbDoc));
+        
+        local.removeDocumentListener(documentListener);
+        editor.getSelectionProvider().removeSelectionChangedListener(cursorEvents::add);
+        styledText.removeCaretListener(cursorEvents::add);
+        cursorEventThread.interrupt();
+    }
+    
+    public void onRemoteInsert(int offset, String text) {
         Assert.isNotNull(Display.getCurrent());
+        
         syncing = true;
         try {
-            local.replace(pos, 0, text);
+            replaceAndRestoreSelection(offset, 0, text);
         } catch (BadLocationException ble) {
-            Log.error("Bad location on remote insert " + pos + " (" + text.length() + ")", ble);
+            Log.error("Bad location on remote insert " + offset + " (" + text.length() + ")", ble);
         }
         syncing = false;
     }
     
-    public void onRemoteRemove(int pos, int length) {
+    public void onRemoteRemove(int offset, int length) {
         Assert.isNotNull(Display.getCurrent());
+        
         syncing = true;
         try {
-            local.replace(pos, length, "");
+            replaceAndRestoreSelection(offset, length, "");
         } catch (BadLocationException ble) {
-            Log.error("Bad location on remote remove " + pos + " " + length, ble);
+            Log.error("Bad location on remote remove " + offset + " " + length, ble);
         }
         syncing = false;
     }
     
-    private void onLocalInsert(int pos, String text) {
-        Assert.isNotNull(Display.getCurrent());
-        js.exec((engine) -> {
-            env.put("pos", pos);
-            env.put("text", text);
-            engine.eval("ctx.insert(pos, text)", env);
-        });
+    /*
+     * Work around {@link IDocument#replace} making updated text selection left-to-right.
+     */
+    private void replaceAndRestoreSelection(int offset, int length, String text) throws BadLocationException {
+        final Point selection = styledText.getSelection();
+        final boolean reversed = selection.x != selection.y && selection.x == styledText.getCaretOffset();
+        final boolean containing = selection.x <= modelToWidgetOffset(offset) && selection.y > modelToWidgetOffset(offset+length);
+        local.replace(offset, length, text);
+        if (containing) {
+            styledText.setSelection(selection.x, selection.y - length + text.length());
+        }
+        if (reversed) {
+            styledText.setSelection(styledText.getSelection().y, styledText.getSelection().x);
+        }
     }
     
-    private void onLocalRemove(int pos, int length) {
+    public void onRemoteCursorUpdate(String username, int[] coordinates) {
         Assert.isNotNull(Display.getCurrent());
-        js.exec((engine) -> {
-            env.put("pos", pos);
-            env.put("length", length);
-            engine.eval("ctx.remove(pos, length)", env);
-        });
+        if (coordinates.length == 3) {
+            cursors.update(username, coordinates[0], coordinates[1], coordinates[2]);
+        } else {
+            cursors.update(username, coordinates[0], coordinates[0], 0);
+        }
     }
     
-    public void documentAboutToBeChanged(DocumentEvent event) { }
-    public void documentChanged(DocumentEvent event) {
-        if (syncing) { return; }
-        if (event.getLength() > 0) {
-            onLocalRemove(event.getOffset(), event.getLength());
+    private void onLocalInsert(int offset, String text) {
+        Assert.isNotNull(Display.getCurrent());
+        collab.jse.exec(js -> js.invocable.invokeFunction("submitInsert", sharedbDoc, offset, text));
+    }
+    
+    private void onLocalRemove(int offset, int length) {
+        Assert.isNotNull(Display.getCurrent());
+        collab.jse.exec(js -> js.invocable.invokeFunction("submitRemove", sharedbDoc, offset, length));
+    }
+    
+    private void onLocalCursorChange() {
+        Assert.isNotNull(Display.getCurrent());
+        
+        // get caret and selection offsets, and adjust for code folding
+        // editor selection provider would have adjusted selection coordinates but doesn't have caret
+        final int offset = widgetToModelOffset(styledText.getCaretOffset());
+        final Point selection = styledText.getSelection();
+        final int start;
+        final int length;
+        if (selection.x == selection.y) {
+            start = offset;
+            length = 0;
+        } else {
+            start = widgetToModelOffset(selection.x);
+            length = widgetToModelOffset(selection.y) - selection.x;
         }
-        if ( ! event.getText().isEmpty()) {
-            onLocalInsert(event.getOffset(), event.getText());
+        
+        collab.jse.exec(js -> js.invocable.invokeFunction("submitCursorUpdate", sharedbDoc, offset, start, length));
+    }
+    
+    private int widgetToModelOffset(int widgetOffset) {
+        if (viewer instanceof ITextViewerExtension5) {
+            return ((ITextViewerExtension5)viewer).widgetOffset2ModelOffset(widgetOffset);
         }
+        return widgetOffset;
+    }
+    
+    private int modelToWidgetOffset(int modelOffset) {
+        if (viewer instanceof ITextViewerExtension5) {
+            return ((ITextViewerExtension5)viewer).modelOffset2WidgetOffset(modelOffset);
+        }
+        return modelOffset;
     }
 }

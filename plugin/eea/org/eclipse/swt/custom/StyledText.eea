@@ -1,0 +1,4 @@
+class org/eclipse/swt/custom/StyledText
+addCaretListener
+ (Lorg/eclipse/swt/custom/CaretListener;)V
+ (L1org/eclipse/swt/custom/CaretListener;)V

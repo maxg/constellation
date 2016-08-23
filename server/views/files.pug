@@ -1,0 +1,21 @@
+extends layout
+
+append head
+  title Collaborating - Eclipseonut
+
+block content
+  .row: .col-xs-12
+    h2 Collaborating #[small#project] #[small#partners]
+    .alert.alert-success.col-sm-offset-2.col-sm-8
+      h3 Collaboration active
+      p You may close this browser window and edit in Eclipse.
+  
+  .row: .col-xs-12
+    h3#project
+    #files
+  
+  script.
+    var shareURL = !{JSON.stringify(shareURL)};
+    var collabid = !{JSON.stringify(collabid)};
+  script(src='/public/sharedb.js')
+  script(src='/static/files.js')

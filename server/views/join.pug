@@ -1,0 +1,24 @@
+extends layout
+
+append head
+  title Find a Partner - Eclipseonut
+  script(src='/static/join.js')
+
+block content
+  .row: .col-xs-12
+    h2 Find a partner
+    h3 Collaborating on: #{project}
+  
+  .row: .col-xs-10.col-sm-8.col-md-6.col-lg-4
+    form#join
+      .form-group
+        h3 My joincode: #[span.text-danger= joincode.join(' ')]
+      .form-group
+        .input-group
+          input#partner.form-control.input-lg(type='text', autofocus=true, placeholder="Enter your partner's joincode")
+          span.input-group-btn
+            button.btn.btn-danger.btn-lg Join
+    h3#status.text-primary
+  
+  script.
+    rendezvous(!{JSON.stringify(joincode.join(' '))}, $('#join'), $('#partner'), $('#status'));

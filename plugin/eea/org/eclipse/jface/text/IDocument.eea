@@ -1,0 +1,4 @@
+class org/eclipse/jface/text/IDocument
+get
+ ()Ljava/lang/String;
+ ()L1java/lang/String;

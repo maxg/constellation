@@ -1,0 +1,10 @@
+class org/eclipse/compare/ITypedElement
+getImage
+ ()Lorg/eclipse/swt/graphics/Image;
+ ()L0org/eclipse/swt/graphics/Image;
+getName
+ ()Ljava/lang/String;
+ ()L0java/lang/String;
+getType
+ ()Ljava/lang/String;
+ ()L0java/lang/String;

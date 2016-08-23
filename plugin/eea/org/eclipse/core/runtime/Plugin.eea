@@ -1,0 +1,4 @@
+class org/eclipse/core/runtime/Plugin
+getBundle
+ ()Lorg/osgi/framework/Bundle;
+ ()L0org/osgi/framework/Bundle;

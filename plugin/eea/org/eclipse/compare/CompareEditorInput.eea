@@ -1,0 +1,4 @@
+class org/eclipse/compare/CompareEditorInput
+createContents
+ (Lorg/eclipse/swt/widgets/Composite;)Lorg/eclipse/swt/widgets/Control;
+ (L1org/eclipse/swt/widgets/Composite;)L1org/eclipse/swt/widgets/Control;

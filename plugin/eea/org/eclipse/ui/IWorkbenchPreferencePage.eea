@@ -1,0 +1,4 @@
+class org/eclipse/ui/IWorkbenchPreferencePage
+init
+ (Lorg/eclipse/ui/IWorkbench;)V
+ (L1org/eclipse/ui/IWorkbench;)V

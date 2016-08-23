@@ -1,21 +1,23 @@
 {
   "name": "eclipseonut",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
-    "async": "^1.5.2",
-    "body-parser": "^1.14.2",
-    "express": "^4.13.3",
-    "jade": "^1.11.0",
-    "livedb": "^0.5.13",
-    "livedb-mongo": "^0.4.1",
-    "mongodb": "^1.4.40",
-    "share": "^0.7.40",
-    "ws": "^1.0.1",
-    "x509": "^0.2.3"
+    "async": "^2.0.1",
+    "body-parser": "^1.15.2",
+    "enchilada": "^0.13.0",
+    "express": "^4.14.0",
+    "mongodb": "^2.2.5",
+    "pug": "^2.0.0-beta4",
+    "sharedb": "^1.0.0-beta.4",
+    "sharedb-mongo": "^1.0.0-beta",
+    "sharedb-string-binding": "^1.0.0",
+    "websocket-json-stream": "0.0.3",
+    "ws": "^1.1.1",
+    "x509": "^0.2.6"
   },
   "devDependencies": {},
   "engines": {
-    "node": "^5.3.0"
+    "node": "^6.3.0"
   }
 }

@@ -1,0 +1,4 @@
+class org/eclipse/ui/commands/IElementUpdater
+updateElement
+ (Lorg/eclipse/ui/menus/UIElement;Ljava/util/Map;)V
+ (L1org/eclipse/ui/menus/UIElement;L1java/util/Map;)V

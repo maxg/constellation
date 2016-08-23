@@ -13,7 +13,7 @@ function rendezvous(me, form, partner, status) {
         status.text('Redirecting...');
         document.location.href = responseJSON.redirect;
       }).fail(function(req) {
-        status.text(req.responseJSON.error || 'Error');
+        status.text(req.responseJSON && req.responseJSON.error || 'Error');
       });
       status.text('Waiting for partner...');
     } catch (e) {
