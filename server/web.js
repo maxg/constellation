@@ -165,6 +165,6 @@ exports.createFrontend = function createFrontend(config, db) {
 // get the plug-in version without qualifier
 function getPluginVersion(callback) {
   fs.readFile(`${__dirname}/install/version.txt`, { encoding: 'utf8' }, function(err, version) {
-    callback(err, version.trim().split('.', 3).join('.'));
+    callback(err, version && version.trim().split('.', 3).join('.'));
   });
 }
