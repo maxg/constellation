@@ -2,6 +2,7 @@ package eclipseonut;
 
 import static eclipseonut.Util.startThread;
 
+import java.time.Duration;
 import java.util.EventObject;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -23,7 +24,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
 
 public class ShareDoc {
     
-    private static final int CURSOR_DEBOUNCE_DELAY = 1500;
+    private static final Duration CURSOR_DEBOUNCE_DELAY = Duration.ofMillis(1500);
     
     private final Collaboration collab;
     private final Object sharedbDoc;
@@ -80,7 +81,7 @@ public class ShareDoc {
                     cursorEvents.take();
                     PlatformUI.getWorkbench().getDisplay().syncExec(this::onLocalCursorChange);
                     cursorEvents.clear();
-                    Thread.sleep(CURSOR_DEBOUNCE_DELAY);
+                    Thread.sleep(CURSOR_DEBOUNCE_DELAY.toMillis());
                 }
             } catch (InterruptedException ie) {}
         });

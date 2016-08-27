@@ -35,9 +35,9 @@ public class JSWebSocket {
     public static final int CLOSING = 2;
     public static final int CLOSED = 3;
     
-    private static final Duration RECONNECT_BASE_DELAY = Duration.ofMillis(1000);
+    private static final Duration RECONNECT_BASE_DELAY = Duration.ofSeconds(1);
     private static final double RECONNECT_EXP_FACTOR = 1.7;
-    private static final Duration RECONNECT_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration RECONNECT_TIMEOUT = Duration.ofMinutes(1);
     
     private final JSEngine jse;
     private final URI uri;
@@ -55,7 +55,7 @@ public class JSWebSocket {
     public int readyState = CONNECTING;
     
     //
-    // WebSocket contructor
+    // WebSocket constructor
     //
     public JSWebSocket(JSEngine jse, URI uri) throws Exception {
         Debug.trace();
