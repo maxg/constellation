@@ -44,6 +44,8 @@ function open(path, contents, callback) {
         filepath: path,
         text: contents,
         cursors: {}
+      }, function(err) {
+        if (err && err.code !== 4016) { throw err; }
       });
     }
     callback(doc, doc.data.text);
