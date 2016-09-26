@@ -56,5 +56,46 @@ exports.createBackend = function createBackend(config) {
         },
       }, callback);
     },
+    
+    // get most common initial text for a file
+    getBaseline(project, filepath, callback) {
+      db.getDbs(function(err, mongo) {
+        if (err) { return callback(err); }
+        mongo.collection('o_'+FILES).aggregate([
+          { $match: {
+            'create.data.project': project,
+            'create.data.filepath': filepath,
+          } },
+          { $project: { text: '$create.data.text' } },
+          { $group: { _id: '$text', count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
+          { $limit: 1 },
+        ], function(err, results) {
+          callback(err, results[0] && results[0]._id);
+        });
+      });
+    },
+    
+    getHistorical(collabid, filepath, timestamp, callback) {
+      db.getDbs(function(err, mongo) {
+        if (err) { return callback(err); }
+        mongo.collection(FILES).findOne({ collabid, filepath }, function(err, file) {
+          if (err) { return callback(err); }
+          mongo.collection('o_'+FILES).aggregate([
+            { $match: { d: file._id, 'm.ts': { $lte: +timestamp } } },
+            { $sort: { v: 1 } },
+            { $project: { _id: 0, create: 1, op: 1 } },
+          ], function(err, ops) {
+            if (err) { return callback(err); }
+            let doc = {};
+            for (let op of ops) {
+              if (op.create) { doc = op.create; }
+              if (op.op) { doc.data = sharedb.types.map[doc.type].apply(doc.data, op.op); }
+            }
+            callback(err, doc);
+          });
+        });
+      });
+    },
   };
 };

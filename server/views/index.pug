@@ -23,6 +23,8 @@ block content
           transform="translate(30.716 15.288)")
   
   #big-text.text-center
+    if authstaff
+      p: a.btn.btn-large.btn-warning(href='/dashboard') All projects
     if collabid
       p You are in a collaboration
       p: a.btn.btn-large.btn-primary(href='/edit') Edit files on the web

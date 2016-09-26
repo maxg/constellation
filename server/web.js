@@ -4,6 +4,7 @@ const enchilada = require('enchilada');
 const events = require('events');
 const express = require('express');
 const fs = require('fs');
+const moment = require('moment');
 const mongodb = require('mongodb');
 const pug = require('pug');
 
@@ -22,6 +23,19 @@ exports.createFrontend = function createFrontend(config, db) {
   app.use(bodyparser.json());
   
   app.locals.config = config;
+  
+  // validate parameter against anchored regex
+  function validate(regex) {
+    let anchored = new RegExp('^' + regex.source + '$');
+    return function(req, res, next, val) {
+      if (anchored.test(val)) { next(); } else { next('route'); }
+    };
+  }
+  
+  app.param('project', validate(/[\w-]+/));
+  app.param('userid', validate(/\w+/));
+  app.param('milestone', validate(/\w+/));
+  app.param('cutoff', validate(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d/));
   
   function authenticate(req, res, next) {
     let cert = req.connection.getPeerCertificate();
@@ -106,6 +120,63 @@ exports.createFrontend = function createFrontend(config, db) {
     }
     res.render('edit', {
       filepath: req.params.filepath,
+    });
+  });
+  
+  app.get('/dashboard', authenticate, staffonly, function(req, res, next) {
+    db.getProjects(function(err, projects) {
+      res.render('projects', {
+        projects,
+      });
+    });
+  });
+  
+  app.get('/dashboard/:project/:cutoff?', authenticate, staffonly, function(req, res, next) {
+    res.render('collabs', {
+      project: req.params.project,
+      cutoff: req.params.cutoff,
+    });
+  });
+  
+  app.get('/dashboard/:project/m/:milestone/:cutoff?', authenticate, staffonly, function(req, res, next) {
+    res.render('collabs', {
+      project: req.params.project,
+      milestone: req.params.milestone,
+      cutoff: req.params.cutoff,
+    });
+  });
+  
+  app.get('/dashboard/:project/:collabid/:cutoff?', authenticate, staffonly, function(req, res, next) {
+    res.render('collab', {
+      project: req.params.project,
+      collabid: req.params.collabid,
+      cutoff: req.params.cutoff,
+    });
+  });
+  
+  app.get('/dashboard/:project/:collabid/m/:milestone/:cutoff?', authenticate, staffonly, function(req, res, next) {
+    res.render('collab', {
+      project: req.params.project,
+      collabid: req.params.collabid,
+      milestone: req.params.milestone,
+      cutoff: req.params.cutoff,
+    });
+  });
+  
+  app.get('/baseline/:project/:filepath(*)', function(req, res, next) {
+    db.getBaseline(req.params.project, req.params.filepath, function(err, baseline) {
+      res.type('text/plain');
+      if (err) { return res.status(400).send(); }
+      res.setHeader('Cache-Control', 'max-age=3600');
+      res.send(baseline);
+    });
+  });
+  
+  app.get('/historical/:project/:collabid/:filepath(*)/:cutoff', authenticate, staffonly, function(req, res, next) {
+    db.getHistorical(req.params.collabid, req.params.filepath, moment(req.params.cutoff), function(err, historical) {
+      if (err) { return res.status(400).send(); }
+      res.setHeader('Cache-Control', 'max-age=3600');
+      res.send(historical);
     });
   });
   

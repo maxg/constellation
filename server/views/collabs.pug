@@ -1,0 +1,44 @@
+extends layout
+
+append head
+  title #{project} Collaborations - Eclipseonut
+
+block content
+  .row: .col-xs-12
+    a#back(href=`/dashboard/`) all projects
+    h2 #{project} collaborations
+      br
+      if milestone
+        small #[span.label.label-primary= milestone] checkoffs
+      if cutoff
+        |  #[small #[span.label.label-warning= cutoff] collabs]
+      else
+        |  #[small #[span.label.label-success current] collabs]
+  
+  #collabs.row
+  
+  #dupes-header.row.faded.hidden: .col-xs-12: h3 No longer active
+  
+  #dupes.row.faded
+  
+  template#collab
+    .collab.col-xs-6.col-sm-3.col-md-2: .tile.panel.panel-default: .panel-body
+      h4: a
+      span.grader
+      | &nbsp;
+      span.score
+  
+  template#score-0 #[span.glyphicon.glyphicon-minus]
+  template#score-1 #[span.glyphicon.glyphicon-ok]
+  template#score-2 #[span.glyphicon.glyphicon-ok]+
+  
+  script.
+    var shareURL = !{JSON.stringify(shareURL)};
+    var project = !{JSON.stringify(project)};
+    var milestone = !{JSON.stringify(milestone || false)};
+    var cutoff = !{JSON.stringify(cutoff || false)};
+  script(src='/public/sharedb.js')
+  script(src='/public/moment.js')
+  script(src='/static/collabs.js')
+  if milestone
+    script(src='/static/checkoffs.js')

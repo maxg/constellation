@@ -10,7 +10,16 @@ body {
   right: 10px;
 }
 #user.staff {
-  background-color: #f0ad4e;
+  background-color: #6f5499;
+}
+
+#back {
+  position: relative;
+  top: 10px;
+}
+#back::before {
+  font-weight: bold;
+  content: '\2190\00a0';
 }
 
 #big-logo {
@@ -34,7 +43,14 @@ body {
 h1 span.glyphicon,
 h2 span.glyphicon,
 h3 span.glyphicon {
-  font-size: 75%;
+  font-size: 85%;
+}
+
+h1 small .label,
+h2 small .label,
+h3 small .label {
+  position: relative;
+  top: -0.2em;
 }
 
 .alert > :first-child {
@@ -53,3 +69,80 @@ h3 span.glyphicon {
 textarea {
   font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
+
+.btn-group[data-toggle='buttons'] .btn-link {
+  border-radius: 4px;
+}
+.btn-group[data-toggle='buttons'] .btn-link:hover {
+  text-decoration: none;
+}
+.btn-group[data-toggle='buttons'] .btn-link.active {
+  color: #fff;
+  background-color: #428bca;
+  border-color: #357ebd;
+}
+
+.tile.panel .panel-body {
+  padding: 10px;
+}
+.tile h4 {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.faded {
+  opacity: 0.33;
+}
+
+.diff {
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 10px 0 0 0;
+  line-height: .9;
+}
+.diff .diff-part:not(.diff-added) {
+  -webkit-filter: grayscale(1);
+  opacity: .6;
+}
+.diff .diff-added {
+  line-height: 1.1;
+  background: rgba(252, 248, 227, .3);
+}
+.diff .diff-removed + .diff-added {
+}
+
+/* syntax highlighting with Eclipse colors */
+.hljs,
+.hljs-subst { color: #333; }
+.hljs-keyword,
+.hljs-attribute,
+.hljs-selector-tag,
+.hljs-meta-keyword,
+.hljs-doctag,
+.hljs-name { color: rgb(127,0,85); }
+.hljs-built_in,
+.hljs-bullet,
+.hljs-code,
+.hljs-addition { color: #2C6F2C; }
+.hljs-literal { color: #4D974D; }
+.hljs-regexp,
+.hljs-symbol,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-link,
+.hljs-selector-attr,
+.hljs-selector-pseudo { color: #BC6060; }
+.hljs-type,
+.hljs-string,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-quote,
+.hljs-template-tag,
+.hljs-deletion { color: rgb(41,0,255); }
+.hljs-title,
+.hljs-section { color: #333; }
+.hljs-comment { color: rgb(63,127,95); }
+.hljs-meta { color: rgb(100,100,100); }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: bold; }

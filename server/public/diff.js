@@ -1,0 +1,1 @@
+window.diff = require('diff');

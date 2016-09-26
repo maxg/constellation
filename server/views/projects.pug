@@ -1,0 +1,12 @@
+extends layout
+
+append head
+  title All Projects - Eclipseonut
+
+block content
+  .row: .col-xs-12
+    h2 All projects
+  
+  .row: .col-xs-12
+    each project in projects
+      h4 #[a(href=`/dashboard/${project._id}`)= project._id] #[small= project.count]
