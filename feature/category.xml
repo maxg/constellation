@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/eclipseonut.feature_0.2.0.qualifier.jar" id="eclipseonut.feature" version="0.2.0.qualifier">
+   <feature url="features/eclipseonut.feature_0.2.1.qualifier.jar" id="eclipseonut.feature" version="0.2.1.qualifier">
       <category name="eclipseonut.category"/>
    </feature>
    <category-def name="eclipseonut.category" label="Eclipseonut"/>
