@@ -6,6 +6,7 @@ module.exports = {
     httpUpdateSite: 8080,
     certDomain: 'MIT.EDU',
     userFakery: true,
+    secret: ...,
   },
   mongodb: 'mongodb://localhost:27017/eclipseonut-development',
 };

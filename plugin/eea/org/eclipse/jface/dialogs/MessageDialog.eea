@@ -1,0 +1,7 @@
+class org/eclipse/jface/dialogs/MessageDialog
+createCustomArea
+ (Lorg/eclipse/swt/widgets/Composite;)Lorg/eclipse/swt/widgets/Control;
+ (L1org/eclipse/swt/widgets/Composite;)L0org/eclipse/swt/widgets/Control;
+createDialogArea
+ (Lorg/eclipse/swt/widgets/Composite;)Lorg/eclipse/swt/widgets/Control;
+ (L1org/eclipse/swt/widgets/Composite;)L1org/eclipse/swt/widgets/Control;

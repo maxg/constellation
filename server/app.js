@@ -46,12 +46,19 @@ servers.web.on('secureConnection', function(connection) {
 new ws.Server({ server: servers.websocket }).on('connection', function(connection) {
   connection.on('error', err => console.error('WebSocket error', err));
   let stream = new websocketjsonstream(connection);
+  stream.authusername = db.tokenUsername(connection.upgradeReq.url.substr(1));
+  stream.push = function push(chunk, encoding) {
+    if (chunk && chunk.a === 'ping') {
+      return db.ping(chunk.collabid);
+    }
+    websocketjsonstream.prototype.push.call(this, chunk, encoding);
+  };
   stream._write = function _write(msg, encoding, next) {
     if (this.ws.readyState !== ws.OPEN) {
       return next(new Error('WebSocket must be OPEN to send'));
     }
     websocketjsonstream.prototype._write.call(this, msg, encoding, next);
-  }
+  };
   db.share.listen(stream);
 });
 

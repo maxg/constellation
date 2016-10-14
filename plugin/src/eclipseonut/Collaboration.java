@@ -1,9 +1,9 @@
 package eclipseonut;
 
-import static eclipseonut.Collaboration.State.CONNECTED;
-import static eclipseonut.Collaboration.State.CONNECTING;
-import static eclipseonut.Collaboration.State.DISCONNECTED;
-import static eclipseonut.Collaboration.State.RECONNECTING;
+import static eclipseonut.CollaborationState.CONNECTED;
+import static eclipseonut.CollaborationState.CONNECTING;
+import static eclipseonut.CollaborationState.DISCONNECTED;
+import static eclipseonut.CollaborationState.RECONNECTING;
 import static eclipseonut.Util.assertNotNull;
 
 import java.io.IOException;
@@ -33,10 +33,6 @@ import org.osgi.framework.Version;
 import eclipseonut.prefs.Preferences;
 
 public class Collaboration {
-    
-    public static enum State {
-        NONE, CONNECTING, CONNECTED, RECONNECTING, ALONE, DISCONNECTED;
-    }
     
     public static Collaboration connect(IProject project, CollaborationListener listener, SubMonitor progress)
             throws InterruptedException, ExecutionException, IOException, PartInitException {
@@ -90,7 +86,7 @@ public class Collaboration {
     public final JSEngine jse;
     public final JSWebSocket socket;
     
-    private State state = CONNECTING;
+    private CollaborationState state = CONNECTING;
     private final CollaborationListener listener;
     private final EditorManager manager;
     
@@ -105,7 +101,7 @@ public class Collaboration {
         this.partner = settings.get("partner");
         try {
             jse = new JSEngine();
-            socket = new JSWebSocket(jse, new URI(Preferences.ws()));
+            socket = new JSWebSocket(jse, new URI(Preferences.ws() + "/" + settings.get("token")));
         } catch (Exception e) {
             throw new IOException(e);
         }
@@ -129,7 +125,7 @@ public class Collaboration {
         progress.worked(1);
     }
     
-    public State state() {
+    public CollaborationState state() {
         return state;
     }
     
@@ -159,6 +155,11 @@ public class Collaboration {
         manager.stop();
         Runnable callback = jse::stop;
         jse.exec(js -> js.invocable.invokeFunction("disconnect", callback));
+    }
+    
+    public void ping() {
+        Debug.trace();
+        jse.exec(js -> socket.ping(collabid));
     }
     
     public Future<ShareDoc> open(IDocument local, IFile file, ITextEditor editor) {

@@ -1,9 +1,12 @@
 package eclipseonut;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 
@@ -60,5 +63,19 @@ public interface Util {
     @SuppressWarnings("unchecked")
     public static <T, U extends T> Function<T, Stream<U>> streamOnly(Class<U> subtype) {
         return t -> subtype.isInstance(t) ? Stream.of((U)t) : Stream.empty();
+    }
+    
+    /**
+     * Create a {@code Map<String, String>}.
+     * @param keysValues key_0, value_0, key_1, value_1, ...
+     * @return { key_0 => value_0, key_1 => value_1, ... }
+     */
+    public static Map<String, String> stringMap(@NonNull String... keysValues) {
+        Assert.isTrue(keysValues.length % 2 == 0);
+        Map<String, String> map = new HashMap<>();
+        for (int idx = 0; idx < keysValues.length; idx += 2) {
+            map.put(keysValues[idx], keysValues[idx+1]);
+        }
+        return map;
     }
 }

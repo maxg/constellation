@@ -22,9 +22,17 @@
    <extension
          point="org.eclipse.ui.commands">
       <command
+            description="Collaborate with Eclipseonut"
             id="eclipseonut.command.collaborate"
             name="Collaborate">
       </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commandImages">
+      <image
+            commandId="eclipseonut.command.collaborate"
+            icon="icons/collab-started.png">
+      </image>
    </extension>
    <extension
          point="org.eclipse.ui.handlers">

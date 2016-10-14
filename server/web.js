@@ -46,16 +46,16 @@ exports.createFrontend = function createFrontend(config, db) {
       });
     }
     
-    Object.assign(res.locals, {
-      authusername: cert.subject.emailAddress.replace('@' + config.web.certDomain, ''),
-      shareURL: `wss://${req.hostname}:${config.web.wss}`,
-    });
+    res.locals.authusername = cert.subject.emailAddress.replace('@' + config.web.certDomain, '');
     if (config.web.userFakery) {
       res.locals.authusername += '+' +
         crypto.createHash('md5').update(req.headers['user-agent']).digest('hex').substr(0, 3);
     }
     res.locals.authstaff = config.staff.indexOf(res.locals.authusername) >= 0;
     res.set('X-Authenticated-User', res.locals.authusername);
+    
+    res.locals.shareURL = `wss://${req.hostname}:${config.web.wss}/${db.usernameToken(res.locals.authusername)}`;
+    
     next();
   }
   
@@ -96,12 +96,13 @@ exports.createFrontend = function createFrontend(config, db) {
       }
       
       let me = res.locals.authusername;
+      let token = db.usernameToken(res.locals.authusername);
       let partner = agreed.partner.username;
       let project = agreed.me.project;
       let collabid = agreed.id;
       
       db.addUserToCollaboration(me, project, collabid, function(err) {
-        paired.emit(req.params.userid, { me, partner, project, collabid });
+        paired.emit(req.params.userid, { me, token, partner, project, collabid });
         res.send({ redirect: '/edit' });
       });
     });

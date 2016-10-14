@@ -3,6 +3,7 @@ package eclipseonut;
 import static eclipseonut.Util.assertNotNull;
 import static eclipseonut.Util.callIfNotNull;
 import static eclipseonut.Util.startThread;
+import static eclipseonut.Util.stringMap;
 
 import java.io.IOException;
 import java.net.URI;
@@ -14,6 +15,7 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.jetty.util.ajax.JSON;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.StatusCode;
@@ -128,6 +130,14 @@ public class JSWebSocket {
         readyState = CLOSING;
         // ShareDB connection to "closed" state
         jse.exec(js -> assertSession(session).close(StatusCode.NORMAL, "closed"));
+    }
+    
+    public void ping(String collabid) {
+        Debug.trace();
+        if (readyState != OPEN) {
+            return;
+        }
+        send(JSON.toString(stringMap("a", "ping", "collabid", collabid)));
     }
     
     private void scheduleReconnection(Instant started, int attempt) {

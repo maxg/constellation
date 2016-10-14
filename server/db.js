@@ -1,10 +1,12 @@
 const async = require('async');
+const crypto = require('crypto');
 const mongodb = require('mongodb');
 const sharedb = require('sharedb');
 
 const COLLABS = 'collabs';
 const USERS = 'users';
 const FILES = 'files';
+const PINGS = 'pings';
 
 exports.createBackend = function createBackend(config) {
   
@@ -13,8 +15,54 @@ exports.createBackend = function createBackend(config) {
   
   let connection = share.connect();
   
-  return {
+  function authorize(req) {
+    if (req.agent.stream.isServer) { return true; }
+    if (req.agent.authstaff) { return true; }
+    if (req.collection === COLLABS) {
+      return req.snapshot.data.users.indexOf(req.agent.authusername) >= 0;
+    }
+    if (req.collection === FILES) { return true; }
+    return false;
+  }
+  
+  share.use('connect', function(req, cb) {
+    if ( ! req.agent.stream.authusername) {
+      return cb('401 Unauthorized');
+    }
+    req.agent.authusername = req.agent.stream.authusername;
+    req.agent.authstaff = config.staff.indexOf(req.agent.authusername) >= 0;
+    cb();
+  });
+  share.use('doc', function(req, cb) {
+    if (authorize(req)) { return cb(); }
+    console.error('denied doc', req.agent.authusername, req.collection, req.id);
+    cb('403 Forbidden');
+  });
+  share.use('commit', function(req, cb) {
+    if (authorize(req)) { return cb(); }
+    console.error('denied commit', req.agent.authusername, req.collection, req.id);
+    cb('403 Forbidden');
+  });
+  share.use('query', function(req, cb) {
+    if (req.agent.stream.isServer || req.agent.authstaff) { return cb(); }
+    console.error('denied query', req.agent.authusername, req.collection, req.query);
+    cb('403 Forbidden');
+  });
+  
+  let backend = {
     share,
+    
+    // get signed username token
+    usernameToken(username) {
+      let hmac = crypto.createHmac('sha256', config.web.secret).update(username).digest('hex');
+      return username + ':' + hmac;
+    },
+    
+    // verify signed username token
+    tokenUsername(token) {
+      let username = token.split(':')[0];
+      return token === backend.usernameToken(username) ? username : undefined;
+    },
     
     // fetch all project names
     getProjects(callback) {
@@ -97,5 +145,11 @@ exports.createBackend = function createBackend(config) {
         });
       });
     },
+    
+    ping(collabid) {
+      console.log('ping', collabid);
+    },
   };
+  
+  return backend;
 };

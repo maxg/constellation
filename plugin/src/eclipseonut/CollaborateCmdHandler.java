@@ -2,7 +2,6 @@ package eclipseonut;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -18,7 +17,6 @@ import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
@@ -26,27 +24,16 @@ import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.commands.IElementUpdater;
 import org.eclipse.ui.menus.UIElement;
 
-import eclipseonut.Collaboration.State;
-
 public class CollaborateCmdHandler extends AbstractHandler implements IElementUpdater, CollaborationListener {
     
     private static final String COLLABORATE = "eclipseonut.command.collaborate";
-    
-    private static ImageDescriptor ICON_STARTED = Activator.getIcon("collab-started");
-    private static final Map<State, ImageDescriptor> ICONS = new EnumMap<>(State.class);
-    static {
-        ICONS.put(State.NONE, Activator.getIcon("collab-stopped"));
-        ICONS.put(State.RECONNECTING, Activator.getIcon("collab-warning"));
-        ICONS.put(State.ALONE, Activator.getIcon("collab-warning"));
-        ICONS.put(State.DISCONNECTED, Activator.getIcon("collab-error"));
-    }
     
     private Optional<Collaboration> collab = Optional.empty();
     
     @Override
     public @Nullable Object execute(@Nullable ExecutionEvent event) {
         this.setBaseEnabled(false);
-        if (state() == State.NONE) {
+        if (state() == CollaborationState.NONE) {
             start();
         } else {
             stop();
@@ -58,9 +45,9 @@ public class CollaborateCmdHandler extends AbstractHandler implements IElementUp
     
     @Override
     public void updateElement(UIElement element, @SuppressWarnings("rawtypes") Map parameters) {
-        element.setIcon(ICONS.getOrDefault(state(), ICON_STARTED));
-        element.setText(Activator.getString("command.collaborate." + state().name().toLowerCase()));
-        element.setChecked(state() != State.NONE);
+        element.setIcon(state().icon);
+        element.setText(state().description);
+        element.setChecked(state() != CollaborationState.NONE);
     }
     
     @Override
@@ -69,8 +56,8 @@ public class CollaborateCmdHandler extends AbstractHandler implements IElementUp
         Activator.getService(ICommandService.class).refreshElements(COLLABORATE, null);
     }
     
-    private State state() {
-        return collab.isPresent() ? collab.get().state() : State.NONE;
+    private CollaborationState state() {
+        return collab.isPresent() ? collab.get().state() : CollaborationState.NONE;
     }
     
     private void start() {
@@ -89,15 +76,13 @@ public class CollaborateCmdHandler extends AbstractHandler implements IElementUp
     private void stop() {
         Debug.trace();
         Assert.isTrue(collab.isPresent());
-        boolean stop;
-        String description = "on " + collab.get().project.getName() + " with " + collab.get().partner;
-        if (state() == State.DISCONNECTED) {
+        final boolean stop;
+        if (state() == CollaborationState.DISCONNECTED) {
             stop = MessageDialog.openConfirm(null, "Collaboration disconnected",
-                    "Collaboration " + description + " disconnected.");
+                    "Collaboration on " + collab.get().project.getName() + " with " + collab.get().partner + " disconnected.");
         } else {
-            stop = new MessageDialog(null, "Stop collaboration?", null,
-                    "Stop collaborating " + description + "?",
-                    MessageDialog.CONFIRM, 0, "Stop", "Don't stop").open() == 0;
+            collab.get().ping();
+            stop = new StatusDialog(null, collab.get()).open() == StatusDialog.STOP;
         }
         if (stop) {
             collab.get().stop();
