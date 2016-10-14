@@ -14,6 +14,9 @@ block content
         |  #[small #[span.label.label-warning= cutoff] collabs]
       else
         |  #[small #[span.label.label-success current] collabs]
+        if milestone
+          small: a(href=`/dashboard/${project}/live/m/${milestone}`)
+            |  #[span.glyphicon.glyphicon-flag] live checkoff
   
   #collabs.row
   

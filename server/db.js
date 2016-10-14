@@ -147,7 +147,33 @@ exports.createBackend = function createBackend(config) {
     },
     
     ping(collabid) {
-      console.log('ping', collabid);
+      async.autoInject({
+        collab(done) {
+          let collab = connection.get(COLLABS, collabid);
+          collab.fetch(err => done(err, collab));
+        },
+        ping(collab, done) {
+          let ping = connection.get(PINGS, collab.data.project);
+          ping.fetch(err => done(err, ping));
+        },
+        ping_created(ping, done) {
+          if ( ! ping.type) {
+            ping.create({ collabs: [ null, null, null, null, null, null ], idx: 0 }, done);
+          } else { done(); }
+        },
+        ping_replace(collab, ping, ping_created, done) {
+          let curr = ping.data;
+          ping.submitOp([
+            { p: [ 'collabs', curr.idx ], ld: curr.collabs[curr.idx],
+                                          li: Object.assign({ collabid }, collab.data) },
+            { p: [ 'idx' ], od: curr.idx,
+                            oi: (curr.idx+1)%curr.collabs.length },
+          ], done);
+        },
+        debug(ping, ping_replace, done) {
+          done();
+        },
+      });
     },
   };
   

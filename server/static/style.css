@@ -90,6 +90,12 @@ textarea {
   white-space: pre-line;
 }
 
+.ping.faded {
+  opacity: 0.1;
+  transition: opacity 20s ease-out 5s;
+  -webkit-transition: opacity 20s ease-out 5s;
+}
+
 .faded {
   opacity: 0.33;
 }

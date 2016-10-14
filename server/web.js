@@ -139,6 +139,13 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
   
+  app.get('/dashboard/:project/live/m/:milestone', authenticate, staffonly, function(req, res, next) {
+    res.render('pings', {
+      project: req.params.project,
+      milestone: req.params.milestone,
+    });
+  });
+  
   app.get('/dashboard/:project/m/:milestone/:cutoff?', authenticate, staffonly, function(req, res, next) {
     res.render('collabs', {
       project: req.params.project,
