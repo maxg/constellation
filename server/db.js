@@ -132,13 +132,13 @@ exports.createBackend = function createBackend(config) {
           mongo.collection('o_'+FILES).aggregate([
             { $match: { d: file._id, 'm.ts': { $lte: +timestamp } } },
             { $sort: { v: 1 } },
-            { $project: { _id: 0, create: 1, op: 1 } },
+            { $project: { _id: 0, create: 1, op: 1, v: 1 } },
           ], function(err, ops) {
             if (err) { return callback(err); }
-            let doc = {};
+            let doc = { v: 0 };
             for (let op of ops) {
-              if (op.create) { doc = op.create; }
-              if (op.op) { doc.data = sharedb.types.map[doc.type].apply(doc.data, op.op); }
+              let err = sharedb.ot.apply(doc, op);
+              if (err) { return callback(err); }
             }
             callback(err, doc);
           });
