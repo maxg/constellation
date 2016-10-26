@@ -84,13 +84,19 @@ exports.createBackend = function createBackend(config) {
     // add user to collaboration, and set their active collaboration
     addUserToCollaboration(username, project, collabid, callback) {
       async.autoInject({
-        collab(done) { done(null, connection.get(COLLABS, collabid)); },
+        collab(done) {
+          let collab = connection.get(COLLABS, collabid);
+          collab.fetch(err => done(err, collab));
+        },
         collab_created(collab, done) {
           if ( ! collab.type) {
             collab.create({ [USERS]: [], project }, done);
           } else { done(); }
         },
-        user(done) { done(null, connection.get(USERS, username)); },
+        user(done) {
+          let user = connection.get(USERS, username);
+          user.fetch(err => done(err, user));
+        },
         user_created(user, done) {
           if ( ! user.type) {
             user.create({ [COLLABS]: [] }, done);
