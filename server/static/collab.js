@@ -23,6 +23,8 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
           updateDiff(diff, baseline, historical.data ? historical.data.text : undefined);
+        }).fail(function(req, status, err) {
+          diff.textContent = 'Error fetching code: ' + errorToString(req.responseJSON, status, err);
         });
       } else {
         file.subscribe(function() {
@@ -32,6 +34,8 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
           });
         });
       }
+    }).fail(function(req, status, err) {
+      diff.textContent = 'Error fetching baseline: ' + errorToString(req.responseJSON, status, err);
     });
   });
 });
@@ -53,4 +57,8 @@ function updateDiff(node, baseline, text) {
     node.appendChild(elt);
   });
   hljs.highlightBlock(node);
+}
+
+function errorToString(json, status, err) {
+  return (json.code || status) + ' ' + (json.message || err);
 }
