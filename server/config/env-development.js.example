@@ -8,5 +8,5 @@ module.exports = {
     userFakery: true,
     secret: ...,
   },
-  mongodb: 'mongodb://localhost:27017/eclipseonut-development',
+  mongodb: 'mongodb://localhost:27017/constellation-development',
 };

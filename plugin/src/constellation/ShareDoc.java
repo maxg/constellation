@@ -1,6 +1,6 @@
-package eclipseonut;
+package constellation;
 
-import static eclipseonut.Util.startThread;
+import static constellation.Util.startThread;
 
 import java.time.Duration;
 import java.util.EventObject;

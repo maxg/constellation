@@ -1,4 +1,4 @@
-package eclipseonut;
+package constellation;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -26,7 +26,7 @@ import org.eclipse.ui.menus.UIElement;
 
 public class CollaborateCmdHandler extends AbstractHandler implements IElementUpdater, CollaborationListener {
     
-    private static final String COLLABORATE = "eclipseonut.command.collaborate";
+    private static final String COLLABORATE = "constellation.command.collaborate";
     
     private Optional<Collaboration> collab = Optional.empty();
     

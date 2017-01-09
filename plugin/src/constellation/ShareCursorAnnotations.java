@@ -1,6 +1,6 @@
-package eclipseonut;
+package constellation;
 
-import static eclipseonut.Util.assertNotNull;
+import static constellation.Util.assertNotNull;
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Stream.concat;
 
@@ -26,9 +26,9 @@ import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
 
 public class ShareCursorAnnotations {
     
-    private static final String CARET = "eclipseonut.annotation.caret";
+    private static final String CARET = "constellation.annotation.caret";
     private static final RGB CARET_COLOR = new RGB(181, 118, 117);
-    private static final String SELECTION = "eclipseonut.annotation.selection";
+    private static final String SELECTION = "constellation.annotation.selection";
     private static final RGB SELECTION_COLOR = new RGB(242, 222, 222);
     
     private final ITextViewerExtension4 viewer;

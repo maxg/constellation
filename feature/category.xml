@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/eclipseonut.feature_0.2.1.qualifier.jar" id="eclipseonut.feature" version="0.2.1.qualifier">
-      <category name="eclipseonut.category"/>
+   <feature url="features/constellation.feature_0.2.2.qualifier.jar" id="constellation.feature" version="0.2.2.qualifier">
+      <category name="constellation.category"/>
    </feature>
-   <category-def name="eclipseonut.category" label="Eclipseonut"/>
+   <category-def name="constellation.category" label="Constellation"/>
 </site>

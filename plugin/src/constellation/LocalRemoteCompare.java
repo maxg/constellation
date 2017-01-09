@@ -1,4 +1,4 @@
-package eclipseonut;
+package constellation;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;

@@ -1,15 +1,12 @@
-Eclipseonut
-===========
+Constellation
+=============
 
-**Collaborative coding for small examples -- in Eclipse**
-
-see also: [**Coconut**](https://github.com/maxg/coconut)
+**Classroom collaborative coding in Eclipse**
 
 
 Icons
 -----
 
-- [Palm tree](http://thenounproject.com/term/palm-tree/10397/)
 - [Eclipse logo](http://www.eclipse.org/artwork/)
 
 

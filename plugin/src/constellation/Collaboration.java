@@ -1,10 +1,10 @@
-package eclipseonut;
+package constellation;
 
-import static eclipseonut.CollaborationState.CONNECTED;
-import static eclipseonut.CollaborationState.CONNECTING;
-import static eclipseonut.CollaborationState.DISCONNECTED;
-import static eclipseonut.CollaborationState.RECONNECTING;
-import static eclipseonut.Util.assertNotNull;
+import static constellation.CollaborationState.CONNECTED;
+import static constellation.CollaborationState.CONNECTING;
+import static constellation.CollaborationState.DISCONNECTED;
+import static constellation.CollaborationState.RECONNECTING;
+import static constellation.Util.assertNotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +30,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.osgi.framework.Version;
 
-import eclipseonut.prefs.Preferences;
+import constellation.prefs.Preferences;
 
 public class Collaboration {
     
@@ -51,7 +51,7 @@ public class Collaboration {
         
         if (metadata.containsKey("update")) {
             browse("/update/" + version);
-            throw new IOException("Please update to the latest version of Eclipseonut");
+            throw new IOException("Please update to the latest version of Constellation");
         }
         
         String userid = metadata.get("userid");

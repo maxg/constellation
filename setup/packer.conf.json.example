@@ -16,5 +16,5 @@
   "deploy_openstack_flavor": "FLAVOR_ID",
   "deploy_openstack_key": "KEY_NAME",
   
-  "app": "eclipseonut"
+  "app": "constellation"
 }

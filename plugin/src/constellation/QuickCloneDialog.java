@@ -1,6 +1,6 @@
-package eclipseonut;
+package constellation;
 
-import static eclipseonut.Util.assertNotNull;
+import static constellation.Util.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -86,7 +86,7 @@ public class QuickCloneDialog extends InputDialog {
     }
     
     private IProject cloneAndImport(String remoteURL) throws IOException, InvocationTargetException, InterruptedException {
-        File tempDir = Files.createTempDirectory("eclipseonut-").toFile();
+        File tempDir = Files.createTempDirectory("constellation-").toFile();
         try {
             new ProgressMonitorDialog(null).run(true, true, monitor -> cloneAndImport(remoteURL, tempDir, monitor));
             String projectName = getProjectName(tempDir);

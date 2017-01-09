@@ -1,9 +1,9 @@
-package eclipseonut;
+package constellation;
 
-import static eclipseonut.Util.assertNotNull;
-import static eclipseonut.Util.callIfNotNull;
-import static eclipseonut.Util.startThread;
-import static eclipseonut.Util.stringMap;
+import static constellation.Util.assertNotNull;
+import static constellation.Util.callIfNotNull;
+import static constellation.Util.startThread;
+import static constellation.Util.stringMap;
 
 import java.io.IOException;
 import java.net.URI;

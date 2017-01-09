@@ -25,15 +25,15 @@ rm -rf "$BUILD/output" && mkdir "$BUILD/output"
 
 # Copy feature & plug-in sources to build output dir
 #  - include library JARs
-#  - rename e.g. plugin -> plugins/eclipseonut.plugin
+#  - rename e.g. plugin -> plugins/constellation.plugin
 COPYFILE_DISABLE=1 tar cv -T <(git ls-files -- feature
                                git ls-files -- plugin | fgrep -v plugin/eea/
                                ls plugin/lib/*.jar) \
-                          -s '%^\(feature\)*\(plugin\)*%~s/eclipseonut.~%' |
+                          -s '%^\(feature\)*\(plugin\)*%~s/constellation.~%' |
                    tar x -C "$BUILD/output"
 
 # Replace default settings
-cp "$BUILD/defaults.properties" "$BUILD/output/plugins/eclipseonut.plugin/src/eclipseonut/prefs/"
+cp "$BUILD/defaults.properties" "$BUILD/output/plugins/constellation.plugin/src/constellation/prefs/"
 
 # Run the headless PDE build
 java -jar "$ECLIPSE"/plugins/$launcher.*.jar \
@@ -44,7 +44,7 @@ java -jar "$ECLIPSE"/plugins/$launcher.*.jar \
      "$@"
 
 # Fix site name
-sed -i '' -e "/<repository/s/'file:[^']*'/'Eclipseonut'/" "$BUILD"/output/site/*.xml
+sed -i '' -e "/<repository/s/'file:[^']*'/'Constellation'/" "$BUILD"/output/site/*.xml
 
 # Record version number
 fgrep .feature= "$BUILD/output/finalFeaturesVersions.properties" | cut -f2 -d= > "$BUILD/output/site/version.txt"

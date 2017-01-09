@@ -1,9 +1,9 @@
-package eclipseonut.prefs;
+package constellation.prefs;
 
-import static eclipseonut.prefs.Preferences.Key.DEBUG;
-import static eclipseonut.prefs.Preferences.Key.HOST;
-import static eclipseonut.prefs.Preferences.Key.HTTP_PORT;
-import static eclipseonut.prefs.Preferences.Key.WS_PORT;
+import static constellation.prefs.Preferences.Key.DEBUG;
+import static constellation.prefs.Preferences.Key.HOST;
+import static constellation.prefs.Preferences.Key.HTTP_PORT;
+import static constellation.prefs.Preferences.Key.WS_PORT;
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.Integer.parseInt;
 
@@ -13,8 +13,8 @@ import java.util.Properties;
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 
-import eclipseonut.Activator;
-import eclipseonut.Log;
+import constellation.Activator;
+import constellation.Log;
 
 /**
  * Plug-in preferences.
@@ -37,7 +37,7 @@ public class Preferences extends AbstractPreferenceInitializer {
             Log.warn("Error reading preferences defaults", ioe);
         }
         store.setDefault(DEBUG.key,     parseBoolean(defaults.getProperty(DEBUG.key, "false")));
-        store.setDefault(HOST.key,      defaults.getProperty(HOST.key, "eclipseonut"));
+        store.setDefault(HOST.key,      defaults.getProperty(HOST.key, "constellation"));
         store.setDefault(HTTP_PORT.key, parseInt(defaults.getProperty(HTTP_PORT.key, "443")));
         store.setDefault(WS_PORT.key,   parseInt(defaults.getProperty(WS_PORT.key, "444")));
     }

@@ -1,4 +1,4 @@
-package eclipseonut;
+package constellation;
 
 public interface CollaborationListener {
     

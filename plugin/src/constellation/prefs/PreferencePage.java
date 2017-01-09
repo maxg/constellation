@@ -1,8 +1,8 @@
-package eclipseonut.prefs;
+package constellation.prefs;
 
-import static eclipseonut.prefs.Preferences.Key.HOST;
-import static eclipseonut.prefs.Preferences.Key.HTTP_PORT;
-import static eclipseonut.prefs.Preferences.Key.WS_PORT;
+import static constellation.prefs.Preferences.Key.HOST;
+import static constellation.prefs.Preferences.Key.HTTP_PORT;
+import static constellation.prefs.Preferences.Key.WS_PORT;
 
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IntegerFieldEditor;
@@ -10,7 +10,7 @@ import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
-import eclipseonut.Activator;
+import constellation.Activator;
 
 /**
  * Preferences GUI.
@@ -20,7 +20,7 @@ public class PreferencePage extends FieldEditorPreferencePage implements IWorkbe
     public PreferencePage() {
         super(GRID);
         setPreferenceStore(Activator.getDefault().getPreferenceStore());
-        setDescription("Eclipseonut connection preferences");
+        setDescription("Constellation connection preferences");
     }
     
     @Override

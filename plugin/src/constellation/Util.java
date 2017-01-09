@@ -1,4 +1,4 @@
-package eclipseonut;
+package constellation;
 
 import java.util.HashMap;
 import java.util.Map;

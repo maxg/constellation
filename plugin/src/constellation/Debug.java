@@ -1,7 +1,7 @@
-package eclipseonut;
+package constellation;
 
-import static eclipseonut.Util.assertNotNull;
-import static eclipseonut.Util.streamOnly;
+import static constellation.Util.assertNotNull;
+import static constellation.Util.streamOnly;
 
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -92,7 +92,7 @@ public class Debug {
                 tm.checkClientTrusted(chain, authType);
             }
             public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                if (chain[0].getSubjectDN().getName().contains("eclipseonut")) {
+                if (chain[0].getSubjectDN().getName().contains("constellation")) {
                     Log.info("Allowing untrusted server " + chain[0].getSubjectDN());
                     return;
                 }
@@ -109,7 +109,7 @@ public class Debug {
             private final HostnameVerifier verify = HttpsURLConnection.getDefaultHostnameVerifier();
             public boolean verify(String hostname, SSLSession session) {
                 try {
-                    if (session.getPeerPrincipal().getName().contains("eclipseonut")) {
+                    if (session.getPeerPrincipal().getName().contains("constellation")) {
                         Log.info("Allowing mismatched hostname " + hostname + " vs. " + session.getPeerHost());
                         return true;
                     }

@@ -1,7 +1,7 @@
 @NonNullByDefault({
     PARAMETER, RETURN_TYPE, FIELD, TYPE_PARAMETER, TYPE_BOUND, TYPE_ARGUMENT, ARRAY_CONTENTS
 })
-package eclipseonut.prefs;
+package constellation;
 
 import static org.eclipse.jdt.annotation.DefaultLocation.*;
 

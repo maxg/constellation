@@ -7,10 +7,10 @@
             allPopups="false"
             locationURI="toolbar:org.eclipse.ui.trim.status">
          <toolbar
-               id="eclipseonut.statusbar"
-               label="Eclipseonut">
+               id="constellation.statusbar"
+               label="Constellation">
             <command
-                  commandId="eclipseonut.command.collaborate"
+                  commandId="constellation.command.collaborate"
                   icon="icons/collab-stopped.png"
                   label="%command.collaborate.none"
                   mode="FORCE_TEXT"
@@ -22,38 +22,38 @@
    <extension
          point="org.eclipse.ui.commands">
       <command
-            description="Collaborate with Eclipseonut"
-            id="eclipseonut.command.collaborate"
+            description="Collaborate with Constellation"
+            id="constellation.command.collaborate"
             name="Collaborate">
       </command>
    </extension>
    <extension
          point="org.eclipse.ui.commandImages">
       <image
-            commandId="eclipseonut.command.collaborate"
+            commandId="constellation.command.collaborate"
             icon="icons/collab-started.png">
       </image>
    </extension>
    <extension
          point="org.eclipse.ui.handlers">
       <handler
-            class="eclipseonut.CollaborateCmdHandler"
-            commandId="eclipseonut.command.collaborate">
+            class="constellation.CollaborateCmdHandler"
+            commandId="constellation.command.collaborate">
       </handler>
    </extension>
    <extension
          point="org.eclipse.ui.preferencePages">
       <page
             category="org.eclipse.team.ui.TeamPreferences"
-            class="eclipseonut.prefs.PreferencePage"
-            id="eclipseonut.prefs.page"
-            name="Eclipseonut">
+            class="constellation.prefs.PreferencePage"
+            id="constellation.prefs.page"
+            name="Constellation">
       </page>
    </extension>
    <extension
          point="org.eclipse.core.runtime.preferences">
       <initializer
-            class="eclipseonut.prefs.Preferences">
+            class="constellation.prefs.Preferences">
       </initializer>
    </extension>
 </plugin>

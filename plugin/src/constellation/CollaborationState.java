@@ -1,4 +1,4 @@
-package eclipseonut;
+package constellation;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 

@@ -1,4 +1,4 @@
-package eclipseonut;
+package constellation;
 
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.annotation.Nullable;

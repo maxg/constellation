@@ -1,6 +1,6 @@
-package eclipseonut;
+package constellation;
 
-import static eclipseonut.Util.assertNotNull;
+import static constellation.Util.assertNotNull;
 
 import java.io.IOException;
 import java.io.InputStreamReader;

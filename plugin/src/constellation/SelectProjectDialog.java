@@ -1,6 +1,6 @@
-package eclipseonut;
+package constellation;
 
-import static eclipseonut.Util.assertNotNull;
+import static constellation.Util.assertNotNull;
 import static java.util.Collections.singletonList;
 
 import org.eclipse.core.resources.IProject;
@@ -47,7 +47,7 @@ public class SelectProjectDialog extends ElementTreeSelectionDialog {
         setInput(input);
         setValidator(VALIDATOR);
         setAllowMultiple(false);
-        setTitle("Eclipseonut");
+        setTitle("Constellation");
         setMessage("Select a project to collaborate on.");
     }
     

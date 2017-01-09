@@ -1,6 +1,6 @@
-package eclipseonut;
+package constellation;
 
-import static eclipseonut.Util.assertNotNull;
+import static constellation.Util.assertNotNull;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;

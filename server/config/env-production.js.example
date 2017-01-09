@@ -6,5 +6,5 @@ module.exports = {
     certDomain: 'MIT.EDU',
     secret: ...,
   },
-  mongodb: 'mongodb://localhost:27017/eclipseonut',
+  mongodb: 'mongodb://localhost:27017/constellation',
 };

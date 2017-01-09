@@ -1,6 +1,6 @@
-var Activator = Java.type('eclipseonut.Activator');
-var Debug = Java.type('eclipseonut.Debug');
-var Log = Java.type('eclipseonut.Log');
+var Activator = Java.type('constellation.Activator');
+var Debug = Java.type('constellation.Debug');
+var Log = Java.type('constellation.Log');
 
 var connection = new window.sharedb.Connection(CollaborationInstance.socket);
 

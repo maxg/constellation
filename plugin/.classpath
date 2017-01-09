@@ -2,49 +2,49 @@
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins">
 		<attributes>
-			<attribute name="annotationpath" value="/eclipseonut-plugin/eea"/>
+			<attribute name="annotationpath" value="/constellation-plugin/eea"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="lib/jetty-io.jar" sourcepath="lib/sources/jetty-io-sources.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/eclipseonut-plugin/lib/javadoc/jetty-io-javadoc.jar!/"/>
-			<attribute name="annotationpath" value="/eclipseonut-plugin/eea"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/jetty-io-javadoc.jar!/"/>
+			<attribute name="annotationpath" value="/constellation-plugin/eea"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/jetty-util-ajax.jar" sourcepath="lib/sources/jetty-util-ajax-sources.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/eclipseonut-plugin/lib/javadoc/jetty-util-ajax-javadoc.jar!/"/>
-			<attribute name="annotationpath" value="/eclipseonut-plugin/eea"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/jetty-util-ajax-javadoc.jar!/"/>
+			<attribute name="annotationpath" value="/constellation-plugin/eea"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/jetty-util.jar" sourcepath="lib/sources/jetty-util-sources.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/eclipseonut-plugin/lib/javadoc/jetty-util-javadoc.jar!/"/>
-			<attribute name="annotationpath" value="/eclipseonut-plugin/eea"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/jetty-util-javadoc.jar!/"/>
+			<attribute name="annotationpath" value="/constellation-plugin/eea"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/websocket-api.jar" sourcepath="lib/sources/websocket-api-sources.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/eclipseonut-plugin/lib/javadoc/websocket-api-javadoc.jar!/"/>
-			<attribute name="annotationpath" value="/eclipseonut-plugin/eea"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/websocket-api-javadoc.jar!/"/>
+			<attribute name="annotationpath" value="/constellation-plugin/eea"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/websocket-client.jar" sourcepath="lib/sources/websocket-client-sources.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/eclipseonut-plugin/lib/javadoc/websocket-client-javadoc.jar!/"/>
-			<attribute name="annotationpath" value="/eclipseonut-plugin/eea"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/websocket-client-javadoc.jar!/"/>
+			<attribute name="annotationpath" value="/constellation-plugin/eea"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/websocket-common.jar" sourcepath="lib/sources/websocket-common-sources.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/eclipseonut-plugin/lib/javadoc/websocket-common-javadoc.jar!/"/>
-			<attribute name="annotationpath" value="/eclipseonut-plugin/eea"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/websocket-common-javadoc.jar!/"/>
+			<attribute name="annotationpath" value="/constellation-plugin/eea"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
 		<attributes>
-			<attribute name="annotationpath" value="/eclipseonut-plugin/eea"/>
+			<attribute name="annotationpath" value="/constellation-plugin/eea"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="output" path="bin"/>

@@ -1,6 +1,6 @@
-package eclipseonut;
+package constellation;
 
-import static eclipseonut.Util.assertNotNull;
+import static constellation.Util.assertNotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
@@ -23,11 +23,11 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
-import eclipseonut.prefs.Preferences;
+import constellation.prefs.Preferences;
 
 public class Activator extends AbstractUIPlugin {
     
-    public static final String PLUGIN_ID = "eclipseonut.plugin";
+    public static final String PLUGIN_ID = "constellation.plugin";
     
     private static @Nullable Activator plugin;
     
@@ -69,7 +69,7 @@ public class Activator extends AbstractUIPlugin {
         }).toArray(IStatus[]::new);
         IStatus status = new MultiStatus(PLUGIN_ID, 0, children, message + ":\n" + causes, error);
         
-        ErrorDialog.openError(parent, "Eclipseonut Error", null, status);
+        ErrorDialog.openError(parent, "Constellation Error", null, status);
     }
     
     private static Stream<Throwable> causes(@Nullable Throwable error) {
