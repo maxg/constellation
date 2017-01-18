@@ -7,8 +7,8 @@ set -v
 # Apt Repositories
 cat > /etc/apt/sources.list.d/nodesource.list <<< 'deb https://deb.nodesource.com/node_6.x trusty main'
 wget -qO - https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
-cat > /etc/apt/sources.list.d/mongodb-org.list <<< 'deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse'
-apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927
+cat > /etc/apt/sources.list.d/mongodb-org.list <<< 'deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.4 multiverse'
+apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
 apt-get update
 
 # Development
