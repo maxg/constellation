@@ -3,12 +3,16 @@ const crypto = require('crypto');
 const mongodb = require('mongodb');
 const sharedb = require('sharedb');
 
+const logger = require('./logger');
+
 const COLLABS = 'collabs';
 const USERS = 'users';
 const FILES = 'files';
 const PINGS = 'pings';
 
 exports.createBackend = function createBackend(config) {
+  
+  const log = logger.log.child({ in: 'db' });
   
   const db = require('sharedb-mongo')(config.mongodb);
   const share = new sharedb({ db });
@@ -35,17 +39,17 @@ exports.createBackend = function createBackend(config) {
   });
   share.use('doc', function(req, cb) {
     if (authorize(req)) { return cb(); }
-    console.error('denied doc', req.agent.authusername, req.collection, req.id);
+    log.error({ user: req.agent.authusername, collection: req.collection, id: req.id }, 'denied doc');
     cb('403 Forbidden');
   });
   share.use('commit', function(req, cb) {
     if (authorize(req)) { return cb(); }
-    console.error('denied commit', req.agent.authusername, req.collection, req.id);
+    log.error({ user: req.agent.authusername, collection: req.collection, id: req.id }, 'denied commit');
     cb('403 Forbidden');
   });
   share.use('query', function(req, cb) {
     if (req.agent.stream.isServer || req.agent.authstaff) { return cb(); }
-    console.error('denied query', req.agent.authusername, req.collection, req.query);
+    log.error({ user: req.agent.authusername, collection: req.collection, query: req.query }, 'denied query');
     cb('403 Forbidden');
   });
   

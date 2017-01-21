@@ -6,7 +6,9 @@ const websocketjsonstream = require('websocket-json-stream');
 const x509 = require('x509');
 
 const config = require('./config');
+const logger = require('./logger');
 
+const log = logger.log.child({ in: 'app' });
 const db = require('./db').createBackend(config);
 const web = require('./web').createFrontend(config, db);
 
@@ -44,7 +46,7 @@ servers.web.on('secureConnection', function(connection) {
 // connect websocket to share
 
 new ws.Server({ server: servers.websocket }).on('connection', function(connection) {
-  connection.on('error', err => console.error('WebSocket error', err));
+  connection.on('error', err => log.error({ err }, 'WebSocket error'));
   let stream = new websocketjsonstream(connection);
   stream.authusername = db.tokenUsername(connection.upgradeReq.url.substr(1));
   stream.push = function push(chunk, encoding) {
@@ -65,14 +67,14 @@ new ws.Server({ server: servers.websocket }).on('connection', function(connectio
 // start listening
 
 servers.web.listen(config.web.https, function() {
-  console.log('Web server listening on', servers.web.address());
+  log.info({ address: servers.web.address() }, 'Web server listening');
 });
 servers.websocket.listen(config.web.wss, function() {
-  console.log('WebSocket server listening on', servers.websocket.address());
+  log.info({ address: servers.websocket.address() }, 'WebSocket server listening');
 });
 if (config.web.httpUpdateSite) {
   servers.update = http.createServer(web.createUpdateSite());
   servers.update.listen(config.web.httpUpdateSite, function() {
-    console.log('HTTP update site listening on', servers.update.address());
+    log.info({ address: servers.update.address() }, 'HTTP update site listening');
   });
 }

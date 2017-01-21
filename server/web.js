@@ -8,8 +8,12 @@ const moment = require('moment');
 const mongodb = require('mongodb');
 const pug = require('pug');
 
+const logger = require('./logger');
+
 exports.createFrontend = function createFrontend(config, db) {
   
+  const log = logger.log.child({ in: 'app' });
+
   const join = require('./join').create(config);
   const paired = new events.EventEmitter();
   
@@ -17,10 +21,13 @@ exports.createFrontend = function createFrontend(config, db) {
   
   app.set('view engine', 'pug');
   app.set('views', `${__dirname}/views`);
+  app.set('x-powered-by', false);
   
   app.use('/public', enchilada(`${__dirname}/public`));
   app.use('/static', express.static(`${__dirname}/static`));
   app.use(bodyparser.json());
+  
+  app.use(logger.express(log));
   
   app.locals.config = config;
   
