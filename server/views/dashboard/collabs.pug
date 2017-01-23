@@ -1,4 +1,4 @@
-extends layout
+extends ../layout
 
 append head
   title #{project} Collaborations - Constellation
@@ -42,6 +42,6 @@ block content
     var cutoff = !{JSON.stringify(cutoff || false)};
   script(src='/public/sharedb.js')
   script(src='/public/moment.js')
-  script(src='/static/collabs.js')
+  script(src='/static/dashboard/collabs.js')
   if milestone
-    script(src='/static/checkoffs.js')
+    script(src='/static/dashboard/checkoffs.js')

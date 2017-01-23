@@ -133,28 +133,28 @@ exports.createFrontend = function createFrontend(config, db) {
   
   app.get('/dashboard', authenticate, staffonly, function(req, res, next) {
     db.getProjects(function(err, projects) {
-      res.render('projects', {
+      res.render('dashboard/projects', {
         projects,
       });
     });
   });
   
   app.get('/dashboard/:project/:cutoff?', authenticate, staffonly, function(req, res, next) {
-    res.render('collabs', {
+    res.render('dashboard/collabs', {
       project: req.params.project,
       cutoff: req.params.cutoff,
     });
   });
   
   app.get('/dashboard/:project/live/m/:milestone', authenticate, staffonly, function(req, res, next) {
-    res.render('pings', {
+    res.render('dashboard/pings', {
       project: req.params.project,
       milestone: req.params.milestone,
     });
   });
   
   app.get('/dashboard/:project/m/:milestone/:cutoff?', authenticate, staffonly, function(req, res, next) {
-    res.render('collabs', {
+    res.render('dashboard/collabs', {
       project: req.params.project,
       milestone: req.params.milestone,
       cutoff: req.params.cutoff,
@@ -162,7 +162,7 @@ exports.createFrontend = function createFrontend(config, db) {
   });
   
   app.get('/dashboard/:project/:collabid/:cutoff?', authenticate, staffonly, function(req, res, next) {
-    res.render('collab', {
+    res.render('dashboard/collab', {
       project: req.params.project,
       collabid: req.params.collabid,
       cutoff: req.params.cutoff,
@@ -170,7 +170,7 @@ exports.createFrontend = function createFrontend(config, db) {
   });
   
   app.get('/dashboard/:project/:collabid/m/:milestone/:cutoff?', authenticate, staffonly, function(req, res, next) {
-    res.render('collab', {
+    res.render('dashboard/collab', {
       project: req.params.project,
       collabid: req.params.collabid,
       milestone: req.params.milestone,

@@ -1,4 +1,4 @@
-extends layout
+extends ../layout
 
 append head
   title #{project} Pings - Constellation
@@ -35,4 +35,4 @@ block content
     var project = !{JSON.stringify(project)};
     var milestone = !{JSON.stringify(milestone)};
   script(src='/public/sharedb.js')
-  script(src='/static/pings.js')
+  script(src='/static/dashboard/pings.js')

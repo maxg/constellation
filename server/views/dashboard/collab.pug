@@ -1,4 +1,4 @@
-extends layout
+extends ../layout
 
 append head
   title Collaboration - Constellation
@@ -52,6 +52,6 @@ block content
   script(src='/public/sharedb.js')
   script(src='/public/diff.js')
   script(src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js')
-  script(src='/static/collab.js')
+  script(src='/static/dashboard/collab.js')
   if milestone
-    script(src='/static/checkoff.js')
+    script(src='/static/dashboard/checkoff.js')
