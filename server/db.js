@@ -20,14 +20,35 @@ exports.createBackend = function createBackend(config) {
   
   let connection = share.connect();
   
-  function authorize(req) {
-    if (req.agent.stream.isServer) { return true; }
-    if (req.agent.authstaff) { return true; }
-    if (req.collection === COLLABS) {
-      return req.snapshot.data.users.indexOf(req.agent.authusername) >= 0;
+  const authorize = { read: {}, write: {}, query: {} };
+  
+  // users can read/write collabs they have already been added to
+  authorize.read[COLLABS] = authorize.write[COLLABS] = function(req, cb) {
+    return req.snapshot.data.users.indexOf(req.agent.authusername) >= 0 ? cb() : deny(req, cb);
+  };
+  // users can read/write files and read checkoffs for their collabs
+  // since authorizing requires looking up the collab, cache the result in the agent
+  authorize.read[FILES] = authorize.write[FILES] = authorize.read[CHECKOFFS] = function(req, cb) {
+    let collabid = req.id.split('-')[0];
+    if (req.agent.custom.hasOwnProperty(collabid)) {
+      return req.agent.custom[collabid] ? cb() : deny(req, cb);
     }
-    if (req.collection === FILES) { return true; }
-    return false;
+    let collab = connection.get(COLLABS, collabid);
+    collab.fetch(function(err) {
+      req.agent.custom[collabid] = ( ! err) && collab.data.users.indexOf(req.agent.authusername) >= 0;
+      authorize.read[FILES](req, cb);
+    });
+  };
+  // users can query for files in a collab (authorization above applies to results)
+  authorize.query[FILES] = function(req, cb) {
+    return req.query.collabid ? cb() : deny(req, cb);
+  };
+  
+  function deny(req, cb) {
+    log.error({
+      user: req.agent.authusername, collection: req.collection, id: req.id, query: req.query
+    }, 'db access denied');
+    cb('403 Forbidden');
   }
   
   share.use('connect', function(req, cb) {
@@ -39,19 +60,16 @@ exports.createBackend = function createBackend(config) {
     cb();
   });
   share.use('doc', function(req, cb) {
-    if (authorize(req)) { return cb(); }
-    log.error({ user: req.agent.authusername, collection: req.collection, id: req.id }, 'denied doc');
-    cb('403 Forbidden');
+    if (req.agent.stream.isServer || req.agent.authstaff) { return cb(); }
+    (authorize.read[req.collection] || deny)(req, cb);
   });
   share.use('commit', function(req, cb) {
-    if (authorize(req)) { return cb(); }
-    log.error({ user: req.agent.authusername, collection: req.collection, id: req.id }, 'denied commit');
-    cb('403 Forbidden');
+    if (req.agent.stream.isServer || req.agent.authstaff) { return cb(); }
+    (authorize.write[req.collection] || deny)(req, cb);
   });
   share.use('query', function(req, cb) {
     if (req.agent.stream.isServer || req.agent.authstaff) { return cb(); }
-    log.error({ user: req.agent.authusername, collection: req.collection, query: req.query }, 'denied query');
-    cb('403 Forbidden');
+    (authorize.query[req.collection] || deny)(req, cb);
   });
   
   let backend = {
