@@ -10,6 +10,7 @@ function setupCheckoff(err) {
       project: project,
       milestone: milestone,
       cutoff: cutoff,
+      modified: moment().toLocal(),
       grader: authusername,
       comment: '',
       score: null
@@ -41,6 +42,10 @@ function setupCheckoff(err) {
 }
 
 function setScore(score) {
+  if (checkoff.data.cutoff !== cutoff) {
+    checkoff.submitOp({ p: ['cutoff'], od: checkoff.data.cutoff, oi: cutoff });
+  }
+  checkoff.submitOp({ p: ['modified'], od: checkoff.data.modified, oi: moment().toLocal() });
   checkoff.submitOp({ p: ['score'], od: checkoff.data.score, oi: score });
   setGrader();
 }
@@ -55,6 +60,7 @@ function updateScore() {
 function setGrader() {
   if (checkoff.data.grader == authusername) { return; }
   checkoff.submitOp({ p: ['grader'], od: checkoff.data.grader, oi: authusername });
+  updateGrader();
 }
 
 function updateGrader() {

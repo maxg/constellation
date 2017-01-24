@@ -100,6 +100,7 @@ function setCheckoff(idx) {
         project: project,
         milestone: milestone,
         cutoff: null,
+        modified: moment().toLocal(),
         grader: authusername,
         comment: comment,
         score: score
@@ -107,6 +108,7 @@ function setCheckoff(idx) {
         if (err && err.code !== 4016) { throw err; }
       });
     } else {
+      checkoff.submitOp({ p: ['modified'], od: checkoff.data.modified, oi: moment().toLocal() });
       if (checkoff.data.comment.indexOf(comment) < 0) {
         checkoff.submitOp({ p: ['comment', 0], si: comment + (checkoff.data.comment.length ? ' ' : '') });
       }
