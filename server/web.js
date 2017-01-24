@@ -131,6 +131,14 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
   
+  app.get('/show/:project/:collabid/m/:milestone', authenticate, function(req, res, next) {
+    res.render('collab', {
+      project: req.params.project,
+      collabid: req.params.collabid,
+      milestone: req.params.milestone,
+    });
+  });
+  
   app.get('/dashboard', authenticate, staffonly, function(req, res, next) {
     db.getProjects(function(err, projects) {
       res.render('dashboard/projects', {
@@ -143,6 +151,20 @@ exports.createFrontend = function createFrontend(config, db) {
     res.render('dashboard/collabs', {
       project: req.params.project,
       cutoff: req.params.cutoff,
+    });
+  });
+  
+  app.get('/dashboard/:project/checkoffs:csv(.csv)?', authenticate, staffonly, function(req, res, next) {
+    db.getCheckoffs(req.params.project, function(err, milestones, users) {
+      if (req.params.csv) {
+        res.attachment(`constellation-checkoffs-${req.params.project}.csv`);
+        res.locals.url = `https://${req.hostname}${config.web.https != 443 ? `:${config.web.https}` : ''}`;
+      }
+      res.render(req.params.csv ? 'dashboard/checkoffs-csv' : 'dashboard/checkoffs', {
+        project: req.params.project,
+        milestones,
+        users,
+      });
     });
   });
   

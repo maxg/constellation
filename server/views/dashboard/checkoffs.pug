@@ -1,0 +1,37 @@
+extends ../layout
+
+append head
+  title #{project} Checkoffs - Constellation
+
+block content
+  .row: .col-xs-12
+    a#back(href=`/dashboard/${project}`) all #{project} collaborations
+    h2 #{project} checkoffs
+      br
+      small: a(href=`/dashboard/${project}/checkoffs.csv`)
+        | #[span.glyphicon.glyphicon-list] download csv
+    
+    table.table-hover.table-condensed
+      thead: tr
+        td
+        each milestone in milestones
+          td #[strong= milestone._id] #[br] #{milestone.at}
+      tbody
+        each user in users
+          tr.text-center
+            td.text-left= user._id
+            each milestone in milestones
+              - let checkoff = user.checkoffs.find(c => c.milestone === milestone._id)
+              td
+                if checkoff
+                  a(href=`/show/${project}/${checkoff.collabid}/m/${checkoff.milestone}`)
+                    if checkoff.score === 0
+                      | &nbsp;#[span.glyphicon.glyphicon-minus]&nbsp;
+                    else if checkoff.score === 1
+                      | &nbsp;#[span.glyphicon.glyphicon-ok]&nbsp;
+                    else if checkoff.score === 2
+                      | &nbsp;&nbsp;#[span.glyphicon.glyphicon-ok]+
+                    else
+                      | no score
+                else
+                  | none

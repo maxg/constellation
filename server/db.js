@@ -8,6 +8,7 @@ const logger = require('./logger');
 const COLLABS = 'collabs';
 const USERS = 'users';
 const FILES = 'files';
+const CHECKOFFS = 'checkoffs';
 const PINGS = 'pings';
 
 exports.createBackend = function createBackend(config) {
@@ -113,6 +114,34 @@ exports.createBackend = function createBackend(config) {
           user.submitOp([ { p: [ COLLABS, 0 ], li: collabid } ], done);
         },
       }, callback);
+    },
+    
+    getCheckoffs(project, callback) {
+      db.getCollection(CHECKOFFS, function(err, checkoffs) {
+        if (err) { return callback(err); }
+        async.parallel([
+          done => checkoffs.aggregate([
+            { $match: { project } },
+            { $group: { _id: '$milestone', at: { $min: '$cutoff' } } },
+            { $sort: { at: 1, _id: 1 } },
+          ], done),
+          done => checkoffs.aggregate([
+            { $match: { project } },
+            { $lookup: { from: 'collabs', localField: 'collabid', foreignField: '_id',
+                         as: 'collab' } },
+            { $unwind: '$collab' },
+            { $project: { collabid: 1, project: 1, milestone: 1,
+                          cutoff: 1, modified: 1, grader: 1, comment: 1, score: 1,
+                          users: '$collab.users' } },
+            { $unwind: '$users' },
+            { $sort: { score: -1 } },
+            { $group: { _id: { user: '$users', milestone: '$milestone' },
+                        checkoff: { $first: '$$ROOT' } } },
+            { $group: { _id: '$_id.user', checkoffs: { $push: '$checkoff' } } },
+            { $sort: { _id: 1 } },
+          ], done),
+        ], (err, [ milestones, users ]) => callback(err, milestones, users));
+      });
     },
     
     // get most common initial text for a file

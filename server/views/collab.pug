@@ -1,0 +1,35 @@
+extends layout
+
+append head
+  title Collaboration - Constellation
+
+block content
+  .row: .col-xs-12
+    h2 #{project} #[small#partners]
+      if milestone
+        br
+        small #[span.label.label-primary= milestone] checkoff #[span#when]
+  
+  if milestone
+    h4: span#comment: i no comment
+    h4: span#grader: i no grader
+    h3
+      span#score-none.label.label-danger.hidden none
+      span#score
+        span#score-0.label.label-danger.disabled &nbsp;#[span.glyphicon.glyphicon-minus]&nbsp;
+        span#score-1.label.label-success.disabled &nbsp;#[span.glyphicon.glyphicon-ok]&nbsp;
+        span#score-2.label.label-success.disabled &nbsp;#[span.glyphicon.glyphicon-ok]+
+  
+  template#cutoff using work as of #[span.label.label-warning]
+  template#live using work at #[span.label.label-success]
+  
+  script.
+    var shareURL = !{JSON.stringify(shareURL)};
+    var project = !{JSON.stringify(project)};
+    var collabid = !{JSON.stringify(collabid)};
+    var milestone = !{JSON.stringify(milestone || false)};
+  script(src='/public/sharedb.js')
+  script(src='/public/moment.js')
+  script(src='/static/collab.js')
+  if milestone
+    script(src='/static/checkoff.js')

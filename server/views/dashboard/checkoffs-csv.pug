@@ -1,0 +1,24 @@
+each milestone in milestones
+  | ,"#{milestone._id}"
+  each key in [ 'comment', 'grader', 'url' ]
+    | ,"#{milestone._id}-#{key}"
+= '\n'
+
+each user in users
+  | "#{user._id}"
+  each milestone in milestones
+    | ,
+    - let checkoff = user.checkoffs.find(c => c.milestone === milestone._id)
+    if checkoff
+      if checkoff.score === 0
+        | "-"
+      else if checkoff.score === 1
+        | "✓"
+      else if checkoff.score === 2
+        | "✓+"
+      else
+        | ""
+      | ,"!{checkoff.comment.replace(/"/g, '""')}","#{checkoff.grader}","#{url}/show/#{project}/#{checkoff.collabid}/m/#{checkoff.milestone}"
+    else
+      | ,,,
+  = '\n'
