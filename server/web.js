@@ -268,6 +268,10 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
   
+  app.get('*', function(req, res, next) {
+    res.status(404).render('404');
+  });
+  
   return app;
 };
 
