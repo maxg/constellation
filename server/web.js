@@ -41,6 +41,7 @@ exports.createFrontend = function createFrontend(config, db) {
   
   app.param('project', validate(/[\w-]+/));
   app.param('userid', validate(/\w+/));
+  app.param('collabid', validate(/[0-9a-f]{24}/));
   app.param('milestone', validate(/\w+/));
   app.param('cutoff', validate(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d/));
   
