@@ -54,7 +54,7 @@ function updatePing(collab, idx) {
   if (collab) {
     item.dataset.collabid = collab.collabid;
     var link = item.querySelector('.users');
-    link.textContent = collab.users.join('\n');
+    link.textContent = collab.users.slice().sort().join('\n');
   }
   
   void item.offsetWidth; // trigger reflow so CSS animation will restart

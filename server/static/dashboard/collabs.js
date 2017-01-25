@@ -15,11 +15,12 @@ function insertCollabs(collabs, atIndex) {
     var item = document.importNode(document.querySelector('#collab').content, true);
     var root = item.querySelector('.collab');
     root.setAttribute('id', 'collab-' + collab.id);
-    root.dataset.users = collab.data.users.join(',');
+    let users = collab.data.users.slice().sort();
+    root.dataset.users = users.join(',');
     var link = item.querySelector('a');
     var href = '/dashboard/' + project + '/' + collab.id + (milestone ? '/m/' + milestone : '') + (cutoff ? '/' + cutoff : '');
     link.setAttribute('href', href);
-    link.textContent = collab.data.users.join('\n');
+    link.textContent = users.join('\n');
     list.insertBefore(item, list.children[atIndex + idx]);
   });
   
