@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -28,6 +29,8 @@ import constellation.prefs.Preferences;
 public class Activator extends AbstractUIPlugin {
     
     public static final String PLUGIN_ID = "constellation.plugin";
+    
+    private static final String RUNTIME_REQUIRED = "1.8.0_71";
     
     private static @Nullable Activator plugin;
     
@@ -96,6 +99,13 @@ public class Activator extends AbstractUIPlugin {
         super.start(context);
         plugin = this;
         
+        try {
+            checkRuntimeVersion();
+        } catch (RuntimeException re) {
+            showErrorDialog(null, "Update Java installation", re);
+            throw re;
+        }
+        
         if (debug()) { Debug.enableInsecureSSL(); }
     }
     
@@ -103,5 +113,20 @@ public class Activator extends AbstractUIPlugin {
     public void stop(BundleContext context) throws Exception {
         plugin = null;
         super.stop(context);
+    }
+    
+    private void checkRuntimeVersion() {
+        String version = System.getProperty("java.runtime.version");
+        Iterator<Integer> versions = splitVersion(version);
+        Iterator<Integer> required = splitVersion(RUNTIME_REQUIRED);
+        while (required.hasNext()) {
+            if (versions.next() < required.next()) {
+                throw new RuntimeException("Running Java " + version + ", Java " + RUNTIME_REQUIRED + " or later required");
+            }
+        }
+    }
+    
+    private Iterator<Integer> splitVersion(String version) {
+        return Arrays.stream(version.split("\\D")).map(Integer::parseInt).iterator();
     }
 }
