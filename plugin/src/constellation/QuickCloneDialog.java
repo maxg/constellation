@@ -11,8 +11,13 @@ import java.util.Optional;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.filesystem.IFileSystem;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.SubMonitor;
@@ -102,13 +107,17 @@ public class QuickCloneDialog extends InputDialog {
             clone(remoteURL, tempDir, progress.split(1));
             String projectName = getProjectName(tempDir);
             progress.worked(1);
-            if (ResourcesPlugin.getWorkspace().getRoot().getProject(projectName).exists()) {
+            IProject target = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+            if (target.exists()) {
                 throw new RuntimeException("Workspace already contains a project named '" + projectName + "'");
             }
             ImportOperation importer = new ImportOperation(Path.fromOSString(projectName), tempDir, FileSystemStructureProvider.INSTANCE, null);
             importer.setCreateContainerStructure(false);
             importer.run(progress.split(1));
-        } catch (GitAPIException | IOException e) {
+            // work around org.eclipse.core.filesystem.provider.FileInfo#setAttribute
+            // which sets the immutable flag on read-only files
+            recursiveUnlock(EFS.getLocalFileSystem(), target.getLocation().toFile());
+        } catch (GitAPIException | IOException | CoreException e) {
             throw new InvocationTargetException(e);
         }
     }
@@ -143,6 +152,24 @@ public class QuickCloneDialog extends InputDialog {
             throw new IOException("Error parsing Eclipse '.project' file", e);
         }
         throw new IOException("Invalid Eclipse '.project' file, could not find project name");
+    }
+    
+    private void recursiveUnlock(IFileSystem filesystem, File file) throws CoreException {
+        if ((filesystem.attributes() & EFS.ATTRIBUTE_IMMUTABLE) == 0) {
+            return;
+        }
+        if ( ! file.exists()) { return; }
+        if (file.isDirectory()) {
+            for (File child : file.listFiles()) {
+                recursiveUnlock(filesystem, child);
+            }
+        }
+        IFileStore store = filesystem.fromLocalFile(file);
+        IFileInfo info = store.fetchInfo();
+        if (info.getAttribute(EFS.ATTRIBUTE_IMMUTABLE)) {
+            info.setAttribute(EFS.ATTRIBUTE_IMMUTABLE, false);
+            store.putInfo(info, EFS.SET_ATTRIBUTES, null);
+        }
     }
     
     private void recursiveDelete(File file) {
