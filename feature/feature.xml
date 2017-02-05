@@ -2,7 +2,7 @@
 <feature
       id="constellation.feature"
       label="Constellation"
-      version="0.2.2.qualifier">
+      version="0.2.3.qualifier">
 
    <description>
       Classroom collaborative coding in Eclipse
