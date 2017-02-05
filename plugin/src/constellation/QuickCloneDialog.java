@@ -27,6 +27,7 @@ import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Config;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.widgets.Display;
@@ -126,8 +127,19 @@ public class QuickCloneDialog extends InputDialog {
         progress.setWorkRemaining(10);
         progress.subTask("Cloning repository");
         Git git = Git.cloneRepository().setURI(remoteURL).setDirectory(tempDir)
-                .setProgressMonitor(new JGitProgressMonitor(progress.split(9)))
+                .setNoCheckout(true)
+                .setProgressMonitor(new JGitProgressMonitor(progress.split(6)))
                 .call();
+        // ensure newlines will not be converted
+        Config config = git.getRepository().getConfig();
+        if (config.getString("core", null, "autocrlf") != null) {
+            config.setString("core", null, "autocrlf", "input");
+        }
+        // JGit clone-without-checkout doesn't set up default branch, assume master
+        git.checkout().setName("master").setStartPoint("refs/remotes/origin/master")
+                .setCreateBranch(true)
+                .call();
+        progress.worked(3);
         git.getRepository().close(); // git.close() alone keeps a pack file lock
         git.close();
         progress.worked(1);
