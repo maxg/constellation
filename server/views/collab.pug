@@ -9,6 +9,9 @@ block content
       if milestone
         br
         small #[span.label.label-primary= milestone] checkoff #[span#when]
+      if cutoff
+        br
+        small #[span.label.label-warning= cutoff] work
   
   if milestone
     h4: span#comment: i no comment
@@ -20,16 +23,30 @@ block content
         span#score-1.label.label-success.disabled &nbsp;#[span.glyphicon.glyphicon-ok]&nbsp;
         span#score-2.label.label-success.disabled &nbsp;#[span.glyphicon.glyphicon-ok]+
   
+  #files-header.row.hidden: .col-xs-12: h3
+    small: a#earlier &larr; 5:00 earlier
+    | &emsp;Edited files&emsp;
+    small: a#later 5:00 later &rarr;
+  
+  #files.row
+  
   template#cutoff using work as of #[span.label.label-warning]
   template#live using work at #[span.label.label-success]
+  
+  template#file
+    .col-xs-12.col-md-6: .tile.panel.panel-default: .panel-body
+      h4
+      pre.diff: code.java
   
   script.
     var shareURL = !{JSON.stringify(shareURL)};
     var project = !{JSON.stringify(project)};
     var collabid = !{JSON.stringify(collabid)};
     var milestone = !{JSON.stringify(milestone || false)};
+    var cutoff = !{JSON.stringify(cutoff || false)};
   script(src='/public/sharedb.js')
   script(src='/public/moment.js')
+  script(src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js')
   script(src='/static/collab.js')
   if milestone
     script(src='/static/checkoff.js')

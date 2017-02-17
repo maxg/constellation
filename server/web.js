@@ -81,6 +81,16 @@ exports.createFrontend = function createFrontend(config, db) {
     next();
   }
   
+  function authorize(req, res, next) {
+    if (res.locals.authstaff) { return next(); }
+    db.getCollab(req.params.collabid, function(err, collab) {
+      if (err || collab.data.users.indexOf(res.locals.authusername) < 0) {
+        return res.status(401).render('401', { error: 'Permission denied' });
+      }
+      next();
+    });
+  }
+  
   app.get('/', authenticate, collaboration, function(req, res, next) {
     res.render('index');
   });
@@ -129,6 +139,14 @@ exports.createFrontend = function createFrontend(config, db) {
     }
     res.render('edit', {
       filepath: req.params.filepath,
+    });
+  });
+  
+  app.get('/show/:project/:collabid/:cutoff', authenticate, function(req, res, next) {
+    res.render('collab', {
+      project: req.params.project,
+      collabid: req.params.collabid,
+      cutoff: req.params.cutoff,
     });
   });
   
@@ -201,7 +219,7 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
   
-  app.get('/baseline/:project/:filepath(*)', function(req, res, next) {
+  app.get('/baseline/:project/:filepath(*)', authenticate, staffonly, function(req, res, next) {
     db.getBaseline(req.params.project, req.params.filepath, function(err, baseline) {
       res.type('text/plain');
       if (err) { return res.status(400).send(); }
@@ -210,7 +228,7 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
   
-  app.get('/historical/:project/:collabid/:filepath(*)/:cutoff', authenticate, staffonly, function(req, res, next) {
+  app.get('/historical/:project/:collabid/:filepath(*)/:cutoff', authenticate, authorize, function(req, res, next) {
     db.getHistorical(req.params.collabid, req.params.filepath, moment(req.params.cutoff), function(err, historical) {
       if (err) { return res.status(400).send(); }
       res.setHeader('Cache-Control', 'max-age=3600');

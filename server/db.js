@@ -104,6 +104,11 @@ exports.createBackend = function createBackend(config) {
       user.fetch(err => callback(err, user));
     },
     
+    getCollab(collabid, callback) {
+      let collab = connection.get(COLLABS, collabid);
+      collab.fetch(err => callback(err, collab));
+    },
+    
     // add user to collaboration, and set their active collaboration
     addUserToCollaboration(username, project, collabid, callback) {
       async.autoInject({

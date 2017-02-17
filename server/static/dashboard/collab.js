@@ -19,7 +19,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     var diff = item.querySelector('.diff code');
     list.appendChild(item);
     
-    $.ajax({ url: '/baseline/' + project + '/' + file.data.filepath }).done(function(baseline) {
+    $.ajax('/baseline/' + project + '/' + file.data.filepath).done(function(baseline) {
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
           updateDiff(diff, baseline, historical.data ? historical.data.text : undefined);
