@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+<style>
+@import url(https://fonts.googleapis.com/css?family=Rubik:400,700);
+body {
+  font-family: 'Rubik', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+#big-logo {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+}
+#big-text {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  max-width: 80%;
+  background: rgba(255, 255, 255, .75);
+  padding: 1em;
+  border-radius: 1em;
+}
+#big-text :first-child { margin-top: 0; }
+#big-text :last-child { margin-bottom: 0; }
+#big-text img { max-width: 100%; }
+#big-image {
+  border-radius: .7% / 1.7881619938% /* = 820/321*.7 */
+}
+</style>
+<title>Constellation</title>
+</head>
+<body>
+<div class="container">
+<!--
+Eclipse logo copyright (c) 2014 Eclipse Foundation, Inc. All Rights Reserved.
+http://www.eclipse.org/artwork/
+-->
+<svg id="big-logo" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 100 100" preserveAspectRatio="xMinYMin slice"></svg>
+<div id="big-text">
+<h1>Constellation</h2>
+<p>Classroom collaborative coding in <a href="https://www.eclipse.org/">Eclipse</a></p>
+<p>Built with <a href="https://github.com/share/sharedb/">ShareDB</a></p>
+<p><a href="https://github.com/maxg/constellation/blob/master/README.md">README</a></p>
+<p>MIT EECS&emsp;&amp;&emsp;MIT CSAIL <a href="http://up.csail.mit.edu/">Usable Programming Group</a></p>
+<img id="big-image" src="constellation-screencapture.gif" alt="Constellation screencapture"></img>
+</div>
+</div>
+<script>
+for (var ii = 15 + Math.random() * 5; ii > 0; ii--) {
+  var image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+  image.setAttribute('x', Math.random() * 99);
+  image.setAttribute('y', Math.random() * 99);
+  image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', './eclipse.svg');
+  image.setAttribute('width', 5 + Math.random() * 5);
+  image.setAttribute('height', 10);
+  image.setAttribute('transform', 'translate(-3, -2)');
+  document.getElementById('big-logo').appendChild(image);
+}
+</script>
+</body>
+</html>

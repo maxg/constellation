@@ -33,12 +33,14 @@ body {
   position: absolute;
   top: 10%;
   left: 10%;
+  max-width: 80%;
   background: rgba(255, 255, 255, .75);
   padding: 1em;
   border-radius: 1em;
 }
 #big-text :first-child { margin-top: 0; }
 #big-text :last-child { margin-bottom: 0; }
+#big-text img { max-width: 100%; }
 
 h1 span.glyphicon,
 h2 span.glyphicon,
