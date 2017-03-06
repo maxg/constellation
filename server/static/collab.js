@@ -52,5 +52,5 @@ function showHistoricalFiles() {
 }
 
 function errorToString(json, status, err) {
-  return (json.code || status) + ' ' + (json.message || err);
+  return (json && json.code || status) + ' ' + (json && json.message || err);
 }

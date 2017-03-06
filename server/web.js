@@ -221,8 +221,8 @@ exports.createFrontend = function createFrontend(config, db) {
   
   app.get('/baseline/:project/:filepath(*)', authenticate, staffonly, function(req, res, next) {
     db.getBaseline(req.params.project, req.params.filepath, function(err, baseline) {
+      if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       res.type('text/plain');
-      if (err) { return res.status(400).send(); }
       res.setHeader('Cache-Control', 'max-age=3600');
       res.send(baseline);
     });
@@ -230,7 +230,7 @@ exports.createFrontend = function createFrontend(config, db) {
   
   app.get('/historical/:project/:collabid/:filepath(*)/:cutoff', authenticate, authorize, function(req, res, next) {
     db.getHistorical(req.params.collabid, req.params.filepath, moment(req.params.cutoff), function(err, historical) {
-      if (err) { return res.status(400).send(); }
+      if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       res.setHeader('Cache-Control', 'max-age=3600');
       res.send(historical);
     });
