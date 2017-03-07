@@ -190,19 +190,27 @@ exports.createBackend = function createBackend(config) {
       db.getDbs(function(err, mongo) {
         if (err) { return callback(err); }
         mongo.collection(FILES).findOne({ collabid, filepath }, function(err, file) {
-          if (err) { return callback(err); }
+          if (err || ! file) { return callback(err, file); }
           mongo.collection('o_'+FILES).aggregate([
             { $match: { d: file._id, 'm.ts': { $lte: +timestamp } } },
-            { $sort: { v: 1 } },
-            { $project: { _id: 0, create: 1, op: 1, v: 1 } },
-          ], function(err, ops) {
+            { $group: { _id: null, v: { $max: '$v' } } },
+          ], function(err, results) {
             if (err) { return callback(err); }
+            let version = results[0] && results[0].v;
             let doc = { v: 0 };
-            for (let op of ops) {
-              let err = sharedb.ot.apply(doc, op);
+            if ( ! version) { return callback(null, doc); }
+            mongo.collection('o_'+FILES).aggregate([
+              { $match: { d: file._id, v: { $lte: version } } },
+              { $sort: { v: 1 } },
+              { $project: { _id: 0, create: 1, op: 1, v: 1 } },
+            ], function(err, ops) {
               if (err) { return callback(err); }
-            }
-            callback(err, doc);
+              for (let op of ops) {
+                let err = sharedb.ot.apply(doc, op);
+                if (err) { return callback(err); }
+              }
+              callback(null, doc);
+            });
           });
         });
       });
