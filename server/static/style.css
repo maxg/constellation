@@ -40,7 +40,7 @@ body {
 }
 #big-text :first-child { margin-top: 0; }
 #big-text :last-child { margin-bottom: 0; }
-#big-text img { max-width: 100%; }
+#big-text img, #big-text video { max-width: 100%; }
 
 h1 span.glyphicon,
 h2 span.glyphicon,

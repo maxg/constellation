@@ -26,9 +26,10 @@ body {
 }
 #big-text :first-child { margin-top: 0; }
 #big-text :last-child { margin-bottom: 0; }
-#big-text img { max-width: 100%; }
-#big-image {
-  border-radius: .7% / 1.7881619938% /* = 820/321*.7 */
+#big-text img, #big-text video { max-width: 100%; }
+.big-image {
+  width: 820px;
+  border-radius: .7% / 1.7881619938%; /* = 820/321*.7 */
 }
 </style>
 <title>Constellation</title>
@@ -46,7 +47,11 @@ http://www.eclipse.org/artwork/
 <p>Built with <a href="https://github.com/share/sharedb/">ShareDB</a></p>
 <p><a href="https://github.com/maxg/constellation/blob/master/README.md">README</a></p>
 <p>MIT EECS&emsp;&amp;&emsp;MIT CSAIL <a href="http://up.csail.mit.edu/">Usable Programming Group</a></p>
-<img id="big-image" src="constellation-screencapture.gif" alt="Constellation screencapture"></img>
+<video class="big-image" autoplay loop playsinline webkit-playsinline>
+  <source src="constellation-screencapture.mp4" type="video/mp4" onerror="parentNode.parentNode.replaceChild(parentNode.querySelector('img'), parentNode)">
+  <img class="big-image" src="constellation-screencapture.gif">
+</video>
+</div>
 </div>
 </div>
 <script>
