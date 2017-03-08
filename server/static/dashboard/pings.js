@@ -16,6 +16,12 @@ pings.on('op', function(op) {
     updatePing(component.li, component.p[1]);
   }
 });
+
+var checkoffs = connection.createSubscribeQuery('checkoffs', {
+  project: project,
+  milestone: milestone,
+}, {});
+
 function createPings() {
   var list = document.querySelector('#pings');
   pings.data.collabs.forEach(function(collab, idx) {
@@ -37,12 +43,11 @@ function createPings() {
     updatePing(collab, idx);
   });
   
-  var checkoffs = connection.createSubscribeQuery('checkoffs', {
-    project: project,
-    milestone: milestone,
-  }, {});
-  
-  checkoffs.on('ready', function() { applyCheckoffs(checkoffs.results); });
+  if (checkoffs.ready) {
+    applyCheckoffs(checkoffs.results);
+  } else {
+    checkoffs.on('ready', function() { applyCheckoffs(checkoffs.results); });
+  }
   checkoffs.on('insert', applyCheckoffs);
 }
 
@@ -51,11 +56,22 @@ function updatePing(collab, idx) {
   item.classList.remove('faded');
   item.querySelector('.score').classList.add('invisible');
   
-  if (collab) {
-    item.dataset.collabid = collab.collabid;
-    var link = item.querySelector('.users');
-    link.textContent = collab.users.slice().sort().join('\n');
+  item.dataset.collabid = collab && collab.collabid;
+  var link = item.querySelector('.users');
+  link.textContent = collab && collab.users.slice().sort().join('\n');
+  
+  var buttons = item.querySelectorAll('.score .btn');
+  buttons.forEach(function(button) {
+    button.classList.remove('active');
+  });
+  
+  var checkoff = collab && checkoffs.ready && checkoffs.results.find(function(checkoff) {
+    return checkoff.data.collabid === collab.collabid;
+  });
+  if (checkoff && checkoff.data.score !== null) {
+    buttons[checkoff.data.score].classList.add('active');
   }
+  item.querySelector('.grader').textContent = checkoff && checkoff.data.grader;
   
   void item.offsetWidth; // trigger reflow so CSS animation will restart
   item.classList.add('faded');
