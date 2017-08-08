@@ -1,26 +1,26 @@
 {
   "name": "constellation",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "dependencies": {
-    "async": "^2.0.1",
-    "body-parser": "^1.15.2",
-    "bunyan": "^1.8.5",
-    "diff": "^2.2.3",
+    "async": "^2.5.0",
+    "body-parser": "^1.17.2",
+    "bunyan": "^1.8.12",
+    "diff": "^3.3.0",
     "enchilada": "^0.13.0",
-    "express": "^4.14.0",
-    "moment": "^2.15.1",
+    "express": "^4.15.4",
+    "moment": "^2.18.1",
     "mongodb": "^2.2.5",
-    "pug": "^2.0.0-beta4",
-    "sharedb": "^1.0.0-beta.4",
-    "sharedb-mongo": "^1.0.0-beta",
+    "pug": "^2.0.0-rc.3",
+    "sharedb": "^1.0.0-beta.7",
+    "sharedb-mongo": "^1.0.0-beta.4",
     "sharedb-string-binding": "^1.0.0",
     "websocket-json-stream": "0.0.3",
-    "ws": "^1.1.1",
-    "x509": "^0.2.6"
+    "ws": "^3.1.0",
+    "x509": "^0.3.2"
   },
   "devDependencies": {},
   "engines": {
-    "node": "^6.3.0"
+    "node": "^6.11.2"
   }
 }

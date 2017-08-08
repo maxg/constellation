@@ -1,3 +1,0 @@
-jetty-io
-jetty-util
-jetty-util-ajax

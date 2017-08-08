@@ -6,21 +6,15 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="lib/jetty-io.jar" sourcepath="lib/sources/jetty-io-sources.jar">
+	<classpathentry kind="lib" path="lib/jetty-client.jar" sourcepath="lib/sources/jetty-client-sources.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/jetty-io-javadoc.jar!/"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/jetty-client-javadoc.jar!/"/>
 			<attribute name="annotationpath" value="/constellation-plugin/eea"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/jetty-util-ajax.jar" sourcepath="lib/sources/jetty-util-ajax-sources.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/jetty-util-ajax-javadoc.jar!/"/>
-			<attribute name="annotationpath" value="/constellation-plugin/eea"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="lib/jetty-util.jar" sourcepath="lib/sources/jetty-util-sources.jar">
-		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/jetty-util-javadoc.jar!/"/>
 			<attribute name="annotationpath" value="/constellation-plugin/eea"/>
 		</attributes>
 	</classpathentry>

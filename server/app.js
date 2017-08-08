@@ -45,10 +45,10 @@ servers.web.on('secureConnection', function(connection) {
 
 // connect websocket to share
 
-new ws.Server({ server: servers.websocket }).on('connection', function(connection) {
+new ws.Server({ server: servers.websocket }).on('connection', function(connection, req) {
   connection.on('error', err => log.error({ err }, 'WebSocket error'));
   let stream = new websocketjsonstream(connection);
-  stream.authusername = db.tokenUsername(connection.upgradeReq.url.substr(1));
+  stream.authusername = db.tokenUsername(req.url.substr(1));
   stream.push = function push(chunk, encoding) {
     if (chunk && chunk.a === 'ping') {
       return db.ping(chunk.collabid);
