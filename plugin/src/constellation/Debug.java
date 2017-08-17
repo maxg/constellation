@@ -34,7 +34,7 @@ public class Debug {
     /**
      * Announce the current method.
      */
-    public static void trace(Object... args) {
+    public static void trace(@Nullable Object... args) {
         if ( ! TRACING) { return; }
         
         @NonNull StackTraceElement[] stack = Thread.currentThread().getStackTrace();

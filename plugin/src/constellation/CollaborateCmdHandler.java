@@ -31,7 +31,7 @@ public class CollaborateCmdHandler extends AbstractHandler implements IElementUp
     private Optional<Collaboration> collab = Optional.empty();
     
     @Override
-    public @Nullable Object execute(@Nullable ExecutionEvent event) {
+    public @Nullable Object execute(ExecutionEvent event) {
         this.setBaseEnabled(false);
         if (state() == CollaborationState.NONE) {
             start();
