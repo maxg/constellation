@@ -26,6 +26,10 @@
             id="constellation.command.collaborate"
             name="Collaborate">
       </command>
+      <command
+            id="constellation.command.setup"
+            name="Set up Constellation">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.commandImages">
@@ -39,6 +43,10 @@
       <handler
             class="constellation.CollaborateCmdHandler"
             commandId="constellation.command.collaborate">
+      </handler>
+      <handler
+            class="constellation.SetupCmdHandler"
+            commandId="constellation.command.setup">
       </handler>
    </extension>
    <extension

@@ -16,6 +16,7 @@ exports.createFrontend = function createFrontend(config, db) {
 
   const join = require('./join').create(config);
   const paired = new events.EventEmitter();
+  const setupproject = 'constellation-setup';
   
   const app = express();
   
@@ -96,6 +97,10 @@ exports.createFrontend = function createFrontend(config, db) {
   });
   
   app.get('/pair/:project/:id', authenticate, function(req, res, next) {
+    if (req.params.project == setupproject) {
+      return res.render('setup-join');
+    }
+    
     res.render('join', {
       project: req.params.project,
       joincode: join.code({ username: res.locals.authusername, project: req.params.project }),
@@ -103,6 +108,14 @@ exports.createFrontend = function createFrontend(config, db) {
   });
   
   app.post('/pair/:project/:userid', authenticate, function(req, res, next) {
+    let me = res.locals.authusername;
+    let token = db.usernameToken(res.locals.authusername);
+    
+    if (req.params.project == setupproject) {
+      paired.emit(req.params.userid, { me, token });
+      return res.send({ redirect: '/setup-done' });
+    }
+    
     join.rendezvous(req.body.me, req.body.partner, function(err, agreed) {
       if (err) { return res.status(400).send({ error: err.message }); }
       
@@ -113,8 +126,6 @@ exports.createFrontend = function createFrontend(config, db) {
         return res.status(400).send({ error: 'Different projects selected' });
       }
       
-      let me = res.locals.authusername;
-      let token = db.usernameToken(res.locals.authusername);
       let partner = agreed.partner.username;
       let project = agreed.me.project;
       let collabid = agreed.id;
@@ -124,6 +135,10 @@ exports.createFrontend = function createFrontend(config, db) {
         res.send({ redirect: '/edit' });
       });
     });
+  });
+  
+  app.get('/setup-done', authenticate, function(req, res, next) {
+    res.render('setup-done');
   });
   
   app.get('/edit', authenticate, collaboration, function(req, res, next) {

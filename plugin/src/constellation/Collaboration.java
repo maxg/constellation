@@ -21,6 +21,7 @@ import java.util.function.BiConsumer;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jetty.util.UrlEncoded;
 import org.eclipse.jetty.util.ajax.JSON;
@@ -33,6 +34,18 @@ import org.osgi.framework.Version;
 import constellation.prefs.Preferences;
 
 public class Collaboration {
+    
+    private static final String SETUP_PROJECT = "constellation-setup";
+    
+    public static void test(SubMonitor progress)
+            throws InterruptedException, ExecutionException, IOException, PartInitException {
+        progress.setWorkRemaining(1);
+        IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(SETUP_PROJECT);
+        Map<String,String> settings = pair(project, progress.split(1));
+        if ( ! settings.containsKey("me")) {
+            throw new IOException("Authentication failed");
+        }
+    }
     
     public static Collaboration connect(IProject project, CollaborationListener listener, SubMonitor progress)
             throws InterruptedException, ExecutionException, IOException, PartInitException {
