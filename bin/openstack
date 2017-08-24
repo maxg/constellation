@@ -2,7 +2,7 @@
 
 #
 # Run OpenStack commands.
-# Requires: pip install python-novaclient python-cinderclient python-glanceclient
+# Requires: pip install python-openstackclient python-novaclient python-cinderclient python-glanceclient
 #
 
 set -e
@@ -47,7 +47,7 @@ case "$cmd" in
     
     ipaddr=`dig +short $hostname | tail -1`
     [ -z "$ipaddr" ] && network=""
-    [ -n "$ipaddr" ] && network="--nic net-id=`nova network-list | tablepick inet 1`,v4-fixed-ip=$ipaddr"
+    [ -n "$ipaddr" ] && network="--nic net-id=`openstack network list | tablepick inet 1`,v4-fixed-ip=$ipaddr"
     
     echo "Booting $name (${ipaddr:-dynamic IP}) from $imagename ($imageid)"
     
