@@ -196,9 +196,9 @@ exports.createBackend = function createBackend(config) {
             { $group: { _id: null, v: { $max: '$v' } } },
           ], function(err, results) {
             if (err) { return callback(err); }
-            let version = results[0] && results[0].v;
             let doc = { v: 0 };
-            if ( ! version) { return callback(null, doc); }
+            if ( ! results[0]) { return callback(null, doc); }
+            let version = results[0].v;
             mongo.collection('o_'+FILES).aggregate([
               { $match: { d: file._id, v: { $lte: version } } },
               { $sort: { v: 1 } },
