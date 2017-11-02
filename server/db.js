@@ -215,6 +215,40 @@ exports.createBackend = function createBackend(config) {
         });
       });
     },
+
+    // TODO: Only get inserts and deletes, not cursors
+    getOps(collabid, filepath, callback) {
+      db.getDbs(function(err, mongo) {
+        if (err) { return callback(err); }
+        mongo.collection(FILES).findOne({ collabid, filepath }, function(err, file) {
+          if (err || ! file) { return callback(err, file); }
+          mongo.collection('o_'+FILES).aggregate([
+            { $match: { d: file._id } },
+            { $group: { _id: null, v: { $max: '$v' } } },
+          ], function(err, results) {
+            if (err) { return callback(err); }
+            let doc = { v: 0 };
+            if ( ! results[0]) { return callback(null, doc); }
+            let version = results[0].v;
+            mongo.collection('o_'+FILES).aggregate([
+              { $match: { d: file._id, v: { $lte: version } } },
+              { $sort: { v: 1 } },
+              { $project: { _id: 0, create: 1, op: 1, v: 1 } },
+            ], function(err, ops) {
+              if (err) { return callback(err); }
+              callback(null, ops);
+              /*
+              for (let op of ops) {
+                let err = sharedb.ot.apply(doc, op);
+                if (err) { return callback(err); }
+              }
+              callback(null, doc);
+              */
+            });
+          });
+        });
+      });
+    },
     
     ping(collabid) {
       async.autoInject({

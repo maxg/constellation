@@ -250,6 +250,14 @@ exports.createFrontend = function createFrontend(config, db) {
       res.send(historical);
     });
   });
+
+  app.get('/ops/:project/:collabid/:filepath(*)', authenticate, staffonly, function(req, res, next) {
+    db.getOps(req.params.collabid, req.params.filepath, function(err, ops) {
+      if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
+      res.setHeader('Cache-Control', 'max-age=3600');
+      res.send(ops);
+    });
+  })
   
   app.get('/hello/:version', function(req, res, next) {
     getPluginVersion(function(err, version) {
