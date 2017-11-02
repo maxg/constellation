@@ -216,7 +216,6 @@ exports.createBackend = function createBackend(config) {
       });
     },
 
-    // TODO: Only get inserts and deletes, not cursors
     getOps(collabid, filepath, callback) {
       db.getDbs(function(err, mongo) {
         if (err) { return callback(err); }
@@ -231,19 +230,20 @@ exports.createBackend = function createBackend(config) {
             if ( ! results[0]) { return callback(null, doc); }
             let version = results[0].v;
             mongo.collection('o_'+FILES).aggregate([
-              { $match: { d: file._id, v: { $lte: version } } },
+              { $match: { d: file._id,
+                          v: { $lte: version },
+                          // Only get text inserts or deletes, not cursors
+                          op: { $elemMatch: { $or: [{"si": { $exists: true}},
+                                                     {"sd": { $exists: true}} ]  
+                                            }
+                              }
+                        }
+              },
               { $sort: { v: 1 } },
-              { $project: { _id: 0, create: 1, op: 1, v: 1 } },
+              { $project: { _id: 0, create: 1, op: 1, v: 1, "m.ts": 1 } },
             ], function(err, ops) {
               if (err) { return callback(err); }
               callback(null, ops);
-              /*
-              for (let op of ops) {
-                let err = sharedb.ot.apply(doc, op);
-                if (err) { return callback(err); }
-              }
-              callback(null, doc);
-              */
             });
           });
         });
