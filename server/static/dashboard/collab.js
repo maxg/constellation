@@ -29,8 +29,8 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       } else {
         file.subscribe(function() {
           updateDiff(diff, baseline, file.data.text, {});
-          file.on('op', function() {
-            updateDiff(diff, baseline, file.data.text, {});
+          file.on('op', function(op) {
+            updateDiff(diff, baseline, file.data.text, { op: op });
           });
         });
       }
