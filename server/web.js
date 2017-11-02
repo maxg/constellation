@@ -1,5 +1,6 @@
 const bodyparser = require('body-parser');
 const crypto = require('crypto');
+const diff = require('diff');
 const enchilada = require('enchilada');
 const events = require('events');
 const express = require('express');
@@ -7,6 +8,7 @@ const fs = require('fs');
 const moment = require('moment');
 const mongodb = require('mongodb');
 const pug = require('pug');
+const sharedb = require('sharedb')
 
 const logger = require('./logger');
 
@@ -254,8 +256,9 @@ exports.createFrontend = function createFrontend(config, db) {
   app.get('/ops/:project/:collabid/:filepath(*)', authenticate, staffonly, function(req, res, next) {
     db.getOps(req.params.collabid, req.params.filepath, function(err, ops) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
+      var chunkedDiffs = getChunkedDiffs(ops);
       res.setHeader('Cache-Control', 'max-age=3600');
-      res.send(ops);
+      res.send(JSON.stringify(chunkedDiffs, null, 4));
     });
   })
   
@@ -321,4 +324,48 @@ function getPluginVersion(callback) {
   fs.readFile(`${__dirname}/install/version.txt`, { encoding: 'utf8' }, function(err, version) {
     callback(err, version && version.trim().split('.', 3).join('.'));
   });
+}
+
+function getChunkedDiffs(ops) {
+    var chunkedDiffs = [];
+    var threshold = 2000; // TODO: Tune threshold
+
+    /* Setup the baseline of the document */ 
+    var firstOp = ops[0];
+
+    // The baseline for the next diff
+    var currentBaseline = {v:0};
+    sharedb.ot.apply(currentBaseline, firstOp);
+    // The doc to apply ops to
+    var currentDoc = {v:0};
+    sharedb.ot.apply(currentDoc, firstOp);
+
+    var lastTs = firstOp.m.ts;
+
+    /* Apply each op, and calculate a diff if two 
+       consecutive ops are far enough apart */
+    for (var i = 1; i < ops.length; i++) {
+      var op = ops[i];
+
+      // Start a new chunk if necessary
+      if (op.m.ts - lastTs > threshold) {
+        var chunkedDiff = diff.diffLines(
+          currentBaseline.data.text.trim(), currentDoc.data.text.trim());
+        chunkedDiffs.push(chunkedDiff);
+        // Make a deep copy
+        currentBaseline = JSON.parse(JSON.stringify(currentDoc));
+      }
+
+      // Apply the op
+      let err = sharedb.ot.apply(currentDoc, op);
+      if (err) {
+        // TODO: Better error handling
+        console.log("err when applying op:" + JSON.stringify(err));
+        return;
+      }
+         
+      lastTs = op.m.ts;
+    }
+
+    return chunkedDiffs;  
 }

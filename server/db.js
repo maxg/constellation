@@ -230,15 +230,7 @@ exports.createBackend = function createBackend(config) {
             if ( ! results[0]) { return callback(null, doc); }
             let version = results[0].v;
             mongo.collection('o_'+FILES).aggregate([
-              { $match: { d: file._id,
-                          v: { $lte: version },
-                          // Only get text inserts or deletes, not cursors
-                          op: { $elemMatch: { $or: [{"si": { $exists: true}},
-                                                     {"sd": { $exists: true}} ]  
-                                            }
-                              }
-                        }
-              },
+              { $match: { d: file._id, v: { $lte: version } } },
               { $sort: { v: 1 } },
               { $project: { _id: 0, create: 1, op: 1, v: 1, "m.ts": 1 } },
             ], function(err, ops) {
