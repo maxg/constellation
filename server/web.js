@@ -258,7 +258,7 @@ exports.createFrontend = function createFrontend(config, db) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       var chunkedDiffs = getChunkedDiffs(ops);
       res.setHeader('Cache-Control', 'max-age=3600');
-      res.send(JSON.stringify(chunkedDiffs, null, 4));
+      res.send(chunkedDiffs);
     });
   })
   
@@ -328,7 +328,10 @@ function getPluginVersion(callback) {
 
 function getChunkedDiffs(ops) {
     var chunkedDiffs = [];
-    var threshold = 2000; // TODO: Tune threshold
+    var threshold = 100000; // TODO: Tune threshold
+    // 2000 -> 89 diffs
+    // 10000 -> 34 diffs
+    // 100000 -> 6 diffs
 
     /* Setup the baseline of the document */ 
     var firstOp = ops[0];
@@ -367,5 +370,5 @@ function getChunkedDiffs(ops) {
       lastTs = op.m.ts;
     }
 
-    return chunkedDiffs;  
+    return chunkedDiffs; 
 }

@@ -37,6 +37,36 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     }).fail(function(req, status, err) {
       diff.textContent = 'Error fetching baseline: ' + errorToString(req.responseJSON, status, err);
     });
+
+    // TODO: Give it its own div
+    var opsDiv = document.querySelector('#files');
+    $.ajax('/ops/' + project + '/' + collabid + '/' + file.data.filepath).done(function(diffs) {
+
+      diffs.forEach(function(diff) {
+        var diffNode = document.createElement('div');
+        var heading = document.createElement('h3');
+        heading.appendChild(document.createTextNode('Diff'));
+        diffNode.appendChild(heading);
+
+        // TODO: Get the newlines to show
+        diff.forEach(function(part){
+          // green for additions, red for deletions
+          // grey for common parts
+          var elt = document.createElement('span');
+          color = part.added ? 'green' :
+                     part.removed ? 'red' : 'grey';
+          elt.style.color = color;
+          elt.appendChild(document.createTextNode(part.value));
+          diffNode.appendChild(elt);
+        });
+
+        opsDiv.appendChild(diffNode);
+      });
+
+    }).fail(function(req, status, err) {
+      opsDiv.textContent = 'Error fetching ops: ' + errorToString(req.responseJSON, status, err);
+    });
+
   });
 });
 
