@@ -45,10 +45,19 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       diffs.forEach(function(diff) {
         var diffNode = document.createElement('div');
         var heading = document.createElement('h3');
-        heading.appendChild(document.createTextNode('Diff'));
+        heading.appendChild(document.createTextNode('Diff for ' + file.data.filepath));
         diffNode.appendChild(heading);
 
-        // TODO: Get the newlines to show
+        var preBlock = document.createElement('pre');
+        preBlock.classList.add('diff');
+        var codeBlock = document.createElement('code');
+        codeBlock.classList.add('java');
+
+        diffNode.appendChild(preBlock);
+        preBlock.appendChild(codeBlock);
+
+        // TODO: Probably don't need all those HTML elements
+
         diff.forEach(function(part){
           // green for additions, red for deletions
           // grey for common parts
@@ -57,7 +66,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
                      part.removed ? 'red' : 'grey';
           elt.style.color = color;
           elt.appendChild(document.createTextNode(part.value));
-          diffNode.appendChild(elt);
+          codeBlock.appendChild(elt);
         });
 
         opsDiv.appendChild(diffNode);
