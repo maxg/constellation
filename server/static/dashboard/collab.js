@@ -37,6 +37,18 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     }).fail(function(req, status, err) {
       diff.textContent = 'Error fetching baseline: ' + errorToString(req.responseJSON, status, err);
     });
+
+    // Testing regex matching
+    $.ajax('/regex/' + '[a-z]+' + '/' + 'hello').done(function(match) {
+      var result = '';
+      match.stdout.data.forEach(function(num) {
+        result += String.fromCharCode(num);
+      });
+      console.log(result);
+    }).fail(function(req, status, err) {
+      console.log("got regex error");
+      console.log(err);
+    })
   });
 });
 
@@ -57,6 +69,9 @@ function updateDiff(node, baseline, text) {
     node.appendChild(elt);
   });
   hljs.highlightBlock(node);
+
+
+
 }
 
 function errorToString(json, status, err) {

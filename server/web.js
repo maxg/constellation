@@ -7,6 +7,7 @@ const fs = require('fs');
 const moment = require('moment');
 const mongodb = require('mongodb');
 const pug = require('pug');
+const child_process = require('child_process');
 
 const logger = require('./logger');
 
@@ -235,12 +236,23 @@ exports.createFrontend = function createFrontend(config, db) {
   });
   
   app.get('/baseline/:project/:filepath(*)', authenticate, staffonly, function(req, res, next) {
+    
     db.getBaseline(req.params.project, req.params.filepath, function(err, baseline) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       res.type('text/plain');
       res.setHeader('Cache-Control', 'max-age=3600');
       res.send(baseline);
     });
+  });
+
+  // Find the given regex in the text, using fuzzy matching
+  app.get('/regex/:regex/:text', authenticate, staffonly,  function(req, res, next) {
+    // Regex matching: https://laurikari.net/tre/about/
+    let result = child_process.spawnSync('tre-agrep',
+      ['-s', '-i', req.params.regex, '-'],
+      {'input': req.params.text}
+    );
+    res.send(result);
   });
   
   app.get('/historical/:project/:collabid/:filepath(*)/:cutoff', authenticate, authorize, function(req, res, next) {
