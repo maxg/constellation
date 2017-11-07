@@ -248,6 +248,8 @@ exports.createFrontend = function createFrontend(config, db) {
   // Find the given regex in the text, using fuzzy matching
   app.get('/regex/:regex/:text', authenticate, staffonly,  function(req, res, next) {
     // Regex matching: https://laurikari.net/tre/about/
+    // TODO: Add 'apt-get install tre-agrep libtre5 libtre-dev'
+    //   to a setup script somewhere?
     let result = child_process.spawnSync('tre-agrep',
       ['-s', '-i', req.params.regex, '-'],
       {'input': req.params.text}
