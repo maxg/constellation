@@ -1,0 +1,10 @@
+@Override
+
+abcsoidfjwlekjflxyz
+abcxyz
+abxyz
+
+public boolean contains(char c);
+
+something something @Override more something
+public boolean remove(char c);

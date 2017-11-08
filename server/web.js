@@ -251,7 +251,7 @@ exports.createFrontend = function createFrontend(config, db) {
     // TODO: Add 'apt-get install tre-agrep libtre5 libtre-dev'
     //   to a setup script somewhere?
     let result = child_process.spawnSync('tre-agrep',
-      ['-s', '-i', req.params.regex, '-'],
+      ['-s', '--show-position', '--line-number', req.params.regex, '-'],
       {'input': req.params.text}
     );
     res.send(result);

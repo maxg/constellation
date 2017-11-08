@@ -39,7 +39,12 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     });
 
     // Testing regex matching
-    $.ajax('/regex/' + '[a-z]+' + '/' + 'hello').done(function(match) {
+    var regex = 'assert';
+    var text = 'assert true; \r\n assert false';
+    // TODO: Probably can't pass all file text through URL
+    // Note: It will only do multiple matches if those
+    //   multiple matches are on different lines.
+    $.ajax('/regex/' + regex + '/' + text).done(function(match) {
       var result = '';
       match.stdout.data.forEach(function(num) {
         result += String.fromCharCode(num);
