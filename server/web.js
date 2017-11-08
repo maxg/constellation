@@ -354,9 +354,17 @@ function getChunkedDiffs(ops) {
       if (op.m.ts - lastTs > threshold) {
         var chunkedDiff = diff.diffLines(
           currentBaseline.data.text.trim(), currentDoc.data.text.trim());
-        chunkedDiffs.push(chunkedDiff);
+        
+        // Only push diffs with changes
+        if (!(chunkedDiff.length == 1 && 
+            !chunkedDiff[0].added &&
+            !chunkedDiff[0].removed)) {
+          chunkedDiffs.push(chunkedDiff);
+        }
+
         // Make a deep copy
         currentBaseline = JSON.parse(JSON.stringify(currentDoc));
+        
       }
 
       // Apply the op
