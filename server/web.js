@@ -380,3 +380,62 @@ function getChunkedDiffs(ops) {
 
     return chunkedDiffs; 
 }
+
+// Merges multiple diffs into one diff with all
+// additions and deletes kept.
+
+// TODO: This seems much too complicated
+function mergeDiffs(diffs) {
+  mergedDiff = diffs[0];
+  for (int i = 1; i < diffs.length; i++) {
+    var diff = diffs[i];
+
+    // Store what index we're currently on in each file
+    var currentChunkInMerged = 0;
+    var indexInCurrentChunkInMerged = 0;
+    var indexInText = 0;
+    diff.forEach(function(part) {
+      if (part.added) {
+        // Add this part 
+        // TODO: Might have to split up a part of the merged diff
+
+        var currentChunk = mergedDiff[currentChunkInMerged];
+
+
+      } else if (part.removed) {
+
+      } else {
+        var totalIndexInMerged = indexInText;
+
+        // It's the same as before, so just increment the counter
+        indexInText += part.value.length;
+
+        // Find the next chunk in the currently merged part
+        // Anything that's added or the same is valid
+        while (totalIndexInMerged < indexInText) {
+          var currentChunk = mergedDiff[currentChunkInMerged];
+          if (indexInCurrentChunkInMerged < currentChunk.value.length) {
+            // Haven't gotten to the end of the chunk yet
+            indexInCurrentChunkInMerged += 1;
+          } else {
+            // We've gone over the end of a chunk, so find the next chunk
+            // The only valid next chunks are normals or added, 
+            // but not removed since those weren't starting characters
+            // for the next diff
+            currentChunkInMerged += 1;
+            var nextChunk = mergedDiff[currentChunkInMerged];
+            while (nextChunk.removed) {
+              currentChunkInMerged += 1;
+              nextChunk = mergedDiff[currentChunkInMerged];
+            }
+
+            // It's a new chunk, so reset this index
+            indexInCurrentChunkInMerged = 0;
+          }
+
+          totalIndexInMerged += 1;
+        }
+      }
+    });
+  }
+}
