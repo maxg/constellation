@@ -249,18 +249,21 @@ exports.createFrontend = function createFrontend(config, db) {
   app.get('/regex/:collabid/:filepath(*)/:regexes', authenticate, staffonly,  function(req, res, next) {
     db.getFile(req.params.collabid, req.params.filepath, function(err, file) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
+
       // Regex matching: https://laurikari.net/tre/about/
       // TODO: Add 'apt-get install tre-agrep libtre5 libtre-dev'
       //   to a setup script somewhere?
-      // TODO: Currently can only match one regex at a time
-      var result = child_process.spawnSync('tre-agrep',
-        ['-s', '--show-position', '--line-number', req.params.regexes, '-'],
-        {'input': file.text}
-      );
-      res.send(result);
-    })
-
-    
+      var results = [];
+      // ';;' is the delimiter
+      req.params.regexes.split(';;').forEach(function(regex) {
+        var result = child_process.spawnSync('tre-agrep',
+          ['--show-position', '--line-number', regex, '-'],
+          {'input': file.text}
+        );
+        results.push(result);
+      });
+      res.send(results);
+    });
   });
   
   app.get('/historical/:project/:collabid/:filepath(*)/:cutoff', authenticate, authorize, function(req, res, next) {
