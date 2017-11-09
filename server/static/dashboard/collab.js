@@ -51,7 +51,7 @@ function updateDiff(node, baseline, text, file) {
   var regexes = '@Overr*' + ';;' + 'void';
   $.ajax('/regex/' + collabid + '/' + file.data.filepath + '/' + regexes).done(function(allRegexesMatches) {
 
-    var regexesList = [];
+    var regexesMap = new Map();
 
     // Fill the regexesList
     allRegexesMatches.forEach(function(singleRegexMatches) {
@@ -78,11 +78,12 @@ function updateDiff(node, baseline, text, file) {
           //   haven't tested if you have abc*xyz as the regex yet
           var lengthToHighlight = parseInt(indices[1]) - parseInt(indices[0]);
 
-          regexesList.push({
-            'lineNumber': lineNumber,
-            'indexInLine': indexInLine,
+          // TODO: If there's 2 results on the same line
+          regexesMap.set(lineNumber,
+            {'indexInLine': indexInLine,
             'length': lengthToHighlight
           });
+          
         })
 
       } else {
@@ -90,8 +91,8 @@ function updateDiff(node, baseline, text, file) {
       }
     });
 
-    console.log("REGEXES LIST");
-    console.log(regexesList);
+    console.log("REGEXES MAP");
+    console.log(regexesMap);
 
     // Calculate the diff and highlight it correctly
     window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {
