@@ -246,15 +246,21 @@ exports.createFrontend = function createFrontend(config, db) {
   });
 
   // Find the given regex in the text, using fuzzy matching
-  app.get('/regex/:regex/:text', authenticate, staffonly,  function(req, res, next) {
-    // Regex matching: https://laurikari.net/tre/about/
-    // TODO: Add 'apt-get install tre-agrep libtre5 libtre-dev'
-    //   to a setup script somewhere?
-    let result = child_process.spawnSync('tre-agrep',
-      ['-s', '--show-position', '--line-number', req.params.regex, '-'],
-      {'input': req.params.text}
-    );
-    res.send(result);
+  app.get('/regex/:collabid/:filepath(*)/:regexes', authenticate, staffonly,  function(req, res, next) {
+    db.getFile(req.params.collabid, req.params.filepath, function(err, file) {
+      if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
+      // Regex matching: https://laurikari.net/tre/about/
+      // TODO: Add 'apt-get install tre-agrep libtre5 libtre-dev'
+      //   to a setup script somewhere?
+      // TODO: Currently can only match one regex at a time
+      var result = child_process.spawnSync('tre-agrep',
+        ['-s', '--show-position', '--line-number', req.params.regexes, '-'],
+        {'input': file.text}
+      );
+      res.send(result);
+    })
+
+    
   });
   
   app.get('/historical/:project/:collabid/:filepath(*)/:cutoff', authenticate, authorize, function(req, res, next) {

@@ -39,17 +39,20 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     });
 
     // Testing regex matching
-    var regex = 'assert';
-    var text = 'assert true; \r\n assert false';
-    // TODO: Probably can't pass all file text through URL
-    // Note: It will only do multiple matches if those
-    //   multiple matches are on different lines.
-    $.ajax('/regex/' + regex + '/' + text).done(function(match) {
+    var regexes = '@Overr*';
+    $.ajax('/regex/' + collabid + '/' + file.data.filepath + '/' + regex).done(function(match) {
+      console.log(match);
       var result = '';
-      match.stdout.data.forEach(function(num) {
-        result += String.fromCharCode(num);
-      });
-      console.log(result);
+      if (match.stdout) {
+        // stdout returns ASCII numbers, so convert them to strings
+        match.stdout.data.forEach(function(num) {
+          result += String.fromCharCode(num);
+        });
+        console.log(result);
+      } else {
+        console.log("no match stdout");
+      }
+      
     }).fail(function(req, status, err) {
       console.log("got regex error");
       console.log(err);

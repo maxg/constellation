@@ -185,6 +185,16 @@ exports.createBackend = function createBackend(config) {
         });
       });
     },
+
+    getFile(collabid, filepath, callback) {
+      db.getDbs(function(err, mongo) {
+        if (err) { return callback(err); }
+        mongo.collection(FILES).findOne({ collabid, filepath }, function(err, file) {
+          if (err || ! file) { return callback(err, file); }
+          callback(null, file);          
+        });
+      });
+    },
     
     getHistorical(collabid, filepath, timestamp, callback) {
       db.getDbs(function(err, mongo) {
