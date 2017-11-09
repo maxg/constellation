@@ -257,6 +257,7 @@ exports.createFrontend = function createFrontend(config, db) {
     db.getOps(req.params.collabid, req.params.filepath, function(err, ops) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       var chunkedDiffs = getChunkedDiffs(ops);
+      //var chunkedDiffs = computeTotalDiff(ops);
       res.setHeader('Cache-Control', 'max-age=3600');
       res.send(chunkedDiffs);
     });
@@ -385,6 +386,7 @@ function getChunkedDiffs(ops) {
 // additions and deletes kept.
 
 // TODO: This seems much too complicated
+/*
 function mergeDiffs(diffs) {
   mergedDiff = diffs[0];
   for (int i = 1; i < diffs.length; i++) {
@@ -438,4 +440,52 @@ function mergeDiffs(diffs) {
       }
     });
   }
+}
+*/
+
+// TODO: Consistently killing mongo when trying to run
+function computeTotalDiff(ops) {
+  var totalDiff = [];
+
+  /* Setup the baseline of the document */ 
+  var firstOp = ops[0];
+  var firstText = firstOp.create.data.text;
+  firstText.split('').forEach(function(char) {
+    totalDiff.push({'char': char, 'type': 'b'});
+  });
+
+  for (var i = 1; i < ops.length; i++) {
+    op = ops[i];
+    console.log(JSON.stringify(op));
+    console.log(JSON.stringify(getOpText(op)));
+    // TODO
+
+  }
+  console.log(JSON.stringify(firstOp));
+
+  return totalDiff;
+}
+
+function getOpText(op) {
+  var textOrCurors = op.op[0].p[0];
+  if (textOrCurors == 'text') {
+    // Get type
+    var type;
+    var text;
+    if (op.op[0].sd) {
+      type = 'delete';
+      text = op.op[0].sd;
+    } else if (op.op[0].si) {
+      type = 'insert';
+      text = op.op[0].si;
+    }
+
+    return {
+      'index': op.op[0].p[1],
+      'type': type,
+      'text': text
+    }
+  }
+
+  return null;
 }
