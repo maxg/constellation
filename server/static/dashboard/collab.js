@@ -49,6 +49,8 @@ function updateDiff(node, baseline, text, file) {
   // Testing regex matching
   // ';;' is used as the delimiter between regexes
   var regexes = '@Overr*' + ';;' + 'void';
+  // TODO: Make this work
+  //regexes = '\(*\)';
   $.ajax('/regex/' + collabid + '/' + file.data.filepath + '/' + regexes).done(function(allRegexesMatches) {
 
     var regexesMap = new Map();
@@ -73,7 +75,7 @@ function updateDiff(node, baseline, text, file) {
           var lineNumber = parseInt(values[0]);
           var relevantChars = values[1];
           var indices = relevantChars.split('-');
-          var indexInLine = indices[0];
+          var indexInLine = parseInt(indices[0]);
           // Note: If *, only includes the len of things before the *
           //   haven't tested if you have abc*xyz as the regex yet
           var lengthToHighlight = parseInt(indices[1]) - parseInt(indices[0]);
@@ -91,24 +93,79 @@ function updateDiff(node, baseline, text, file) {
       }
     });
 
-    console.log("REGEXES MAP");
-    console.log(regexesMap);
+    // Keep track of the current line number we're on
+    // TODO: -1 doesn't seem right
+    var currentLineNumber = 1;
 
     // Calculate the diff and highlight it correctly
     window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {
-      var elt = document.createElement('div');
-      elt.classList.add('diff-part');
-      if (part.added) {
-        elt.classList.add('diff-added');
-        elt.appendChild(document.createTextNode(part.value));
-      } else if (part.removed) {
-        elt.classList.add('diff-removed');
-      } else {
-        elt.appendChild(document.createTextNode(part.value));
+      var partLines = part.value.split('\n');
+      // Last one is always an empty string
+      partLines.pop();
+
+      //console.log(partLines);
+      //console.log(part);
+      for (var i = 0; i < partLines.length; i++) {
+        var partLine = partLines[i];
+
+        var elt = document.createElement('div');
+
+        // A removed part doesn't count toward the line numbers
+        if (part.removed) {
+          elt.classList.add('diff-removed');
+          node.appendChild(elt);
+          //currentLineNumber += 1;
+          continue;
+        }
+
+        if (regexesMap.has(currentLineNumber)) {
+          // TODO: Make more DRY
+
+          var regex = regexesMap.get(currentLineNumber);
+        
+          var beforeRegexElt = document.createElement('span');
+          var regexElt = document.createElement('span');
+          var afterRegexElt = document.createElement('span');
+
+          beforeRegexElt.appendChild(document.createTextNode(
+            partLine.substring(0, regex.indexInLine)));
+          regexElt.appendChild(document.createTextNode(
+            partLine.substring(regex.indexInLine, regex.indexInLine + regex.length)));
+          afterRegexElt.appendChild(document.createTextNode(
+            partLine.substring(regex.indexInLine + regex.length)));
+
+          regexElt.classList.add('diff-regex');
+
+          if (part.added) {
+            beforeRegexElt.classList.add('diff-added');
+            regexElt.classList.add('diff-added');
+            afterRegexElt.classList.add('diff-added');
+          }
+
+          elt.appendChild(beforeRegexElt);
+          elt.appendChild(regexElt);
+          elt.appendChild(afterRegexElt);
+
+        } else {
+          elt.classList.add('diff-part');
+          if (part.added) {
+            elt.classList.add('diff-added');
+            elt.appendChild(document.createTextNode(partLine));
+          } else {
+            elt.appendChild(document.createTextNode(partLine));
+          }
+
+        }
+
+        node.appendChild(elt);
+        currentLineNumber += 1;
       }
-      node.appendChild(elt);
+      
     });
-    hljs.highlightBlock(node);
+
+    // TODO: Syntax highlighting doesn't work anymore
+    //hljs.highlightBlock(node);
+
     
     
   }).fail(function(req, status, err) {

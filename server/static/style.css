@@ -121,8 +121,14 @@ textarea {
 }
 .diff .diff-added {
   line-height: 1.1;
-  background: rgba(252, 248, 227, .3);
+  background: rgba(252, 248, 227, .7);
 }
+
+/** TODO: Choose a better background color */
+.diff .diff-regex {
+  background: rgba(0, 255, 0, 0.5);
+}
+
 .diff .diff-removed + .diff-added {
 }
 
