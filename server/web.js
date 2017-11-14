@@ -257,6 +257,8 @@ exports.createFrontend = function createFrontend(config, db) {
     db.getOps(req.params.collabid, req.params.filepath, function(err, ops) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       var chunkedDiffs = getChunkedDiffs(ops);
+      //var mergedDiffs = mergeDiffs(chunkedDiffs);
+      testMergedDiffs();
       //var chunkedDiffs = computeTotalDiff(ops);
       res.setHeader('Cache-Control', 'max-age=3600');
       res.send(chunkedDiffs);
@@ -386,27 +388,50 @@ function getChunkedDiffs(ops) {
 // additions and deletes kept.
 
 // TODO: This seems much too complicated
-/*
+
 function mergeDiffs(diffs) {
   mergedDiff = diffs[0];
-  for (int i = 1; i < diffs.length; i++) {
+  for (var i = 1; i < diffs.length; i++) {
     var diff = diffs[i];
 
-    // Store what index we're currently on in each file
+    // Index into mergedDiff for what chunk we're currently on
     var currentChunkInMerged = 0;
+
+    // Index within the current chunk
     var indexInCurrentChunkInMerged = 0;
+
+    // Overall index
     var indexInText = 0;
+
     diff.forEach(function(part) {
       if (part.added) {
-        // Add this part 
-        // TODO: Might have to split up a part of the merged diff
-
+        console.log("adding a part");
+        console.log(part);
+        
         var currentChunk = mergedDiff[currentChunkInMerged];
+
+        // Split up this chunk into previous and next
+        var prevChunk = JSON.parse(JSON.stringify(currentChunk));
+        prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged+1);
+        var nextChunk = JSON.parse(JSON.stringify(currentChunk));
+        nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged+1);
+
+        console.log(prevChunk);
+        console.log(nextChunk);
+
+        // Delete the current chunk and replace it with prev, part, and next
+        mergedDiff.splice(currentChunkInMerged, 1, prevChunk, part, nextChunk);
 
 
       } else if (part.removed) {
 
       } else {
+        console.log("got a normal thing");
+        console.log(part);
+        console.log("merged diffs:");
+        console.log(mergedDiff);
+        console.log("doing the thing");
+
         var totalIndexInMerged = indexInText;
 
         // It's the same as before, so just increment the counter
@@ -437,11 +462,92 @@ function mergeDiffs(diffs) {
 
           totalIndexInMerged += 1;
         }
+
+        console.log("current chunk:");
+        console.log(currentChunkInMerged);
+        console.log("index in currentChunk");
+        console.log(indexInCurrentChunkInMerged);
+        console.log("index in text");
+        console.log(indexInText);
+
       }
     });
   }
+  return mergedDiff;
 }
-*/
+
+function testMergedDiffs() {
+  /** Test 1: Adding at the end 
+
+  diff_0 = [
+    {'value': 'hello'},
+    {'value': ' there', 'added': true},
+  ]
+
+  diff_1 = [
+    {'value': 'hello there'},
+    {'value': ' again', 'added': true},
+  ]
+
+  result = mergeDiffs([diff_0, diff_1]);
+  console.log("test merged diffs:");
+  console.log(result);
+  */
+
+  /** Test 2: Adding at the very beginning 
+  TODO: Doesn't pass, it doesn't like the '+1'
+    on the index
+
+  diff_0 = [
+    {'value': 'hello'},
+    {'value': ' there', 'added': true},
+  ]
+
+  diff_1 = [
+    {'value': 'why ', 'added': true},
+    {'value': 'hello there'},
+  ]
+
+  result = mergeDiffs([diff_0, diff_1]);
+  console.log("test merged diffs:");
+  console.log(result);
+ */
+
+ /* Test: Adding at beginning of a chunk
+   in the middle */
+   diff_0 = [
+     {'value': 'hello'},
+     {'value': ' there', 'added': true},
+   ]
+
+   diff_1 = [
+     {'value': 'hello'},
+     {'value': 'xxxx', 'added': true},
+     {'value': ' there'},
+   ]
+
+  result = mergeDiffs([diff_0, diff_1]);
+  console.log("test merged diffs:");
+  console.log(result); 
+
+  /** Test 3: Adding in the middle 
+  diff_0 = [
+    {'value': 'hello'},
+    {'value': ' there', 'added': true},
+  ]
+
+  diff_1 = [
+    {'value': 'hello th'},
+    {'value': 'xxxx', 'added': true},
+    {'value': 'ere'},
+  ]
+
+  result = mergeDiffs([diff_0, diff_1]);
+  console.log("test merged diffs:");
+  console.log(result);
+  */
+}
+
 
 // TODO: Consistently killing mongo when trying to run
 // TODO: Takes forever to run
