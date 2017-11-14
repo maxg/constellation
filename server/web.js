@@ -444,24 +444,47 @@ function mergeDiffs(diffs) {
 */
 
 // TODO: Consistently killing mongo when trying to run
+// TODO: Takes forever to run
 function computeTotalDiff(ops) {
+  console.log("computing total diff");
   var totalDiff = [];
 
   /* Setup the baseline of the document */ 
   var firstOp = ops[0];
   var firstText = firstOp.create.data.text;
   firstText.split('').forEach(function(char) {
-    totalDiff.push({'char': char, 'type': 'b'});
+    totalDiff.push({'char': char, 'type': 'b'}); // b = baseline
   });
 
   for (var i = 1; i < ops.length; i++) {
     op = ops[i];
-    console.log(JSON.stringify(op));
-    console.log(JSON.stringify(getOpText(op)));
-    // TODO
+
+    var opText = getOpText(op);
+    if (opText) {
+      if (opText.type == 'insert') {
+        var textArray = [];
+        opText.text.forEach(function(char) {
+          textArray.push({'char': char, 'type': 's'}); // s = student
+        });
+
+        // TODO: This has to ignore indices
+        //   of deleted code
+        totalDiff.splice(opText.index, /* deleteCount */ 0,
+          ... textArray);
+      } else if (opText.type == 'delete') {
+        
+        for (var i = opText.index; i < opText.index + opText.text.length; i++) {
+          var prev = totalDiff[i];
+          // TODO: Assert that it's an 's' or 'b'
+          totalDiff[i] = {'char': prev.char, 'type': prev.type + 'd'};
+            // sd = student-written code that was deleted
+            // bd = baseline code that was deleted
+        }
+      }
+    }
 
   }
-  console.log(JSON.stringify(firstOp));
+  console.log(totalDiff);
 
   return totalDiff;
 }
@@ -480,11 +503,13 @@ function getOpText(op) {
       text = op.op[0].si;
     }
 
-    return {
-      'index': op.op[0].p[1],
-      'type': type,
-      'text': text
-    }
+    if (text) {
+      return {
+        'index': op.op[0].p[1],
+        'type': type,
+        'text': text.split('')
+      }
+    }    
   }
 
   return null;

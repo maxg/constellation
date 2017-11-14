@@ -41,6 +41,8 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     // TODO: Give it its own div
     var opsDiv = document.querySelector('#files');
     $.ajax('/ops/' + project + '/' + collabid + '/' + file.data.filepath).done(function(diffs) {
+      console.log("result:");
+      console.log(diffs);
 
       diffs.forEach(function(diff) {
         var diffNode = document.createElement('div');
