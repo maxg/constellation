@@ -258,7 +258,7 @@ exports.createFrontend = function createFrontend(config, db) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       var chunkedDiffs = getChunkedDiffs(ops);
       //var mergedDiffs = mergeDiffs(chunkedDiffs);
-      testMergedDiffsRemove();
+      testMergedDiffsAdd();
       //var chunkedDiffs = computeTotalDiff(ops);
       res.setHeader('Cache-Control', 'max-age=3600');
       res.send(chunkedDiffs);
@@ -427,6 +427,8 @@ function mergeDiffs(diffs) {
           mergedDiff.splice(currentChunkInMerged, 1, prevChunk, part, nextChunk);
 
           // TODO: Need to increment currentChunkInMerged?
+          currentChunkInMerged += 2;
+          indexInCurrentChunkInMerged = 0;
 
         }
         
@@ -545,6 +547,7 @@ function mergeDiffs(diffs) {
         // Anything that's added or the same is valid
         while (totalIndexInMerged < indexInText) {
           var currentChunk = mergedDiff[currentChunkInMerged];
+          
           if (indexInCurrentChunkInMerged < currentChunk.value.length) {
             // Haven't gotten to the end of the chunk yet
             indexInCurrentChunkInMerged += 1;
@@ -682,7 +685,7 @@ function testMergedDiffsRemove() {
 }
 
 function testMergedDiffsAdd() {
-  /** Test 1: Adding at the end */
+  /** Adding at the end 
 
   diff_0 = [
     {'value': 'hello'},
@@ -694,14 +697,10 @@ function testMergedDiffsAdd() {
     {'value': ' again', 'added': true},
   ]
 
-  result = mergeDiffs([diff_0, diff_1]);
-  console.log("test merged diffs:");
-  console.log(result);
+  console.log(mergeDiffs([diff_0, diff_1]));
 
 
-  /** Test 2: Adding at the very beginning 
-  TODO: Doesn't pass, it doesn't like the '+1'
-    on the index */
+  /** Adding at the very beginning  
 
   diff_0 = [
     {'value': 'hello'},
@@ -713,13 +712,11 @@ function testMergedDiffsAdd() {
     {'value': 'hello there'},
   ]
 
-  result = mergeDiffs([diff_0, diff_1]);
-  console.log("test merged diffs:");
-  console.log(result);
+  console.log(mergeDiffs([diff_0, diff_1]));
  
 
- /* Test: Adding at beginning of a chunk
-   in the middle */
+ /* Adding at beginning of a chunk
+   in the middle 
    diff_0 = [
      {'value': 'hello'},
      {'value': ' there', 'added': true},
@@ -731,11 +728,10 @@ function testMergedDiffsAdd() {
      {'value': ' there'},
    ]
 
-  result = mergeDiffs([diff_0, diff_1]);
-  console.log("test merged diffs:");
-  console.log(result); 
+  console.log(mergeDiffs([diff_0, diff_1]));
 
-  /** Test 3: Adding in the middle  */
+
+  /** Adding in the middle of a chunk 
   diff_0 = [
     {'value': 'hello'},
     {'value': ' there', 'added': true},
@@ -747,10 +743,25 @@ function testMergedDiffsAdd() {
     {'value': 'ere'},
   ]
 
-  result = mergeDiffs([diff_0, diff_1]);
-  console.log("test merged diffs:");
-  console.log(result);
+  console.log(mergeDiffs([diff_0, diff_1]));
 
+  /** Adding to a diff with removed parts 
+  diff_0 = [
+    {'value': 'hello there'},
+  ]
+
+  diff_1 = [
+    {'value': 'he'},
+    {'value': 'llo the', 'removed': true},
+    {'value': 're'},
+  ]
+  diff_2 = [
+    {'value': 'h'},
+    {'value': 'something', 'added': true},
+    {'value': 'ere'}
+  ]
+  console.log(mergeDiffs([diff_0, diff_1, diff_2]));
+  */
 }
 
 
