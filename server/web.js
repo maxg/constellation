@@ -472,6 +472,9 @@ function mergeDiffs(diffs) {
 
           // Start our while loop at the beginning of the next chunk
           currentChunkInMerged += 2;
+          if (!mergedDiff[currentChunkInMerged]) {
+            return;
+          }
           indexInCurrentChunkInMerged = 0;
 
           /** starting over */
@@ -500,6 +503,9 @@ function mergeDiffs(diffs) {
           // Split last chunk, since remove might end
           // in the middle of a chunk
           currentChunk = mergedDiff[currentChunkInMerged];
+          if (!currentChunk) {
+            return;
+          }
           
           // We have this many more characters to remove 
           numCharactersLeft = numCharactersLeft - numSeenCharacters;
@@ -594,7 +600,7 @@ function testMergedDiffsRemove() {
   console.log(mergeDiffs([diff_0, diff_1]));
   */
 
-  /* Remove everything 
+  /* Remove everything */
   diff_0 = [
     {'value': 'hello'},
     {'value': ' there', 'added': true},
@@ -604,9 +610,9 @@ function testMergedDiffsRemove() {
     {'value': 'hello there', 'removed': true},
   ]
   console.log(mergeDiffs([diff_0, diff_1]));
-  */
+  
 
-  /* Remove in the middle of two parts */
+  /* Remove in the middle of two parts 
   diff_0 = [
     {'value': 'hello'},
     {'value': ' there', 'added': true},
@@ -618,6 +624,8 @@ function testMergedDiffsRemove() {
     {'value': 'ere'},
   ]
   console.log(mergeDiffs([diff_0, diff_1]));
+
+  /* Remove over many complete parts */
 }
 
 function testMergedDiffsAdd() {
