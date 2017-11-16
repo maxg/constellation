@@ -404,14 +404,7 @@ function mergeDiffs(diffs) {
     var indexInCurrentChunkInMerged = 0;
 
     diff.forEach(function(part) {
-      console.log("  ");
-      console.log(mergedDiff);
-      console.log("part:");
-      console.log(part);
       if (part.added) {
-        console.log("added part");
-        console.log(currentChunkInMerged);
-        console.log(indexInCurrentChunkInMerged);
 
         var currentChunk = mergedDiff[currentChunkInMerged];
 
@@ -429,7 +422,6 @@ function mergeDiffs(diffs) {
         indexInCurrentChunkInMerged = 0;     
         
       } else if (part.removed) {
-        console.log("removed part");
 
         var currentChunk = mergedDiff[currentChunkInMerged];
 
@@ -507,9 +499,6 @@ function mergeDiffs(diffs) {
           
           // We have this many more characters to remove 
           numCharactersToDelete = numCharactersLeft - numSeenCharacters;
-
-          console.log(numCharactersToDelete);
-          console.log(currentChunk);
 
           var lastDeletedChunk = JSON.parse(JSON.stringify(currentChunk));
           lastDeletedChunk.value = lastDeletedChunk.value.substring(0, numCharactersToDelete);
@@ -792,7 +781,7 @@ function testMergedDiffsAdd() {
     {'value': 'hello there'},
     {'value': ' again', 'added': true},
   ]
-
+  console.log("expect:hello=same, there=added, again=added");
   console.log(mergeDiffs([diff_0, diff_1]));
 
 
@@ -807,22 +796,22 @@ function testMergedDiffsAdd() {
     {'value': 'why ', 'added': true},
     {'value': 'hello there'},
   ]
-
+  console.log("expect:why =added,hello=same, there=added");
   console.log(mergeDiffs([diff_0, diff_1]));
  
 
  /* Adding at beginning of a chunk in the middle */
-   diff_0 = [
-     {'value': 'hello'},
-     {'value': ' there', 'added': true},
-   ]
+  diff_0 = [
+    {'value': 'hello'},
+    {'value': ' there', 'added': true},
+  ]
 
-   diff_1 = [
-     {'value': 'hello'},
-     {'value': 'xxxx', 'added': true},
-     {'value': ' there'},
-   ]
-
+  diff_1 = [
+    {'value': 'hello'},
+    {'value': 'xxxx', 'added': true},
+    {'value': ' there'},
+  ]
+  console.log('expect:hello=same,xxxx=added, there=added');
   console.log(mergeDiffs([diff_0, diff_1]));
 
 
@@ -837,14 +826,13 @@ function testMergedDiffsAdd() {
     {'value': 'xxxx', 'added': true},
     {'value': 'ere'},
   ]
-
+  console.log('expect:hello=same, th=added,xxxx=added,ere=added');
   console.log(mergeDiffs([diff_0, diff_1]));
 
   /** Adding to a diff with removed parts  */
   diff_0 = [
     {'value': 'hello there'},
   ]
-
   diff_1 = [
     {'value': 'he'},
     {'value': 'llo the', 'removed': true},
@@ -855,9 +843,12 @@ function testMergedDiffsAdd() {
     {'value': 'something', 'added': true},
     {'value': 'ere'}
   ]
+  // Expectation is undetermined based on spec
+  console.log('expect:h=same,something=added,e=same,llo the=removed,re=same')
   console.log(mergeDiffs([diff_0, diff_1, diff_2]));
 
-  console.log("EQUALS");
+  /** Used to test if currentChunkInMerged,
+    indexInCurrentChunkInMerged are correct 
   diff_0 = [
     {'value': 'abc'},
     {'value': 'lmnop'},
@@ -869,9 +860,8 @@ function testMergedDiffsAdd() {
     {'value': 'no'},
     {'value': 'pxyz'}
   ];
-
   console.log(mergeDiffs([diff_0, diff_1]));
-  console.log("END EQUALS");
+  */
 }
 
 
