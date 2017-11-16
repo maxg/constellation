@@ -258,7 +258,7 @@ exports.createFrontend = function createFrontend(config, db) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       var chunkedDiffs = getChunkedDiffs(ops);
       //var mergedDiffs = mergeDiffs(chunkedDiffs);
-      testsToRun();
+      testMergedDiffsRegression();
       //var chunkedDiffs = computeTotalDiff(ops);
       res.setHeader('Cache-Control', 'max-age=3600');
       res.send(chunkedDiffs);
@@ -406,9 +406,6 @@ function mergeDiffs(diffs) {
     var indexInCurrentChunkInMerged = 0;
 
     diff.forEach(function(part) {
-      console.log("  ");
-      console.log(mergedDiff);
-      console.log(part);
       if (part.added) {
 
         var currentChunk = mergedDiff[currentChunkInMerged];
@@ -584,24 +581,9 @@ function mergeDiffs(diffs) {
   return mergedDiff;
 }
 
-function testsToRun() {
-
-}
-
 // Tests for bugs found when looking at real code
 function testMergedDiffsRegression() {
-  /* Testing newlines 
-  diff_0 = [
-    {'value': '    // TODO\n\n    // TODO'}
-  ];
-
-  diff_1 = [
-    {'value': '    // TODO\n', 'removed': true},
-    {'value': '\n    // TODO'}
-  ]
-  console.log(mergeDiffs([diff_0, diff_1])); */
-
-  /* Duplicating test case */
+  /* Regression #1, causing bugs #1 and #2 */
   diff_0 = [
     {'value': '    // TODO\n    \n    //////\n'},
   ];
@@ -630,26 +612,12 @@ function testMergedDiffsRegression() {
       }\n---------------------------added
       \n----------------------------same
       \n----------------------------added
-      //////------------------------same   
+      //////\n------------------------same 
+  */  
+  console.log('expect: see comments');
+  console.log(mergeDiffs([diff_0, diff_1, diff_2]));
 
-  */
-
-  /* Actual, after fixing bug#1 and #2 and only doing diff0 and 1:
-[ { value: '' },
-  { value: '    // TODO\n', removed: true, added: false },
-  { value: '\n    ', added: true },
-  { value: '    \n', added: true },
-  { value: 'public Set<E> CharSet1() {\n        m\n    }\n',
-    added: true },
-  { value: '    \n    //////\n' } ]
-
-  Differences:
-    seems to have switched two of them?
-  */
-
-  console.log(mergeDiffs([diff_0, diff_1]));
-
-  // Bug #2 minimized
+  /* Bug #2 minimized */
   diff_0 = [
     {'value': 'something'}
   ];
@@ -661,23 +629,10 @@ function testMergedDiffsRegression() {
     {'value': 'short', 'added': true},
     {'value': 'ing'}
   ];
+  console.log('expect:some=same,muchlongthing=added,th=same,short=added,ing=same');
+  console.log(mergeDiffs([diff_0, diff_1]));
 
-  //console.log(mergeDiffs([diff_0, diff_1]));
-
-  // Bug #1 minimized
-  diff_0 = [
-    {'value': '    // TODO\n    //////\n'},
-  ];
-
-  diff_1 = [
-    {'value': '    // TODO\n', 'removed': true},
-    {'value': 'something else', 'added': true},
-    {'value': '    //////\n'}
-  ];
-
-  //console.log(mergeDiffs([diff_0, diff_1]));
-
-  // Bug #1 more inimized version
+  /* Bug #1 minimized */
   diff_0 = [
     {'value': 'something'}
   ];
@@ -687,8 +642,8 @@ function testMergedDiffsRegression() {
     {'value': 'else', 'added': true},
     {'value': 'ething'}
   ];
-
-  // console.log(mergeDiffs([diff_0, diff_1]));
+  console.log('expect:som=removed,else=added,ething=same');
+  console.log(mergeDiffs([diff_0, diff_1]));
 
 }
 
