@@ -257,12 +257,12 @@ exports.createFrontend = function createFrontend(config, db) {
     db.getOps(req.params.collabid, req.params.filepath, function(err, ops) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       var chunkedDiffs = getChunkedDiffs(ops);
-      //var mergedDiffs = mergeDiffs(chunkedDiffs);
-      testMergedDiffsRegression();
+      var mergedDiffs = mergeDiffs(chunkedDiffs);
+      //testMergedDiffsRegression();
       //var chunkedDiffs = computeTotalDiff(ops);
       res.setHeader('Cache-Control', 'max-age=3600');
-      res.send(chunkedDiffs);
-      //res.send([chunkedDiffs, mergedDiffs]);
+      //res.send(chunkedDiffs);
+      res.send([chunkedDiffs, mergedDiffs]);
     });
   })
   

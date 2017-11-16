@@ -40,11 +40,14 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
 
     // TODO: Give it its own div
     var opsDiv = document.querySelector('#files');
-    $.ajax('/ops/' + project + '/' + collabid + '/' + file.data.filepath).done(function(diffs) {
-      console.log("result:");
-      console.log(diffs);
+    $.ajax('/ops/' + project + '/' + collabid + '/' + file.data.filepath).done(function(bothDiffs) {
+      console.log("result for:");
+      console.log(file.data.filepath);
+      console.log(bothDiffs);
 
-      diffs.forEach(function(diff) {
+      var diff = bothDiffs[1];
+
+      //diffs.forEach(function(diff) {
         var diffNode = document.createElement('div');
         var heading = document.createElement('h3');
         heading.appendChild(document.createTextNode('Diff for ' + file.data.filepath));
@@ -66,13 +69,13 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
           var elt = document.createElement('span');
           color = part.added ? 'green' :
                      part.removed ? 'red' : 'grey';
-          elt.style.color = color;
+          elt.style.background = color;
           elt.appendChild(document.createTextNode(part.value));
           codeBlock.appendChild(elt);
         });
 
         opsDiv.appendChild(diffNode);
-      });
+      //});
 
     }).fail(function(req, status, err) {
       opsDiv.textContent = 'Error fetching ops: ' + errorToString(req.responseJSON, status, err);
