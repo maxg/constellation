@@ -401,9 +401,6 @@ function mergeDiffs(diffs) {
     // Index within the current chunk
     var indexInCurrentChunkInMerged = 0;
 
-    // Overall index
-    var indexInText = 0;
-
     diff.forEach(function(part) {
       console.log("  ");
       console.log(mergedDiff);
@@ -411,7 +408,6 @@ function mergeDiffs(diffs) {
       console.log(part);
       if (part.added) {
         console.log("added part");
-        console.log(indexInText);
         console.log(currentChunkInMerged);
         console.log(indexInCurrentChunkInMerged);
 
@@ -466,7 +462,6 @@ function mergeDiffs(diffs) {
           // Delete the current chunk and replace it
           mergedDiff.splice(currentChunkInMerged, 1, prevChunk, deletedChunk, nextChunk);
 
-          indexInText += part.value.length;
           // Starting at the beginning of nextChunk
           currentChunkInMerged += 2;
           indexInCurrentChunkInMerged = 0;
@@ -539,23 +534,21 @@ function mergeDiffs(diffs) {
           // Delete the current chunk and replace it with prev and next
           mergedDiff.splice(currentChunkInMerged, 1, prevChunk, nextChunk);
 
-          // We've deleted this many characters, so our new
-          // index in the previous diff increases by this many
-          indexInText += part.value.length;
-
           indexInCurrentChunkInMerged = numCharactersLeft;
 
         }
 
         
-      } else { // part is not removed or added
+      } else {
+        // Part is not removed or added,
+        // So we just need to change our currentChunkInMerged
+        // and indexInCurrentChunkInMerged
 
         var currentChunk = mergedDiff[currentChunkInMerged];
 
         // Check if we stay in the same chunk after this part
         if (indexInCurrentChunkInMerged + part.value.length < currentChunk.value.length) {
           indexInCurrentChunkInMerged += part.value.length;
-          indexInText += part.value.length;
           return;
         }
 
@@ -585,11 +578,11 @@ function mergeDiffs(diffs) {
           currentChunk = mergedDiff[currentChunkInMerged];
         }
 
-        indexInText += part.value.length;
         indexInCurrentChunkInMerged = part.value.length - numSeenCharacters;
       }
     });
   }
+
   return mergedDiff;
 }
 
