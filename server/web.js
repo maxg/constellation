@@ -413,6 +413,14 @@ function mergeDiffs(diffs) {
 
         var currentChunk = mergedDiff[currentChunkInMerged];
 
+        // Skip through the already removed chunks
+        // This preserves order if I remove something,
+        //   and then add something later in the same place
+        while (currentChunk && currentChunk.removed) {
+          currentChunkInMerged += 1;
+          currentChunk = mergedDiff[currentChunkInMerged];
+        }
+
         // Split up this chunk into previous and next
         var prevChunk = JSON.parse(JSON.stringify(currentChunk));
         prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged);
@@ -577,21 +585,7 @@ function mergeDiffs(diffs) {
 }
 
 function testsToRun() {
-  diff_0 = [
-    {'value': 'something'}
-  ];
-  diff_1 = [
-    {'value': 'so'},
-    {'value': 'met', 'removed': true},
-    {'value': 'hing'},
-  ];
-  diff_2 = [
-    {'value': 'so'},
-    {'value': 'hi', 'removed': true},
-    {'value': 'ng'}
-  ]
-  console.log('expect:so=same,met=removed,hi=removed,ng=same');
-  console.log(mergeDiffs([diff_0, diff_1, diff_2]));
+
 }
 
 // Tests for bugs found when looking at real code
@@ -877,6 +871,24 @@ function testMergedDiffsAdd() {
   ]
   // Expectation is undetermined based on spec
   console.log('expect:h=same,something=added,e=same,llo the=removed,re=same')
+  console.log(mergeDiffs([diff_0, diff_1, diff_2]));
+
+  /** Preserve order of operations if you 
+    remove something and then add to the same place */
+  diff_0 = [
+    {'value': 'something'}
+  ];
+  diff_1 = [
+    {'value': 'so'},
+    {'value': 'met', 'removed': true},
+    {'value': 'hing'},
+  ];
+  diff_2 = [
+    {'value': 'so'},
+    {'value': 'woo', 'added': true},
+    {'value': 'hing'}
+  ]
+  console.log('expect:so=same,met=removed,woo=added,hing=same');
   console.log(mergeDiffs([diff_0, diff_1, diff_2]));
 
   /** Used to test if currentChunkInMerged,
