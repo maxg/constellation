@@ -258,7 +258,7 @@ exports.createFrontend = function createFrontend(config, db) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       var chunkedDiffs = getChunkedDiffs(ops);
       //var mergedDiffs = mergeDiffs(chunkedDiffs);
-      testMergedDiffs();
+      testMergedDiffsAdd();
       //var chunkedDiffs = computeTotalDiff(ops);
       res.setHeader('Cache-Control', 'max-age=3600');
       res.send(chunkedDiffs);
@@ -405,32 +405,34 @@ function mergeDiffs(diffs) {
 
     diff.forEach(function(part) {
       if (part.added) {
-        console.log("adding a part");
-        console.log(part);
+
+        // If adding at the very beginning, the +1 below
+        // doesn't apply
+        if (indexInText == 0) {
+          // Add part to the beginning
+          mergedDiff.splice(0, 0, part);
+
+        } else {
+          var currentChunk = mergedDiff[currentChunkInMerged];
+
+          // Split up this chunk into previous and next
+          var prevChunk = JSON.parse(JSON.stringify(currentChunk));
+          prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged+1);
+          var nextChunk = JSON.parse(JSON.stringify(currentChunk));
+          nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged+1);
+
+          // TODO: Remove parts with '' value
+
+          // Delete the current chunk and replace it with prev, part, and next
+          mergedDiff.splice(currentChunkInMerged, 1, prevChunk, part, nextChunk);
+
+
+        }
         
-        var currentChunk = mergedDiff[currentChunkInMerged];
-
-        // Split up this chunk into previous and next
-        var prevChunk = JSON.parse(JSON.stringify(currentChunk));
-        prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged+1);
-        var nextChunk = JSON.parse(JSON.stringify(currentChunk));
-        nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged+1);
-
-        console.log(prevChunk);
-        console.log(nextChunk);
-
-        // Delete the current chunk and replace it with prev, part, and next
-        mergedDiff.splice(currentChunkInMerged, 1, prevChunk, part, nextChunk);
-
-
+        
       } else if (part.removed) {
 
       } else {
-        console.log("got a normal thing");
-        console.log(part);
-        console.log("merged diffs:");
-        console.log(mergedDiff);
-        console.log("doing the thing");
 
         var totalIndexInMerged = indexInText;
 
@@ -476,8 +478,9 @@ function mergeDiffs(diffs) {
   return mergedDiff;
 }
 
-function testMergedDiffs() {
-  /** Test 1: Adding at the end 
+
+function testMergedDiffsAdd() {
+  /** Test 1: Adding at the end */
 
   diff_0 = [
     {'value': 'hello'},
@@ -492,11 +495,11 @@ function testMergedDiffs() {
   result = mergeDiffs([diff_0, diff_1]);
   console.log("test merged diffs:");
   console.log(result);
-  */
+
 
   /** Test 2: Adding at the very beginning 
   TODO: Doesn't pass, it doesn't like the '+1'
-    on the index
+    on the index */
 
   diff_0 = [
     {'value': 'hello'},
@@ -511,7 +514,7 @@ function testMergedDiffs() {
   result = mergeDiffs([diff_0, diff_1]);
   console.log("test merged diffs:");
   console.log(result);
- */
+ 
 
  /* Test: Adding at beginning of a chunk
    in the middle */
@@ -530,7 +533,7 @@ function testMergedDiffs() {
   console.log("test merged diffs:");
   console.log(result); 
 
-  /** Test 3: Adding in the middle 
+  /** Test 3: Adding in the middle  */
   diff_0 = [
     {'value': 'hello'},
     {'value': ' there', 'added': true},
@@ -545,7 +548,7 @@ function testMergedDiffs() {
   result = mergeDiffs([diff_0, diff_1]);
   console.log("test merged diffs:");
   console.log(result);
-  */
+
 }
 
 
