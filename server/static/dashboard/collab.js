@@ -52,52 +52,8 @@ function updateDiff(node, baseline, text, file) {
   var allRegexes = regexes ? regexes : '@Override' + ';;' + 'void';
 
   //allRegexes = '%5C%28.%2A%5C%29'; // \(.*\)
-  $.ajax('/regex/' + collabid + '/' + file.data.filepath + '/' + allRegexes).done(function(allRegexesMatches) {
-
-    var regexesMap = new Map();
-
-    console.log("all regexes:");
-    console.log(allRegexesMatches);
-
-    // Fill the regexesList
-    allRegexesMatches.forEach(function(singleRegexMatches) {
-      var result = '';
-
-      if (singleRegexMatches.stdout) {
-        // stdout returns ASCII numbers, so convert them to strings
-        singleRegexMatches.stdout.data.forEach(function(num) {
-          result += String.fromCharCode(num);
-        });
-
-        var singleMatchesList = result.split('\n');
-        singleMatchesList.forEach(function(singleMatch) {
-          var values = singleMatch.split(':');
-          if (values.length < 3) {
-            // Not a legitimate match
-            return;
-          }
-          var lineNumber = parseInt(values[0]);
-          var relevantChars = values[1];
-          var indices = relevantChars.split('-');
-          var indexInLine = parseInt(indices[0]);
-          // Note: If *, only includes the len of things before the *
-          //   haven't tested if you have abc*xyz as the regex yet
-          var lengthToHighlight = parseInt(indices[1]) - parseInt(indices[0]);
-
-          // TODO: If there's 2 results on the same line
-          regexesMap.set(lineNumber,
-            {'indexInLine': indexInLine,
-            'length': lengthToHighlight
-          });
-          
-        })
-
-      } else {
-        console.log("no match stdout");
-      }
-    });
-
-    console.log(regexesMap);
+  $.ajax('/regex/' + collabid + '/' + file.data.filepath + '/' + allRegexes).done(function(regexesJson) {
+    var regexesMap = new Map(JSON.parse(regexesJson));
 
     // Keep track of the current line number we're on
     // TODO: -1 doesn't seem right

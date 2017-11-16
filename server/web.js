@@ -274,7 +274,47 @@ exports.createFrontend = function createFrontend(config, db) {
           results.push(result);
         }
       });
-      res.send(results);
+
+      // Convert regexes into easier form to display
+      var regexesMap = new Map();
+
+      results.forEach(function(singleRegexMatches) {
+        var result = '';
+
+        if (singleRegexMatches.stdout) {
+          // stdout returns ASCII numbers, so convert them to strings
+          singleRegexMatches.stdout.forEach(function(num) {
+            result += String.fromCharCode(num);
+          });
+
+          var singleMatchesList = result.split('\n');
+          singleMatchesList.forEach(function(singleMatch) {
+            var values = singleMatch.split(':');
+            if (values.length < 3) {
+              // Not a legitimate match
+              return;
+            }
+            var lineNumber = parseInt(values[0]);
+            var relevantChars = values[1];
+            var indices = relevantChars.split('-');
+            var indexInLine = parseInt(indices[0]);
+            // Note: If *, only includes the len of things before the *
+            //   haven't tested if you have abc*xyz as the regex yet
+            var lengthToHighlight = parseInt(indices[1]) - parseInt(indices[0]);
+
+            // TODO: If there's 2 results on the same line
+            regexesMap.set(lineNumber,
+              {'indexInLine': indexInLine,
+              'length': lengthToHighlight
+            });
+            
+          })
+
+        } else {
+          console.log("no match stdout");
+        }
+      });
+      res.send(JSON.stringify([...regexesMap]));
     });
   });
   
