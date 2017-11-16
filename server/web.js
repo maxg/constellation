@@ -438,61 +438,108 @@ function mergeDiffs(diffs) {
         // TODO: Make this a function
         var currentChunk = mergedDiff[currentChunkInMerged];
 
-        // TODO: Really bad hack, should fix
-        if (indexInText == 0) {
-          indexInCurrentChunkInMerged -= 1;
+        if (indexInCurrentChunkInMerged + part.value.length < currentChunk.length) {
+          // The remove is within a single chunk
+          var prevChunk = JSON.parse(JSON.stringify(currentChunk));
+          prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged+1);
+          var deletedChunk = JSON.parse(JSON.stringify(currentChunk));
+          deletedChunk.value = deletedChunk.value.substring(indexInCurrentChunkInMerged+1, indexInCurrentChunkInMerged + part.value.length + 1);
+          deletedChunk.removed = true;
+          deletedChunk.added = false;
+          var nextChunk = JSON.parse(JSON.stringify(currentChunk));
+          nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged + part.value.length + 1);
+
+          // TODO: Remove parts with '' value
+
+          // Delete the current chunk and replace it
+          mergedDiff.splice(currentChunkInMerged, 1, prevChunk, deletedChunk, nextChunk);
+
+          indexInText += part.value.length;
+          indexInCurrentChunkInMerged += part.value.length;
+        } else {
+
+          var prevChunk = JSON.parse(JSON.stringify(currentChunk));
+          prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged);
+          var nextChunk = JSON.parse(JSON.stringify(currentChunk));
+          nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged);
+          nextChunk.removed = true;
+          nextChunk.added = false;
+
+          // TODO: Remove parts with '' value
+
+          // Delete the current chunk and replace it with prev and next
+          mergedDiff.splice(currentChunkInMerged, 1, prevChunk, nextChunk);
+
+          // Start our while loop at the beginning of the next chunk
+          currentChunkInMerged += 2;
+          indexInCurrentChunkInMerged = 0;
+
+          /** starting over */
+          var numSeenCharacters = 0;
+          var numCharactersLeft = part.value.length - nextChunk.value.length;
+          
+          while (numSeenCharacters < numCharactersLeft) {
+            var currentChunk = mergedDiff[currentChunkInMerged];
+            if (currentChunk.removed) {
+              // This chunk is not included this diff, so keep going
+              currentChunkInMerged += 1;
+
+            } else if (numSeenCharacters + currentChunk.value.length < part.value.length) {
+              // This whole chunk should be removed
+              currentChunk.removed = true;
+              currentChunk.added = false;
+              numSeenCharacters = numSeenCharacters + currentChunk.value.length;
+              currentChunkInMerged += 1;
+
+            } else {
+              // The last chunk is partly removed, partly not removed
+              break;
+            }
+          }
+
+          // Split last chunk, since remove might end
+          // in the middle of a chunk
+          currentChunk = mergedDiff[currentChunkInMerged];
+          
+          // We have this many more characters to remove 
+          numCharactersLeft = numCharactersLeft - numSeenCharacters;
+
+          var prevChunk = JSON.parse(JSON.stringify(currentChunk));
+          prevChunk.value = prevChunk.value.substring(0, numCharactersLeft);
+          var nextChunk = JSON.parse(JSON.stringify(currentChunk));
+          nextChunk.value = nextChunk.value.substring(numCharactersLeft);
+          prevChunk.removed = true;
+          prevChunk.added = false;
+
+          // TODO: Remove parts with '' value
+
+          // Delete the current chunk and replace it with prev and next
+          mergedDiff.splice(currentChunkInMerged, 1, prevChunk, nextChunk);
+
+          // We've deleted this many characters, so our new
+          // index in the previous diff increases by this many
+          indexInText += part.value.length;
+
+          indexInCurrentChunkInMerged = numCharactersLeft;
+
         }
 
-        var prevChunk = JSON.parse(JSON.stringify(currentChunk));
-        prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged+1);
-        var nextChunk = JSON.parse(JSON.stringify(currentChunk));
-        nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged+1);
-        nextChunk.removed = true;
-        nextChunk.added = false;
+        
+      } else { // part is not removed or added
 
-        console.log(prevChunk);
-        console.log(nextChunk);
-
-        // Fix the bad hack
-        if (indexInText == 0) {
-          indexInCurrentChunkInMerged += 1;
-        }
-
-        // TODO: If removed is a subset of the chunk we're on
-
-        // TODO: Remove parts with '' value
-
-        // Delete the current chunk and replace it with prev and next
-        mergedDiff.splice(currentChunkInMerged, 1, prevChunk, nextChunk);
-
-        // Start our while loop at the beginning of the next chunk
-        currentChunkInMerged += 2;
-        indexInCurrentChunkInMerged = 0;
-
-        // Find all the chunks that are now removed
-        // Similar subroutine to the equals portion
         var totalIndexInMerged = indexInText;
 
         // It's the same as before, so just increment the counter
-        // TODO: Not sure if this is right
         indexInText += part.value.length;
 
         // Find the next chunk in the currently merged part
         // Anything that's added or the same is valid
-        // TODO: Make this a function
         while (totalIndexInMerged < indexInText) {
           var currentChunk = mergedDiff[currentChunkInMerged];
           if (indexInCurrentChunkInMerged < currentChunk.value.length) {
             // Haven't gotten to the end of the chunk yet
             indexInCurrentChunkInMerged += 1;
           } else {
-            console.log("finished a chunk");
-            console.log(currentChunk);
-            // We've finished this chunk and it should be deleted
-            // Change it to be removed
-            currentChunk.removed = true;
-            currentChunk.added = false;
-
             // We've gone over the end of a chunk, so find the next chunk
             // The only valid next chunks are normals or added, 
             // but not removed since those weren't starting characters
@@ -505,58 +552,9 @@ function mergeDiffs(diffs) {
             while (nextChunk.removed) {
               currentChunkInMerged += 1;
               nextChunk = mergedDiff[currentChunkInMerged];
-            }
-
-            // 
-
-            // It's a new chunk, so reset this index
-            indexInCurrentChunkInMerged = 0;
-          }
-
-          totalIndexInMerged += 1;
-        }
-
-        // Split last chunk, since remove might end
-        // in the middle of a chunk
-        currentChunk = mergedDiff[currentChunkInMerged];
-        var prevChunk = JSON.parse(JSON.stringify(currentChunk));
-        prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged+1);
-        var nextChunk = JSON.parse(JSON.stringify(currentChunk));
-        nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged+1);
-        prevChunk.removed = true;
-        prevChunk.added = false;
-
-        // TODO: Remove parts with '' value
-
-        // Delete the current chunk and replace it with prev and next
-        mergedDiff.splice(currentChunkInMerged, 1, prevChunk, nextChunk);
-
-
-
-      } else {
-
-        var totalIndexInMerged = indexInText;
-
-        // It's the same as before, so just increment the counter
-        indexInText += part.value.length;
-
-        // Find the next chunk in the currently merged part
-        // Anything that's added or the same is valid
-        while (totalIndexInMerged < indexInText) {
-          var currentChunk = mergedDiff[currentChunkInMerged];
-          if (indexInCurrentChunkInMerged < currentChunk.value.length) {
-            // Haven't gotten to the end of the chunk yet
-            indexInCurrentChunkInMerged += 1;
-          } else {
-            // We've gone over the end of a chunk, so find the next chunk
-            // The only valid next chunks are normals or added, 
-            // but not removed since those weren't starting characters
-            // for the next diff
-            currentChunkInMerged += 1;
-            var nextChunk = mergedDiff[currentChunkInMerged];
-            while (nextChunk.removed) {
-              currentChunkInMerged += 1;
-              nextChunk = mergedDiff[currentChunkInMerged];
+              if (!nextChunk) {
+                return;
+              }
             }
 
             // It's a new chunk, so reset this index
@@ -596,7 +594,7 @@ function testMergedDiffsRemove() {
   console.log(mergeDiffs([diff_0, diff_1]));
   */
 
-  /* Remove everything */
+  /* Remove everything 
   diff_0 = [
     {'value': 'hello'},
     {'value': ' there', 'added': true},
@@ -604,6 +602,20 @@ function testMergedDiffsRemove() {
 
   diff_1 = [
     {'value': 'hello there', 'removed': true},
+  ]
+  console.log(mergeDiffs([diff_0, diff_1]));
+  */
+
+  /* Remove in the middle of two parts */
+  diff_0 = [
+    {'value': 'hello'},
+    {'value': ' there', 'added': true},
+  ]
+
+  diff_1 = [
+    {'value': 'hel'},
+    {'value': 'lo th', 'removed': true},
+    {'value': 'ere'},
   ]
   console.log(mergeDiffs([diff_0, diff_1]));
 }
