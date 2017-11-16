@@ -637,9 +637,36 @@ function testMergedDiffsRemove() {
   ]
   console.log(mergeDiffs([diff_0, diff_1])); */
 
-  /* Remove with a remove in the middle of previous diff */
+  /* Remove part of 1 chunk 
+  diff_0 = [
+    {'value': 'something'}
+  ];
 
-  /* Multiple removes in diff_1 */
+  diff_1 = [
+    {'value': 'so'},
+    {'value': 'met', 'removed': true},
+    {'value': 'hing'},
+  ];
+  console.log(mergeDiffs([diff_0, diff_1])); */
+
+  /* Remove with a remove in the middle of previous diff 
+  diff_0 = [
+    {'value': 'something'}
+  ];
+
+  diff_1 = [
+    {'value': 'so'},
+    {'value': 'met', 'removed': true},
+    {'value': 'hing'},
+  ];
+  diff_2 = [
+    {'value': 's'},
+    {'value': 'hi', 'removed': true},
+    {'value': 'ng'}
+  ]
+  console.log(mergeDiffs([diff_0, diff_1, diff_2])); */
+
+  /* Multiple removes in diff_1 
   diff_0 = [
     {'value': 'something xxx yyy'}
   ];
@@ -650,7 +677,7 @@ function testMergedDiffsRemove() {
     {'value': 'x yy', 'removed': true},
     {'value': 'y'},
   ];
-  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log(mergeDiffs([diff_0, diff_1])); */
 
 }
 
