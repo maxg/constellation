@@ -258,7 +258,7 @@ exports.createFrontend = function createFrontend(config, db) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       var chunkedDiffs = getChunkedDiffs(ops);
       //var mergedDiffs = mergeDiffs(chunkedDiffs);
-      testMergedDiffsRegression();
+      testMergedDiffsAdd();
       //var chunkedDiffs = computeTotalDiff(ops);
       res.setHeader('Cache-Control', 'max-age=3600');
       res.send(chunkedDiffs);
@@ -426,9 +426,9 @@ function mergeDiffs(diffs) {
 
           // Split up this chunk into previous and next
           var prevChunk = JSON.parse(JSON.stringify(currentChunk));
-          prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged+1);
+          prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged);
           var nextChunk = JSON.parse(JSON.stringify(currentChunk));
-          nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged+1);
+          nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged);
 
           // TODO: Remove parts with '' value
 
@@ -492,7 +492,6 @@ function mergeDiffs(diffs) {
           }
           indexInCurrentChunkInMerged = 0;
 
-          /** starting over */
           var numSeenCharacters = 0;
           var numCharactersLeft = part.value.length - nextChunk.value.length;
           
@@ -502,7 +501,7 @@ function mergeDiffs(diffs) {
               // This chunk is not included this diff, so keep going
               currentChunkInMerged += 1;
 
-            } else if (numSeenCharacters + currentChunk.value.length < part.value.length) {
+            } else if (numSeenCharacters + currentChunk.value.length < numCharactersLeft) {
               // This whole chunk should be removed
               currentChunk.removed = true;
               currentChunk.added = false;
@@ -551,44 +550,43 @@ function mergeDiffs(diffs) {
         
       } else { // part is not removed or added
 
-        var totalIndexInMerged = indexInText;
+        var currentChunk = mergedDiff[currentChunkInMerged];
 
-        // It's the same as before, so just increment the counter
-        indexInText += part.value.length;
-
-        // Find the next chunk in the currently merged part
-        // Anything that's added or the same is valid
-        while (totalIndexInMerged < indexInText) {
-          var currentChunk = mergedDiff[currentChunkInMerged];
-          
-          if (indexInCurrentChunkInMerged < currentChunk.value.length) {
-            // Haven't gotten to the end of the chunk yet
-            indexInCurrentChunkInMerged += 1;
-          } else {
-            // We've gone over the end of a chunk, so find the next chunk
-            // The only valid next chunks are normals or added, 
-            // but not removed since those weren't starting characters
-            // for the next diff
-            currentChunkInMerged += 1;
-            var nextChunk = mergedDiff[currentChunkInMerged];
-            if (!nextChunk) {
-              return;
-            }
-            while (nextChunk.removed) {
-              currentChunkInMerged += 1;
-              nextChunk = mergedDiff[currentChunkInMerged];
-              if (!nextChunk) {
-                return;
-              }
-            }
-
-            // It's a new chunk, so reset this index
-            indexInCurrentChunkInMerged = 0;
-          }
-
-          totalIndexInMerged += 1;
+        // Check if we stay in the same chunk after this part
+        if (indexInCurrentChunkInMerged + part.value.length < currentChunk.value.length) {
+          indexInCurrentChunkInMerged += part.value.length;
+          indexInText += part.value.length;
+          return;
         }
 
+        // Start out by going through the first chunk
+        var numSeenCharacters = currentChunk.value.length - indexInCurrentChunkInMerged;
+        var numCharactersLeft = part.value.length - numSeenCharacters;
+        
+        currentChunkInMerged += 1;
+        currentChunk = mergedDiff[currentChunkInMerged];
+    
+        // Find the chunk at the end
+        while (currentChunk && numSeenCharacters < numCharactersLeft) {
+          if (currentChunk.removed) {
+            // A removed chunk should not be counted, so keep going
+            currentChunkInMerged += 1;
+
+          } else if (numSeenCharacters + currentChunk.value.length < numCharactersLeft) {
+            // We can go completely through this chunk,
+            // so move on to next chunk
+            numSeenCharacters = numSeenCharacters + currentChunk.value.length;
+            currentChunkInMerged += 1;
+
+          } else {
+            // We can't go through a whole chunk
+            break;
+          }
+          currentChunk = mergedDiff[currentChunkInMerged];
+        }
+
+        indexInText += part.value.length;
+        indexInCurrentChunkInMerged = part.value.length - numSeenCharacters;
       }
     });
   }
@@ -641,26 +639,37 @@ function testMergedDiffsRegression() {
 
   */
 
-  /* Actual:
+  /* Actual, after fixing bug#1 and #2 and only doing diff0 and 1:
 [ { value: '' },
-  { value: '\n    public Set<E> CharSet1() {', added: true },
-  { value: '       \n', added: true },
-  { value: '', added: true },
-  { value: '\n        m', added: false, removed: true },
-  { value: '\n    }\n', added: true },
-  { value: '' },
   { value: '    // TODO\n', removed: true, added: false },
-  { value: '    \n' },
+  { value: '\n    ', added: true },
   { value: '    \n', added: true },
-  { value: '    //////\n' } ]
+  { value: 'public Set<E> CharSet1() {\n        m\n    }\n',
+    added: true },
+  { value: '    \n    //////\n' } ]
 
   Differences:
-    Things seem out of order, even the first one
+    seems to have switched two of them?
   */
 
-  console.log(mergeDiffs([diff_0, diff_1, diff_2]));
+  console.log(mergeDiffs([diff_0, diff_1]));
 
-  // More minimized maybe?
+  // Bug #2 minimized
+  diff_0 = [
+    {'value': 'something'}
+  ];
+
+  diff_1 = [
+    {'value': 'some'},
+    {'value': 'muchlongthing', 'added': true},
+    {'value': 'th'},
+    {'value': 'short', 'added': true},
+    {'value': 'ing'}
+  ];
+
+  //console.log(mergeDiffs([diff_0, diff_1]));
+
+  // Bug #1 minimized
   diff_0 = [
     {'value': '    // TODO\n    //////\n'},
   ];
@@ -673,7 +682,7 @@ function testMergedDiffsRegression() {
 
   //console.log(mergeDiffs([diff_0, diff_1]));
 
-  // More inimized version
+  // Bug #1 more inimized version
   diff_0 = [
     {'value': 'something'}
   ];
@@ -789,7 +798,7 @@ function testMergedDiffsRemove() {
 }
 
 function testMergedDiffsAdd() {
-  /** Adding at the end 
+  /** Adding at the end */
 
   diff_0 = [
     {'value': 'hello'},
@@ -804,7 +813,7 @@ function testMergedDiffsAdd() {
   console.log(mergeDiffs([diff_0, diff_1]));
 
 
-  /** Adding at the very beginning  
+  /** Adding at the very beginning  */
 
   diff_0 = [
     {'value': 'hello'},
@@ -819,8 +828,7 @@ function testMergedDiffsAdd() {
   console.log(mergeDiffs([diff_0, diff_1]));
  
 
- /* Adding at beginning of a chunk
-   in the middle 
+ /* Adding at beginning of a chunk in the middle */
    diff_0 = [
      {'value': 'hello'},
      {'value': ' there', 'added': true},
@@ -835,7 +843,7 @@ function testMergedDiffsAdd() {
   console.log(mergeDiffs([diff_0, diff_1]));
 
 
-  /** Adding in the middle of a chunk 
+  /** Adding in the middle of a chunk */
   diff_0 = [
     {'value': 'hello'},
     {'value': ' there', 'added': true},
@@ -849,7 +857,7 @@ function testMergedDiffsAdd() {
 
   console.log(mergeDiffs([diff_0, diff_1]));
 
-  /** Adding to a diff with removed parts 
+  /** Adding to a diff with removed parts  */
   diff_0 = [
     {'value': 'hello there'},
   ]
@@ -865,7 +873,22 @@ function testMergedDiffsAdd() {
     {'value': 'ere'}
   ]
   console.log(mergeDiffs([diff_0, diff_1, diff_2]));
-  */
+
+  console.log("EQUALS");
+  diff_0 = [
+    {'value': 'abc'},
+    {'value': 'lmnop'},
+    {'value': 'xyz'}
+  ];
+
+  diff_1 = [
+    {'value': 'abclm'},
+    {'value': 'no'},
+    {'value': 'pxyz'}
+  ];
+
+  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log("END EQUALS");
 }
 
 
