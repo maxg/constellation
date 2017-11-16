@@ -5,7 +5,7 @@ append head
 
 block content
   .row: .col-xs-12
-    a#back(href=`/dashboard/${project}/${milestone ? `m/${milestone}/`: ''}${cutoff || ''}`) all #{project} collaborations
+    a#back(href=`/dashboard/${project}/${milestone ? `m/${milestone}/`: ''}${cutoff || ''}${regexes ? '/' + regexes : ''}`) all #{project} collaborations
     h2 #{project}: #[span#partners]
       br
       if milestone
