@@ -438,17 +438,17 @@ function mergeDiffs(diffs) {
         // TODO: Make this a function
         var currentChunk = mergedDiff[currentChunkInMerged];
 
-        if (indexInCurrentChunkInMerged + part.value.length < currentChunk.length) {
+        if (indexInCurrentChunkInMerged + part.value.length < currentChunk.value.length) {
+
           // The remove is within a single chunk
           var prevChunk = JSON.parse(JSON.stringify(currentChunk));
-          prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged+1);
+          prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged);
           var deletedChunk = JSON.parse(JSON.stringify(currentChunk));
-          deletedChunk.value = deletedChunk.value.substring(indexInCurrentChunkInMerged+1, indexInCurrentChunkInMerged + part.value.length + 1);
+          deletedChunk.value = deletedChunk.value.substring(indexInCurrentChunkInMerged, indexInCurrentChunkInMerged + part.value.length);
           deletedChunk.removed = true;
           deletedChunk.added = false;
           var nextChunk = JSON.parse(JSON.stringify(currentChunk));
-          nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged + part.value.length + 1);
-
+          nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged + part.value.length);
           // TODO: Remove parts with '' value
 
           // Delete the current chunk and replace it
@@ -510,6 +510,9 @@ function mergeDiffs(diffs) {
           // We have this many more characters to remove 
           numCharactersLeft = numCharactersLeft - numSeenCharacters;
 
+          console.log(numCharactersLeft);
+          console.log(currentChunk);
+
           var prevChunk = JSON.parse(JSON.stringify(currentChunk));
           prevChunk.value = prevChunk.value.substring(0, numCharactersLeft);
           var nextChunk = JSON.parse(JSON.stringify(currentChunk));
@@ -570,13 +573,6 @@ function mergeDiffs(diffs) {
           totalIndexInMerged += 1;
         }
 
-        console.log("current chunk:");
-        console.log(currentChunkInMerged);
-        console.log("index in currentChunk");
-        console.log(indexInCurrentChunkInMerged);
-        console.log("index in text");
-        console.log(indexInText);
-
       }
     });
   }
@@ -598,9 +594,9 @@ function testMergedDiffsRemove() {
     {'value': ' there', 'removed': true},
   ]
   console.log(mergeDiffs([diff_0, diff_1]));
-  */
+  
 
-  /* Remove everything */
+  /* Remove everything 
   diff_0 = [
     {'value': 'hello'},
     {'value': ' there', 'added': true},
@@ -625,7 +621,37 @@ function testMergedDiffsRemove() {
   ]
   console.log(mergeDiffs([diff_0, diff_1]));
 
-  /* Remove over many complete parts */
+  /* Remove over many complete parts 
+  diff_0 = [
+    {'value': 'hello'},
+    {'value': ' there', 'added': true},
+    {'value': ' Constellation'},
+    {'value': '. you are', 'added': true},
+    {'value': 'cool.', 'added': true}
+  ]
+
+  diff_1 = [
+    {'value': 'hello'},
+    {'value': ' there Constellation. you are', 'removed': true},
+    {'value': 'cool.'},
+  ]
+  console.log(mergeDiffs([diff_0, diff_1])); */
+
+  /* Remove with a remove in the middle of previous diff */
+
+  /* Multiple removes in diff_1 */
+  diff_0 = [
+    {'value': 'something xxx yyy'}
+  ];
+
+  diff_1 = [
+    {'value': 'so', 'removed': true},
+    {'value': 'mething xx'},
+    {'value': 'x yy', 'removed': true},
+    {'value': 'y'},
+  ];
+  console.log(mergeDiffs([diff_0, diff_1]));
+
 }
 
 function testMergedDiffsAdd() {
