@@ -390,6 +390,8 @@ function getChunkedDiffs(ops) {
 
 // TODO: This seems much too complicated
 
+// TODO: Remove parts with '' at the end
+
 function mergeDiffs(diffs) {
   mergedDiff = JSON.parse(JSON.stringify(diffs[0]));
   for (var i = 1; i < diffs.length; i++) {
@@ -411,43 +413,27 @@ function mergeDiffs(diffs) {
         console.log(currentChunkInMerged);
         console.log(indexInCurrentChunkInMerged);
 
-        // If adding at the very beginning, the +1 below
-        // doesn't apply
-        if (indexInCurrentChunkInMerged == 0) {
-          // Add part to the beginning
-          mergedDiff.splice(currentChunkInMerged, 0, part);
+        var currentChunk = mergedDiff[currentChunkInMerged];
 
-        } else {
-          var currentChunk = mergedDiff[currentChunkInMerged];
+        // Split up this chunk into previous and next
+        var prevChunk = JSON.parse(JSON.stringify(currentChunk));
+        prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged);
+        var nextChunk = JSON.parse(JSON.stringify(currentChunk));
+        nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged);
 
-          // Split up this chunk into previous and next
-          var prevChunk = JSON.parse(JSON.stringify(currentChunk));
-          prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged);
-          var nextChunk = JSON.parse(JSON.stringify(currentChunk));
-          nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged);
+        // Delete the current chunk and replace it with prev, part, and next
+        mergedDiff.splice(currentChunkInMerged, 1, prevChunk, part, nextChunk);
 
-          // TODO: Remove parts with '' value
-
-          // Delete the current chunk and replace it with prev, part, and next
-          mergedDiff.splice(currentChunkInMerged, 1, prevChunk, part, nextChunk);
-
-          // TODO: Need to increment currentChunkInMerged?
-          currentChunkInMerged += 2;
-          indexInCurrentChunkInMerged = 0;
-
-        }
-        
+        // Now, we start at the beginning of nextChunk
+        currentChunkInMerged += 2;
+        indexInCurrentChunkInMerged = 0;     
         
       } else if (part.removed) {
         console.log("removed part");
 
-        // Split first chunk, since the remove might start
-        // in the middle of a chunk
-        // TODO: Make this a function
         var currentChunk = mergedDiff[currentChunkInMerged];
 
         if (indexInCurrentChunkInMerged + part.value.length < currentChunk.value.length) {
-
           // The remove is within a single chunk
           var prevChunk = JSON.parse(JSON.stringify(currentChunk));
           prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged);
@@ -457,7 +443,6 @@ function mergeDiffs(diffs) {
           deletedChunk.added = false;
           var nextChunk = JSON.parse(JSON.stringify(currentChunk));
           nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged + part.value.length);
-          // TODO: Remove parts with '' value
 
           // Delete the current chunk and replace it
           mergedDiff.splice(currentChunkInMerged, 1, prevChunk, deletedChunk, nextChunk);
@@ -466,30 +451,34 @@ function mergeDiffs(diffs) {
           currentChunkInMerged += 2;
           indexInCurrentChunkInMerged = 0;
 
-        } else { // Normal part
+        } else {
+          // The remove goes over multiple chunks
 
-          var prevChunk = JSON.parse(JSON.stringify(currentChunk));
-          prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged);
-          var nextChunk = JSON.parse(JSON.stringify(currentChunk));
-          nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged);
-          nextChunk.removed = true;
-          nextChunk.added = false;
+          // Split the first chunk into a normal part and deleted part
+          var normalChunk = JSON.parse(JSON.stringify(currentChunk));
+          normalChunk.value = normalChunk.value.substring(0, indexInCurrentChunkInMerged);
+          var firstDeletedChunk = JSON.parse(JSON.stringify(currentChunk));
+          firstDeletedChunk.value = firstDeletedChunk.value.substring(indexInCurrentChunkInMerged);
+          firstDeletedChunk.removed = true;
+          firstDeletedChunk.added = false;
 
           // TODO: Remove parts with '' value
 
           // Delete the current chunk and replace it with prev and next
-          mergedDiff.splice(currentChunkInMerged, 1, prevChunk, nextChunk);
+          mergedDiff.splice(currentChunkInMerged, 1, normalChunk, firstDeletedChunk);
 
           // Start our while loop at the beginning of the next chunk
           currentChunkInMerged += 2;
+          indexInCurrentChunkInMerged = 0;
           if (!mergedDiff[currentChunkInMerged]) {
             return;
           }
-          indexInCurrentChunkInMerged = 0;
 
           var numSeenCharacters = 0;
           var numCharactersLeft = part.value.length - nextChunk.value.length;
           
+          // Mark all chunks in the middle as removed
+          // and find the chunk at the end that must be partially removed
           while (numSeenCharacters < numCharactersLeft) {
             var currentChunk = mergedDiff[currentChunkInMerged];
             if (currentChunk.removed) {
@@ -497,7 +486,7 @@ function mergeDiffs(diffs) {
               currentChunkInMerged += 1;
 
             } else if (numSeenCharacters + currentChunk.value.length < numCharactersLeft) {
-              // This whole chunk should be removed
+              // This whole chunk should be considered removed
               currentChunk.removed = true;
               currentChunk.added = false;
               numSeenCharacters = numSeenCharacters + currentChunk.value.length;
@@ -517,24 +506,25 @@ function mergeDiffs(diffs) {
           }
           
           // We have this many more characters to remove 
-          numCharactersLeft = numCharactersLeft - numSeenCharacters;
+          numCharactersToDelete = numCharactersLeft - numSeenCharacters;
 
-          console.log(numCharactersLeft);
+          console.log(numCharactersToDelete);
           console.log(currentChunk);
 
-          var prevChunk = JSON.parse(JSON.stringify(currentChunk));
-          prevChunk.value = prevChunk.value.substring(0, numCharactersLeft);
-          var nextChunk = JSON.parse(JSON.stringify(currentChunk));
-          nextChunk.value = nextChunk.value.substring(numCharactersLeft);
-          prevChunk.removed = true;
-          prevChunk.added = false;
+          var lastDeletedChunk = JSON.parse(JSON.stringify(currentChunk));
+          lastDeletedChunk.value = lastDeletedChunk.value.substring(0, numCharactersToDelete);
+          lastDeletedChunk.removed = true;
+          lastDeletedChunk.added = false;
+          var nextNormalChunk = JSON.parse(JSON.stringify(currentChunk));
+          nextNormalChunk.value = nextNormalChunk.value.substring(numCharactersToDelete);
 
-          // TODO: Remove parts with '' value
 
           // Delete the current chunk and replace it with prev and next
-          mergedDiff.splice(currentChunkInMerged, 1, prevChunk, nextChunk);
+          mergedDiff.splice(currentChunkInMerged, 1, lastDeletedChunk, nextNormalChunk);
 
-          indexInCurrentChunkInMerged = numCharactersLeft;
+          // Start at the beginning of the normal chunk
+          currentChunkInMerged += 1;
+          indexInCurrentChunkInMerged = 0;
 
         }
 
