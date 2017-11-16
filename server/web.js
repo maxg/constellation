@@ -257,7 +257,7 @@ exports.createFrontend = function createFrontend(config, db) {
       // ';;' is the delimiter
       req.params.regexes.split(';;').forEach(function(regex) {
         var result = child_process.spawnSync('tre-agrep',
-          ['--show-position', '--line-number', regex, '-'],
+          ['--show-position', '--line-number', '--regexp', regex, '-'],
           {'input': file.text}
         );
         results.push(result);

@@ -48,12 +48,15 @@ function updateDiff(node, baseline, text, file) {
 
   // Testing regex matching
   // ';;' is used as the delimiter between regexes
-  var regexes = '@Overr*' + ';;' + 'void';
+  var regexes = '@Override' + ';;' + 'void';
   // TODO: Make this work
-  //regexes = '\(*\)';
+  regexes = '%5C%28%2A%5C%29'; // \(*\)
   $.ajax('/regex/' + collabid + '/' + file.data.filepath + '/' + regexes).done(function(allRegexesMatches) {
 
     var regexesMap = new Map();
+
+    console.log("all regexes:");
+    console.log(allRegexesMatches);
 
     // Fill the regexesList
     allRegexesMatches.forEach(function(singleRegexMatches) {
@@ -92,6 +95,8 @@ function updateDiff(node, baseline, text, file) {
         console.log("no match stdout");
       }
     });
+
+    console.log(regexesMap);
 
     // Keep track of the current line number we're on
     // TODO: -1 doesn't seem right
