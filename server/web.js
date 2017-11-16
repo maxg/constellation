@@ -210,11 +210,12 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
   
-  app.get('/dashboard/:project/m/:milestone/:cutoff?', authenticate, staffonly, function(req, res, next) {
+  app.get('/dashboard/:project/m/:milestone/:cutoff?/:regexes?', authenticate, staffonly, function(req, res, next) {
     res.render('dashboard/collabs', {
       project: req.params.project,
       milestone: req.params.milestone,
       cutoff: req.params.cutoff,
+      regexes: req.params.regexes,
     });
   });
   
@@ -226,12 +227,13 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
   
-  app.get('/dashboard/:project/:collabid/m/:milestone/:cutoff?', authenticate, staffonly, function(req, res, next) {
+  app.get('/dashboard/:project/:collabid/m/:milestone/:cutoff?/:regexes?', authenticate, staffonly, function(req, res, next) {
     res.render('dashboard/collab', {
       project: req.params.project,
       collabid: req.params.collabid,
       milestone: req.params.milestone,
       cutoff: req.params.cutoff,
+      regexes: req.params.regexes,
     });
   });
   
@@ -247,6 +249,18 @@ exports.createFrontend = function createFrontend(config, db) {
 
   // Find the given regex in the text, using fuzzy matching
   app.get('/regex/:collabid/:filepath(*)/:regexes', authenticate, staffonly,  function(req, res, next) {
+    // TODO: When a regex like '%5C%28.%2A%5C%29'; // \(.*\)
+    //   comes through a URL directly instead of set as a string
+    //   in collab.js, the regex is not processed correctly:
+    //   filepath: src/SquareClient.java//(.*
+    //   regex: )
+
+    // TODO: Typing \(.*\) in URL bar doesn't encode the \ or the ()
+    
+    // TODO: regex = 'import ;;' didn't do anything, presumably
+    //   because the empty string matches everything
+
+
     db.getFile(req.params.collabid, req.params.filepath, function(err, file) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
 

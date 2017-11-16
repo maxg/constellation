@@ -46,12 +46,13 @@ function updateDiff(node, baseline, text, file) {
   if (baseline === undefined || text === undefined) { return; }
   node.innerHTML = '';
 
-  // Testing regex matching
   // ';;' is used as the delimiter between regexes
-  var regexes = '@Override' + ';;' + 'void';
-  // TODO: Make this work
-  regexes = '%5C%28%2A%5C%29'; // \(*\)
-  $.ajax('/regex/' + collabid + '/' + file.data.filepath + '/' + regexes).done(function(allRegexesMatches) {
+
+  // TODO: Don't call the regex URL if there are no regexes
+  var allRegexes = regexes ? regexes : '@Override' + ';;' + 'void';
+
+  //allRegexes = '%5C%28.%2A%5C%29'; // \(.*\)
+  $.ajax('/regex/' + collabid + '/' + file.data.filepath + '/' + allRegexes).done(function(allRegexesMatches) {
 
     var regexesMap = new Map();
 
