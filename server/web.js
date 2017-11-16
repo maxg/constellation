@@ -256,10 +256,6 @@ exports.createFrontend = function createFrontend(config, db) {
     //   regex: )
 
     // TODO: Typing \(.*\) in URL bar doesn't encode the \ or the ()
-    
-    // TODO: regex = 'import ;;' didn't do anything, presumably
-    //   because the empty string matches everything
-
 
     db.getFile(req.params.collabid, req.params.filepath, function(err, file) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
@@ -270,11 +266,13 @@ exports.createFrontend = function createFrontend(config, db) {
       var results = [];
       // ';;' is the delimiter
       req.params.regexes.split(';;').forEach(function(regex) {
-        var result = child_process.spawnSync('tre-agrep',
-          ['--show-position', '--line-number', '--regexp', regex, '-'],
-          {'input': file.text}
-        );
-        results.push(result);
+        if (regex.length > 0) {
+          var result = child_process.spawnSync('tre-agrep',
+            ['--show-position', '--line-number', '--regexp', regex, '-'],
+            {'input': file.text}
+          );
+          results.push(result);
+        }
       });
       res.send(results);
     });
