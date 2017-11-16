@@ -258,7 +258,7 @@ exports.createFrontend = function createFrontend(config, db) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       var chunkedDiffs = getChunkedDiffs(ops);
       //var mergedDiffs = mergeDiffs(chunkedDiffs);
-      testMergedDiffsAdd();
+      testsToRun();
       //var chunkedDiffs = computeTotalDiff(ops);
       res.setHeader('Cache-Control', 'max-age=3600');
       res.send(chunkedDiffs);
@@ -392,6 +392,8 @@ function getChunkedDiffs(ops) {
 
 // TODO: Remove parts with '' at the end
 
+// TODO: Could merge chunks if we want
+
 function mergeDiffs(diffs) {
   mergedDiff = JSON.parse(JSON.stringify(diffs[0]));
   for (var i = 1; i < diffs.length; i++) {
@@ -404,6 +406,9 @@ function mergeDiffs(diffs) {
     var indexInCurrentChunkInMerged = 0;
 
     diff.forEach(function(part) {
+      console.log("  ");
+      console.log(mergedDiff);
+      console.log(part);
       if (part.added) {
 
         var currentChunk = mergedDiff[currentChunkInMerged];
@@ -424,6 +429,12 @@ function mergeDiffs(diffs) {
       } else if (part.removed) {
 
         var currentChunk = mergedDiff[currentChunkInMerged];
+
+        // Skip through the already removed chunks
+        while (currentChunk && currentChunk.removed) {
+          currentChunkInMerged += 1;
+          currentChunk = mergedDiff[currentChunkInMerged];
+        }
 
         if (indexInCurrentChunkInMerged + part.value.length < currentChunk.value.length) {
           // The remove is within a single chunk
@@ -467,7 +478,7 @@ function mergeDiffs(diffs) {
           }
 
           var numSeenCharacters = 0;
-          var numCharactersLeft = part.value.length - nextChunk.value.length;
+          var numCharactersLeft = part.value.length - firstDeletedChunk.value.length;
           
           // Mark all chunks in the middle as removed
           // and find the chunk at the end that must be partially removed
@@ -563,6 +574,24 @@ function mergeDiffs(diffs) {
   }
 
   return mergedDiff;
+}
+
+function testsToRun() {
+  diff_0 = [
+    {'value': 'something'}
+  ];
+  diff_1 = [
+    {'value': 'so'},
+    {'value': 'met', 'removed': true},
+    {'value': 'hing'},
+  ];
+  diff_2 = [
+    {'value': 'so'},
+    {'value': 'hi', 'removed': true},
+    {'value': 'ng'}
+  ]
+  console.log('expect:so=same,met=removed,hi=removed,ng=same');
+  console.log(mergeDiffs([diff_0, diff_1, diff_2]));
 }
 
 // Tests for bugs found when looking at real code
@@ -670,33 +699,32 @@ function testMergedDiffsRegression() {
 }
 
 function testMergedDiffsRemove() {
-  console.log("start of testing remove");
-  /* Remove exactly 1 chunk 
+  /* Remove exactly 1 chunk */ 
   diff_0 = [
     {'value': 'hello'},
     {'value': ' there', 'added': true},
   ]
-
   diff_1 = [
     {'value': 'hello'},
     {'value': ' there', 'removed': true},
   ]
+  console.log('expect:hello=same, there=removed');
   console.log(mergeDiffs([diff_0, diff_1]));
   
 
-  /* Remove everything 
+  /* Remove everything */
   diff_0 = [
     {'value': 'hello'},
     {'value': ' there', 'added': true},
   ]
-
   diff_1 = [
     {'value': 'hello there', 'removed': true},
   ]
+  console.log('expect:hello=removed, there=removed');
   console.log(mergeDiffs([diff_0, diff_1]));
   
 
-  /* Remove in the middle of two parts 
+  /* Remove in the middle of two parts */
   diff_0 = [
     {'value': 'hello'},
     {'value': ' there', 'added': true},
@@ -707,9 +735,10 @@ function testMergedDiffsRemove() {
     {'value': 'lo th', 'removed': true},
     {'value': 'ere'},
   ]
+  console.log('expect:hel=same,lo=removed, th=removed,ere=added');
   console.log(mergeDiffs([diff_0, diff_1]));
 
-  /* Remove over many complete parts 
+  /* Remove over many complete parts */ 
   diff_0 = [
     {'value': 'hello'},
     {'value': ' there', 'added': true},
@@ -717,44 +746,47 @@ function testMergedDiffsRemove() {
     {'value': '. you are', 'added': true},
     {'value': 'cool.', 'added': true}
   ]
-
   diff_1 = [
     {'value': 'hello'},
     {'value': ' there Constellation. you are', 'removed': true},
     {'value': 'cool.'},
   ]
-  console.log(mergeDiffs([diff_0, diff_1])); */
+  console.log('expect:hello=same, there=removed, Constellation=removed' + 
+    '. you are=removed,cool.=added');
+  console.log(mergeDiffs([diff_0, diff_1]));
 
-  /* Remove part of 1 chunk 
+  /* Remove part of 1 chunk */
   diff_0 = [
     {'value': 'something'}
   ];
-
   diff_1 = [
     {'value': 'so'},
     {'value': 'met', 'removed': true},
     {'value': 'hing'},
   ];
-  console.log(mergeDiffs([diff_0, diff_1])); */
+  console.log('expect:so=same,met=removed,hing=same');
+  console.log(mergeDiffs([diff_0, diff_1]));
 
   /* Remove with a remove in the middle of previous diff 
+   THIS DOESN'T PASS
+  */
   diff_0 = [
     {'value': 'something'}
   ];
-
   diff_1 = [
     {'value': 'so'},
     {'value': 'met', 'removed': true},
     {'value': 'hing'},
   ];
   diff_2 = [
-    {'value': 's'},
+    {'value': 'so'},
     {'value': 'hi', 'removed': true},
     {'value': 'ng'}
   ]
-  console.log(mergeDiffs([diff_0, diff_1, diff_2])); */
+  console.log('expect:so=same,met=removed,hi=removed,ng=same');
+  console.log(mergeDiffs([diff_0, diff_1, diff_2]));
 
-  /* Multiple removes in diff_1 
+  /* Multiple removes in diff_1 */
   diff_0 = [
     {'value': 'something xxx yyy'}
   ];
@@ -765,8 +797,8 @@ function testMergedDiffsRemove() {
     {'value': 'x yy', 'removed': true},
     {'value': 'y'},
   ];
-  console.log(mergeDiffs([diff_0, diff_1])); */
-
+  console.log('expect:so=removed,mething xx=same,x yy=removed,y=same');
+  console.log(mergeDiffs([diff_0, diff_1]));
 }
 
 function testMergedDiffsAdd() {
