@@ -438,6 +438,11 @@ function mergeDiffs(diffs) {
         // TODO: Make this a function
         var currentChunk = mergedDiff[currentChunkInMerged];
 
+        // TODO: Really bad hack, should fix
+        if (indexInText == 0) {
+          indexInCurrentChunkInMerged -= 1;
+        }
+
         var prevChunk = JSON.parse(JSON.stringify(currentChunk));
         prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged+1);
         var nextChunk = JSON.parse(JSON.stringify(currentChunk));
@@ -447,6 +452,11 @@ function mergeDiffs(diffs) {
 
         console.log(prevChunk);
         console.log(nextChunk);
+
+        // Fix the bad hack
+        if (indexInText == 0) {
+          indexInCurrentChunkInMerged += 1;
+        }
 
         // TODO: If removed is a subset of the chunk we're on
 
@@ -464,6 +474,7 @@ function mergeDiffs(diffs) {
         var totalIndexInMerged = indexInText;
 
         // It's the same as before, so just increment the counter
+        // TODO: Not sure if this is right
         indexInText += part.value.length;
 
         // Find the next chunk in the currently merged part
@@ -488,6 +499,9 @@ function mergeDiffs(diffs) {
             // for the next diff
             currentChunkInMerged += 1;
             var nextChunk = mergedDiff[currentChunkInMerged];
+            if (!nextChunk) {
+              return;
+            }
             while (nextChunk.removed) {
               currentChunkInMerged += 1;
               nextChunk = mergedDiff[currentChunkInMerged];
@@ -502,9 +516,9 @@ function mergeDiffs(diffs) {
           totalIndexInMerged += 1;
         }
 
-
         // Split last chunk, since remove might end
         // in the middle of a chunk
+        currentChunk = mergedDiff[currentChunkInMerged];
         var prevChunk = JSON.parse(JSON.stringify(currentChunk));
         prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged+1);
         var nextChunk = JSON.parse(JSON.stringify(currentChunk));
@@ -569,7 +583,7 @@ function mergeDiffs(diffs) {
 
 function testMergedDiffsRemove() {
   console.log("start of testing remove");
-  /* Remove everything */
+  /* Remove exactly 1 chunk 
   diff_0 = [
     {'value': 'hello'},
     {'value': ' there', 'added': true},
@@ -580,8 +594,18 @@ function testMergedDiffsRemove() {
     {'value': ' there', 'removed': true},
   ]
   console.log(mergeDiffs([diff_0, diff_1]));
+  */
 
   /* Remove everything */
+  diff_0 = [
+    {'value': 'hello'},
+    {'value': ' there', 'added': true},
+  ]
+
+  diff_1 = [
+    {'value': 'hello there', 'removed': true},
+  ]
+  console.log(mergeDiffs([diff_0, diff_1]));
 }
 
 function testMergedDiffsAdd() {
