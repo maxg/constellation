@@ -258,10 +258,11 @@ exports.createFrontend = function createFrontend(config, db) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       var chunkedDiffs = getChunkedDiffs(ops);
       //var mergedDiffs = mergeDiffs(chunkedDiffs);
-      testMergedDiffsAdd();
+      testMergedDiffsRegression();
       //var chunkedDiffs = computeTotalDiff(ops);
       res.setHeader('Cache-Control', 'max-age=3600');
       res.send(chunkedDiffs);
+      //res.send([chunkedDiffs, mergedDiffs]);
     });
   })
   
@@ -390,9 +391,9 @@ function getChunkedDiffs(ops) {
 // TODO: This seems much too complicated
 
 function mergeDiffs(diffs) {
-  mergedDiff = diffs[0];
+  mergedDiff = JSON.parse(JSON.stringify(diffs[0]));
   for (var i = 1; i < diffs.length; i++) {
-    var diff = diffs[i];
+    var diff = JSON.parse(JSON.stringify(diffs[i]));
 
     // Index into mergedDiff for what chunk we're currently on
     var currentChunkInMerged = 0;
@@ -404,13 +405,21 @@ function mergeDiffs(diffs) {
     var indexInText = 0;
 
     diff.forEach(function(part) {
+      console.log("  ");
+      console.log(mergedDiff);
+      console.log("part:");
+      console.log(part);
       if (part.added) {
+        console.log("added part");
+        console.log(indexInText);
+        console.log(currentChunkInMerged);
+        console.log(indexInCurrentChunkInMerged);
 
         // If adding at the very beginning, the +1 below
         // doesn't apply
-        if (indexInText == 0) {
+        if (indexInCurrentChunkInMerged == 0) {
           // Add part to the beginning
-          mergedDiff.splice(0, 0, part);
+          mergedDiff.splice(currentChunkInMerged, 0, part);
 
         } else {
           var currentChunk = mergedDiff[currentChunkInMerged];
@@ -434,6 +443,7 @@ function mergeDiffs(diffs) {
         
         
       } else if (part.removed) {
+        console.log("removed part");
 
         // Split first chunk, since the remove might start
         // in the middle of a chunk
@@ -457,8 +467,11 @@ function mergeDiffs(diffs) {
           mergedDiff.splice(currentChunkInMerged, 1, prevChunk, deletedChunk, nextChunk);
 
           indexInText += part.value.length;
-          indexInCurrentChunkInMerged += part.value.length;
-        } else {
+          // Starting at the beginning of nextChunk
+          currentChunkInMerged += 2;
+          indexInCurrentChunkInMerged = 0;
+
+        } else { // Normal part
 
           var prevChunk = JSON.parse(JSON.stringify(currentChunk));
           prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged);
@@ -582,7 +595,98 @@ function mergeDiffs(diffs) {
   return mergedDiff;
 }
 
+// Tests for bugs found when looking at real code
+function testMergedDiffsRegression() {
+  /* Testing newlines 
+  diff_0 = [
+    {'value': '    // TODO\n\n    // TODO'}
+  ];
 
+  diff_1 = [
+    {'value': '    // TODO\n', 'removed': true},
+    {'value': '\n    // TODO'}
+  ]
+  console.log(mergeDiffs([diff_0, diff_1])); */
+
+  /* Duplicating test case */
+  diff_0 = [
+    {'value': '    // TODO\n    \n    //////\n'},
+  ];
+
+  diff_1 = [
+    {'value': '    // TODO\n', 'removed': true},
+    {'value': '\n    public Set<E> CharSet1() {\n        m\n    }\n', 'added': true},
+    {'value': '    \n'},
+    {'value': '    \n', 'added': true},
+    {'value': '     //////\n'}
+  ];
+
+  diff_2 = [
+    {'value': '\n    public Set<E> CharSet1() {\n'},
+    {'value': '        m\n', 'removed': true},
+    {'value': '       \n', 'added': true},
+    {'value': '    }\n    \n    \n    //////\n'}
+  ]
+
+  /* Expect:
+      // TODO\n---------------------removed
+  \n--------------------------------added
+      public Set<E> CharSet1() {\n--added
+          m\n-----------------------added then removed(2)
+         \n-------------------------added(2)
+      }\n---------------------------added
+      \n----------------------------same
+      \n----------------------------added
+      //////------------------------same   
+
+  */
+
+  /* Actual:
+[ { value: '' },
+  { value: '\n    public Set<E> CharSet1() {', added: true },
+  { value: '       \n', added: true },
+  { value: '', added: true },
+  { value: '\n        m', added: false, removed: true },
+  { value: '\n    }\n', added: true },
+  { value: '' },
+  { value: '    // TODO\n', removed: true, added: false },
+  { value: '    \n' },
+  { value: '    \n', added: true },
+  { value: '    //////\n' } ]
+
+  Differences:
+    Things seem out of order, even the first one
+  */
+
+  console.log(mergeDiffs([diff_0, diff_1, diff_2]));
+
+  // More minimized maybe?
+  diff_0 = [
+    {'value': '    // TODO\n    //////\n'},
+  ];
+
+  diff_1 = [
+    {'value': '    // TODO\n', 'removed': true},
+    {'value': 'something else', 'added': true},
+    {'value': '    //////\n'}
+  ];
+
+  //console.log(mergeDiffs([diff_0, diff_1]));
+
+  // More inimized version
+  diff_0 = [
+    {'value': 'something'}
+  ];
+
+  diff_1 = [
+    {'value': 'som', 'removed': true},
+    {'value': 'else', 'added': true},
+    {'value': 'ething'}
+  ];
+
+  // console.log(mergeDiffs([diff_0, diff_1]));
+
+}
 
 function testMergedDiffsRemove() {
   console.log("start of testing remove");
