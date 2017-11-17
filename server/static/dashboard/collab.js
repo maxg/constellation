@@ -81,32 +81,50 @@ function updateDiff(node, baseline, text, file) {
         }
 
         if (regexesMap.has(currentLineNumber)) {
-          // TODO: Make more DRY
 
-          var regex = regexesMap.get(currentLineNumber);
-        
-          var beforeRegexElt = document.createElement('span');
-          var regexElt = document.createElement('span');
-          var afterRegexElt = document.createElement('span');
+          var endOfLastRegex = 0;
+          regexesMap.get(currentLineNumber).forEach(function(match) {
+            if (endOfLastRegex > match.indexInLine) {
+              // The regexes overlapped (e.g. 'Stream' and 'a')
+              // Ignore this regex
+              // TODO: Better handling of this case?
+              //   Probably won't happen that much?
+              return;
+            }
 
-          beforeRegexElt.appendChild(document.createTextNode(
-            partLine.substring(0, regex.indexInLine)));
-          regexElt.appendChild(document.createTextNode(
-            partLine.substring(regex.indexInLine, regex.indexInLine + regex.length)));
-          afterRegexElt.appendChild(document.createTextNode(
-            partLine.substring(regex.indexInLine + regex.length)));
+            // TODO: Make more DRY
 
-          regexElt.classList.add('diff-regex');
+            var beforeRegexElt = document.createElement('span');
+            var regexElt = document.createElement('span');
+            var afterRegexElt = document.createElement('span');
 
-          if (part.added) {
-            beforeRegexElt.classList.add('diff-added');
-            regexElt.classList.add('diff-added');
-            afterRegexElt.classList.add('diff-added');
-          }
+            beforeRegexElt.appendChild(document.createTextNode(
+              partLine.substring(endOfLastRegex, match.indexInLine)));
+            regexElt.appendChild(document.createTextNode(
+              partLine.substring(match.indexInLine, match.indexInLine + match.length)));
+            afterRegexElt.appendChild(document.createTextNode(
+              partLine.substring(match.indexInLine + match.length)));
 
-          elt.appendChild(beforeRegexElt);
-          elt.appendChild(regexElt);
-          elt.appendChild(afterRegexElt);
+            regexElt.classList.add('diff-regex');
+
+            if (part.added) {
+              beforeRegexElt.classList.add('diff-added');
+              regexElt.classList.add('diff-added');
+              afterRegexElt.classList.add('diff-added');
+            }
+
+            if (endOfLastRegex > 0) {
+              // Need to remove the last child, since this the three elts
+              // created here represent the same characters as the last child
+              elt.removeChild(elt.lastChild);
+            }
+
+            elt.appendChild(beforeRegexElt);
+            elt.appendChild(regexElt);
+            elt.appendChild(afterRegexElt);
+
+            endOfLastRegex = match.indexInLine + match.length;
+          });
 
         } else {
           elt.classList.add('diff-part');

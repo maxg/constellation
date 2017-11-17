@@ -275,6 +275,8 @@ exports.createFrontend = function createFrontend(config, db) {
         }
       });
 
+      // TODO: tre-agre only finds first instance of regex in each line
+
       // Convert regexes into easier form to display
       var regexesMap = new Map();
 
@@ -302,18 +304,23 @@ exports.createFrontend = function createFrontend(config, db) {
             //   haven't tested if you have abc*xyz as the regex yet
             var lengthToHighlight = parseInt(indices[1]) - parseInt(indices[0]);
 
-            // TODO: If there's 2 results on the same line
-            regexesMap.set(lineNumber,
-              {'indexInLine': indexInLine,
+            var mapValue = {
+              'indexInLine': indexInLine,
               'length': lengthToHighlight
-            });
-            
-          })
+            };
+
+            if (regexesMap.has(lineNumber)) {
+              regexesMap.set(lineNumber, regexesMap.get(lineNumber).concat([mapValue]));
+            } else {
+              regexesMap.set(lineNumber, [mapValue]);
+            }         
+          });
 
         } else {
           console.log("no match stdout");
         }
       });
+
       res.send(JSON.stringify([...regexesMap]));
     });
   });
