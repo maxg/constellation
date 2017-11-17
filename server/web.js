@@ -211,6 +211,7 @@ exports.createFrontend = function createFrontend(config, db) {
   });
   
   app.get('/dashboard/:project/m/:milestone/:cutoff?/:regexes?', authenticate, staffonly, function(req, res, next) {
+
     res.render('dashboard/collabs', {
       project: req.params.project,
       milestone: req.params.milestone,
@@ -227,6 +228,7 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
   
+  // TODO: Get URL with regex but no cutoff to work
   app.get('/dashboard/:project/:collabid/m/:milestone/:cutoff?/:regexes?', authenticate, staffonly, function(req, res, next) {
     res.render('dashboard/collab', {
       project: req.params.project,
@@ -248,7 +250,8 @@ exports.createFrontend = function createFrontend(config, db) {
   });
 
   // Find the given regex in the text, using fuzzy matching
-  app.get('/regex/:collabid/:filepath(*)/:regexes', authenticate, staffonly,  function(req, res, next) {
+  // TODO: Better URL?
+  app.get('/regex/:collabid/:regexes/:cutoff?/f/:filepath(*)', authenticate, staffonly,  function(req, res, next) {
     // TODO: When a regex like '%5C%28.%2A%5C%29'; // \(.*\)
     //   comes through a URL directly instead of set as a string
     //   in collab.js, the regex is not processed correctly:
@@ -257,72 +260,19 @@ exports.createFrontend = function createFrontend(config, db) {
 
     // TODO: Typing \(.*\) in URL bar doesn't encode the \ or the ()
 
-    db.getFile(req.params.collabid, req.params.filepath, function(err, file) {
-      if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
-
-      // Regex matching: https://laurikari.net/tre/about/
-      // TODO: Add 'apt-get install tre-agrep libtre5 libtre-dev'
-      //   to a setup script somewhere?
-      var results = [];
-      // ';;' is the delimiter
-      req.params.regexes.split(';;').forEach(function(regex) {
-        if (regex.length > 0) {
-          var result = child_process.spawnSync('tre-agrep',
-            ['--show-position', '--line-number', '--regexp', regex, '-'],
-            {'input': file.text}
-          );
-          results.push(result);
-        }
+    if (req.params.cutoff) {
+      db.getHistorical(req.params.collabid, req.params.filepath, moment(req.params.cutoff), function(err, historical) {
+        if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
+        var regexesMap = getRegexesMap(historical, req.params.regexes);
+        res.send(JSON.stringify([...regexesMap]));
       });
-
-      // TODO: tre-agre only finds first instance of regex in each line
-
-      // Convert regexes into easier form to display
-      var regexesMap = new Map();
-
-      results.forEach(function(singleRegexMatches) {
-        var result = '';
-
-        if (singleRegexMatches.stdout) {
-          // stdout returns ASCII numbers, so convert them to strings
-          singleRegexMatches.stdout.forEach(function(num) {
-            result += String.fromCharCode(num);
-          });
-
-          var singleMatchesList = result.split('\n');
-          singleMatchesList.forEach(function(singleMatch) {
-            var values = singleMatch.split(':');
-            if (values.length < 3) {
-              // Not a legitimate match
-              return;
-            }
-            var lineNumber = parseInt(values[0]);
-            var relevantChars = values[1];
-            var indices = relevantChars.split('-');
-            var indexInLine = parseInt(indices[0]);
-            // Note: If *, only includes the len of things before the *
-            //   haven't tested if you have abc*xyz as the regex yet
-            var lengthToHighlight = parseInt(indices[1]) - parseInt(indices[0]);
-
-            var mapValue = {
-              'indexInLine': indexInLine,
-              'length': lengthToHighlight
-            };
-
-            if (regexesMap.has(lineNumber)) {
-              regexesMap.set(lineNumber, regexesMap.get(lineNumber).concat([mapValue]));
-            } else {
-              regexesMap.set(lineNumber, [mapValue]);
-            }         
-          });
-
-        } else {
-          console.log("no match stdout");
-        }
+    } else {
+      db.getFile(req.params.collabid, req.params.filepath, function(err, file) {
+        if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
+        var regexesMap = getRegexesMap(file, req.params.regexes);
+        res.send(JSON.stringify([...regexesMap]));
       });
-
-      res.send(JSON.stringify([...regexesMap]));
-    });
+    }
   });
   
   app.get('/historical/:project/:collabid/:filepath(*)/:cutoff', authenticate, authorize, function(req, res, next) {
@@ -395,4 +345,69 @@ function getPluginVersion(callback) {
   fs.readFile(`${__dirname}/install/version.txt`, { encoding: 'utf8' }, function(err, version) {
     callback(err, version && version.trim().split('.', 3).join('.'));
   });
+}
+
+function getRegexesMap(file, regexes) {
+  // Regex matching: https://laurikari.net/tre/about/
+  // TODO: Add 'apt-get install tre-agrep libtre5 libtre-dev'
+  //   to a setup script somewhere?
+  var results = [];
+  // ';;' is the delimiter
+  regexes.split(';;').forEach(function(regex) {
+    if (regex.length > 0) {
+      var result = child_process.spawnSync('tre-agrep',
+        ['--show-position', '--line-number', '--regexp', regex, '-'],
+        {'input': file.data.text}
+      );
+      results.push(result);
+    }
+  });
+
+  // TODO: tre-agre only finds first instance of regex in each line
+
+  // Convert regexes into easier form to display
+  var regexesMap = new Map();
+
+  results.forEach(function(singleRegexMatches) {
+    var result = '';
+
+    if (singleRegexMatches.stdout) {
+      // stdout returns ASCII numbers, so convert them to strings
+      singleRegexMatches.stdout.forEach(function(num) {
+        result += String.fromCharCode(num);
+      });
+
+      var singleMatchesList = result.split('\n');
+      singleMatchesList.forEach(function(singleMatch) {
+        var values = singleMatch.split(':');
+        if (values.length < 3) {
+          // Not a legitimate match
+          return;
+        }
+        var lineNumber = parseInt(values[0]);
+        var relevantChars = values[1];
+        var indices = relevantChars.split('-');
+        var indexInLine = parseInt(indices[0]);
+        // Note: If *, only includes the len of things before the *
+        //   haven't tested if you have abc*xyz as the regex yet
+        var lengthToHighlight = parseInt(indices[1]) - parseInt(indices[0]);
+
+        var mapValue = {
+          'indexInLine': indexInLine,
+          'length': lengthToHighlight
+        };
+
+        if (regexesMap.has(lineNumber)) {
+          regexesMap.set(lineNumber, regexesMap.get(lineNumber).concat([mapValue]));
+        } else {
+          regexesMap.set(lineNumber, [mapValue]);
+        }         
+      });
+
+    } else {
+      console.log("no match stdout");
+    }
+  });
+
+  return regexesMap;
 }

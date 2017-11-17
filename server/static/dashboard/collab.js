@@ -22,7 +22,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     $.ajax('/baseline/' + project + '/' + file.data.filepath).done(function(baseline) {
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
-          updateDiff(diff, baseline, historical.data ? historical.data.text : undefined, file);
+          updateDiff(diff, baseline, historical.data ? historical.data.text : undefined, file, cutoff);
         }).fail(function(req, status, err) {
           diff.textContent = 'Error fetching code: ' + errorToString(req.responseJSON, status, err);
         });
@@ -42,7 +42,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
 });
 
 // TODO: Don't need to pass in text if we get the whole file anyway
-function updateDiff(node, baseline, text, file) {
+function updateDiff(node, baseline, text, file, cutoff) {
   if (baseline === undefined || text === undefined) { return; }
   node.innerHTML = '';
 
@@ -64,9 +64,10 @@ function updateDiff(node, baseline, text, file) {
       hljs.highlightBlock(node);
 
   } else {
+    var cutoffUrlPart = cutoff ? '/' + cutoff : '';
     // ';;' is used as the delimiter between regexes
     //regexes = '%5C%28.%2A%5C%29'; // \(.*\)
-    $.ajax('/regex/' + collabid + '/' + file.data.filepath + '/' + regexes).done(function(regexesJson) {
+    $.ajax('/regex/' + collabid + '/' + regexes + cutoffUrlPart + '/f/' + file.data.filepath).done(function(regexesJson) {
       var regexesMap = new Map(JSON.parse(regexesJson));
 
       // Keep track of the current line number we're on
