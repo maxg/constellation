@@ -71,6 +71,7 @@ function updateDiff(node, baseline, text, file) {
         var partLine = partLines[i];
 
         var elt = document.createElement('div');
+        elt.classList.add('diff-part');
 
         // A removed part doesn't count toward the line numbers
         if (part.removed) {
@@ -78,6 +79,9 @@ function updateDiff(node, baseline, text, file) {
           node.appendChild(elt);
           //currentLineNumber += 1;
           continue;
+        }
+        if (part.added) {
+          elt.classList.add('diff-added');
         }
 
         if (regexesMap.has(currentLineNumber)) {
@@ -106,12 +110,6 @@ function updateDiff(node, baseline, text, file) {
               partLine.substring(match.indexInLine + match.length)));
 
             regexElt.classList.add('diff-regex');
-
-            if (part.added) {
-              beforeRegexElt.classList.add('diff-added');
-              regexElt.classList.add('diff-added');
-              afterRegexElt.classList.add('diff-added');
-            }
 
             if (endOfLastRegex > 0) {
               // Need to remove the last child, since this the three elts
@@ -144,7 +142,7 @@ function updateDiff(node, baseline, text, file) {
     });
 
     // TODO: Syntax highlighting doesn't work anymore
-    //hljs.highlightBlock(node);
+    hljs.highlightBlock(node);
 
     
     
