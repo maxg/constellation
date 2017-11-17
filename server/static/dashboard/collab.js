@@ -93,6 +93,10 @@ function updateDiff(node, baseline, text, file) {
               // Ignore this regex
               // TODO: Better handling of this case?
               //   Probably won't happen that much?
+
+              // TODO: What if the regex that's first in the line
+              //   came last
+              
               return;
             }
 
@@ -124,15 +128,17 @@ function updateDiff(node, baseline, text, file) {
             endOfLastRegex = match.indexInLine + match.length;
           });
 
+          // Add newline back in for correct syntax highlighting
+          elt.lastChild.appendChild(document.createTextNode('\n'));
+
         } else {
           elt.classList.add('diff-part');
           if (part.added) {
             elt.classList.add('diff-added');
-            elt.appendChild(document.createTextNode(partLine));
-          } else {
-            elt.appendChild(document.createTextNode(partLine));
           }
 
+          // Add newline back in for correct syntax highlighting
+          elt.appendChild(document.createTextNode(partLine + '\n'));
         }
 
         node.appendChild(elt);
