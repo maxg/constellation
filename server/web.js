@@ -259,9 +259,7 @@ exports.createFrontend = function createFrontend(config, db) {
       var chunkedDiffs = getChunkedDiffs(ops);
       var mergedDiffs = mergeDiffs(chunkedDiffs);
       //testMergedDiffsRegression();
-      //var chunkedDiffs = computeTotalDiff(ops);
       res.setHeader('Cache-Control', 'max-age=3600');
-      //res.send(chunkedDiffs);
       res.send([chunkedDiffs, mergedDiffs]);
     });
   })
@@ -549,18 +547,17 @@ function mergeDiffs(diffs) {
 
         // Start out by going through the first chunk
         var numSeenCharacters = currentChunk.value.length - indexInCurrentChunkInMerged;
-        var numCharactersLeft = part.value.length - numSeenCharacters;
         
         currentChunkInMerged += 1;
         currentChunk = mergedDiff[currentChunkInMerged];
     
         // Find the chunk at the end
-        while (currentChunk && numSeenCharacters < numCharactersLeft) {
+        while (currentChunk && numSeenCharacters < part.value.length) {
           if (currentChunk.removed) {
             // A removed chunk should not be counted, so keep going
             currentChunkInMerged += 1;
 
-          } else if (numSeenCharacters + currentChunk.value.length < numCharactersLeft) {
+          } else if (numSeenCharacters + currentChunk.value.length < part.value.length) {
             // We can go completely through this chunk,
             // so move on to next chunk
             numSeenCharacters = numSeenCharacters + currentChunk.value.length;
@@ -583,68 +580,101 @@ function mergeDiffs(diffs) {
 
 // Tests for bugs found when looking at real code
 function testMergedDiffsRegression() {
+  /* Regression #3: Not going through enough of the diff
+       during a normal part  */
+  diff_0 = [
+    {"count":3,"value":"/**\n * A mutable set of characters.\n */\n"},
+    {"count":1,"removed":true,"value":"public interface Set {\n"},
+    {"count":1,"added":true,"value":"public interface Set<E> {\n"},
+    {"count":4,"value":"    \n    //////\n    // creators:\n    \n"},
+    {"count":1,"removed":true,"value":"    // TODO\n"},
+    {"count":4,"added":true,"value":"\n    public Set<E> CharSet1() {\n        m\n    }\n"},
+    {"count":1,"value":"    \n"},
+    {"count":1,"added":true,"value":"    \n"},
+    {"count":3,"value":"    //////\n    // observers:\n    \n"},
+    {"count":1,"removed":true,"value":"    // TODO\n"},
+    {"count":1,"added":true,"value":"    public int size();\n"},
+    {"count":1,"value":"    \n"},
+    {"count":4,"added":true,"value":"    public boolean contains(E e);\n    \n    \n    \n"},
+    {"count":8,"value":"    //////\n    // producers:\n    \n    // TODO\n    \n    //////\n    // mutators:\n    \n"},
+    {"count":1,"removed":true,"value":"    // TODO\n"},
+    {"count":2,"added":true,"value":"    public void add(E e);\n    public void remove(E e);\n"},
+    {"count":1,"value":"    \n"},
+    {"count":6,"added":true,"value":"    \n     \n        \n    \n    \n    \n"},
+    {"count":1,"value":"}"}
+  ];
+
+  diff_1 = [
+    {"count":10,"value":"/**\n * A mutable set of characters.\n */\npublic interface Set<E> {\n    \n    //////\n    // creators:\n    \n\n    public Set<E> CharSet1() {\n"},
+    {"count":1,"removed":true,"value":"        m\n"},
+    {"count":1,"added":true,"value":"       \n"},
+    {"count":30,"value":"    }\n    \n    \n    //////\n    // observers:\n    \n public int size();\n    \n    public boolean contains(E e);\n    \n    \n    \n    //////\n    // producers:\n    \n    // TODO\n    \n    //////\n    // mutators:\n    \n    public void add(E e);\n    public void remove(E e);\n    \n    \n     \n        \n    \n    \n    \n}"},
+  ];
+
+  console.log("expect:public Set<E> CharSet1() to be all together");
+  console.log(mergeDiffs([diff_0, diff_1]));
+
   /* Regression #1, causing bugs #1 and #2 */
-  diff_0 = [
-    {'value': '    // TODO\n    \n    //////\n'},
-  ];
+    diff_0 = [
+      {'value': '    // TODO\n    \n    //////\n'},
+    ];
 
-  diff_1 = [
-    {'value': '    // TODO\n', 'removed': true},
-    {'value': '\n    public Set<E> CharSet1() {\n        m\n    }\n', 'added': true},
-    {'value': '    \n'},
-    {'value': '    \n', 'added': true},
-    {'value': '     //////\n'}
-  ];
+    diff_1 = [
+      {'value': '    // TODO\n', 'removed': true},
+      {'value': '\n    public Set<E> CharSet1() {\n        m\n    }\n', 'added': true},
+      {'value': '    \n'},
+      {'value': '    \n', 'added': true},
+      {'value': '     //////\n'}
+    ];
 
-  diff_2 = [
-    {'value': '\n    public Set<E> CharSet1() {\n'},
-    {'value': '        m\n', 'removed': true},
-    {'value': '       \n', 'added': true},
-    {'value': '    }\n    \n    \n    //////\n'}
-  ]
+    diff_2 = [
+      {'value': '\n    public Set<E> CharSet1() {\n'},
+      {'value': '        m\n', 'removed': true},
+      {'value': '       \n', 'added': true},
+      {'value': '    }\n    \n    \n    //////\n'}
+    ]
 
-  /* Expect:
-      // TODO\n---------------------removed
-  \n--------------------------------added
-      public Set<E> CharSet1() {\n--added
-          m\n-----------------------added then removed(2)
-         \n-------------------------added(2)
-      }\n---------------------------added
-      \n----------------------------same
-      \n----------------------------added
-      //////\n------------------------same 
-  */  
-  console.log('expect: see comments');
-  console.log(mergeDiffs([diff_0, diff_1, diff_2]));
+    /* Expect:
+        // TODO\n---------------------removed
+    \n--------------------------------added
+        public Set<E> CharSet1() {\n--added
+            m\n-----------------------added then removed(2)
+           \n-------------------------added(2)
+        }\n---------------------------added
+        \n----------------------------same
+        \n----------------------------added
+        //////\n------------------------same 
+    */  
+    console.log('expect: see comments');
+    console.log(mergeDiffs([diff_0, diff_1, diff_2]));
 
-  /* Bug #2 minimized */
-  diff_0 = [
-    {'value': 'something'}
-  ];
+    /* Bug #2 minimized */
+    diff_0 = [
+      {'value': 'something'}
+    ];
 
-  diff_1 = [
-    {'value': 'some'},
-    {'value': 'muchlongthing', 'added': true},
-    {'value': 'th'},
-    {'value': 'short', 'added': true},
-    {'value': 'ing'}
-  ];
-  console.log('expect:some=same,muchlongthing=added,th=same,short=added,ing=same');
-  console.log(mergeDiffs([diff_0, diff_1]));
+    diff_1 = [
+      {'value': 'some'},
+      {'value': 'muchlongthing', 'added': true},
+      {'value': 'th'},
+      {'value': 'short', 'added': true},
+      {'value': 'ing'}
+    ];
+    console.log('expect:some=same,muchlongthing=added,th=same,short=added,ing=same');
+    console.log(mergeDiffs([diff_0, diff_1]));
 
-  /* Bug #1 minimized */
-  diff_0 = [
-    {'value': 'something'}
-  ];
+    /* Bug #1 minimized */
+    diff_0 = [
+      {'value': 'something'}
+    ];
 
-  diff_1 = [
-    {'value': 'som', 'removed': true},
-    {'value': 'else', 'added': true},
-    {'value': 'ething'}
-  ];
-  console.log('expect:som=removed,else=added,ething=same');
-  console.log(mergeDiffs([diff_0, diff_1]));
-
+    diff_1 = [
+      {'value': 'som', 'removed': true},
+      {'value': 'else', 'added': true},
+      {'value': 'ething'}
+    ];
+    console.log('expect:som=removed,else=added,ething=same');
+    console.log(mergeDiffs([diff_0, diff_1]));
 }
 
 function testMergedDiffsRemove() {
