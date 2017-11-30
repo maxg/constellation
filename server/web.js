@@ -393,6 +393,10 @@ function getChunkedDiffs(ops) {
 // TODO: Could merge chunks if we want
 
 function mergeDiffs(diffs) {
+  if (diffs.length == 0) {
+    return diffs;
+  }
+
   mergedDiff = JSON.parse(JSON.stringify(diffs[0]));
   for (var i = 1; i < diffs.length; i++) {
     var diff = JSON.parse(JSON.stringify(diffs[i]));
