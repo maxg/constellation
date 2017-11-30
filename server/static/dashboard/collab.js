@@ -67,9 +67,15 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
           // green for additions, red for deletions
           // grey for common parts
           var elt = document.createElement('span');
-          color = part.added ? 'green' :
-                     part.removed ? 'red' : 'grey';
-          elt.style.background = color;
+
+          if (part.added) {
+            elt.classList.add('span-added');
+          } else if (part.removed) {
+            elt.classList.add('span-removed');
+          } else {
+            elt.classList.add('span-original');
+          }
+          
           elt.appendChild(document.createTextNode(part.value));
           codeBlock.appendChild(elt);
         });

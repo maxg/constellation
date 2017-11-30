@@ -126,6 +126,27 @@ textarea {
 .diff .diff-removed + .diff-added {
 }
 
+
+/* TODO: Not use red + green to distinguish
+   between added and removed */
+
+.span-added {
+  background: rgba(63, 196, 70, 0.7);
+  line-height: 1.1;
+}
+
+.span-removed {
+  background: rgba(220, 145, 141, 0.5);
+  color: rgba(0, 0, 0, 0.5);
+  line-height: 1;
+}
+
+.span-original {
+  color: rgba(0, 0, 0, 0.5);
+  line-height: 0.9;
+}
+
+
 /* syntax highlighting with Eclipse colors */
 .hljs,
 .hljs-subst { color: #333; }
