@@ -13,11 +13,13 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
   var list = document.querySelector('#files');
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
   files.forEach(function(file) {
+    /*
     var item = document.importNode(document.querySelector('#file').content, true);
     var heading = item.querySelector('h4');
     heading.textContent = file.data.filepath;
     var diff = item.querySelector('.diff code');
     list.appendChild(item);
+    
     
     $.ajax('/baseline/' + project + '/' + file.data.filepath).done(function(baseline) {
       if (cutoff) {
@@ -37,6 +39,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     }).fail(function(req, status, err) {
       diff.textContent = 'Error fetching baseline: ' + errorToString(req.responseJSON, status, err);
     });
+    */
 
     // TODO: Give it its own div
     var opsDiv = document.querySelector('#files');
@@ -50,7 +53,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       //diffs.forEach(function(diff) {
         var diffNode = document.createElement('div');
         var heading = document.createElement('h3');
-        heading.appendChild(document.createTextNode('Diff for ' + file.data.filepath));
+        heading.appendChild(document.createTextNode(file.data.filepath));
         diffNode.appendChild(heading);
 
         var preBlock = document.createElement('pre');
@@ -75,7 +78,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
           } else {
             elt.classList.add('span-original');
           }
-          
+
           elt.appendChild(document.createTextNode(part.value));
           codeBlock.appendChild(elt);
         });

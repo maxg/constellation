@@ -138,7 +138,7 @@ textarea {
 .span-removed {
   background: rgba(220, 145, 141, 0.5);
   color: rgba(0, 0, 0, 0.5);
-  line-height: 1;
+  line-height: 1.1;
 }
 
 .span-original {
