@@ -402,15 +402,14 @@ function getChunkedDiffs(ops) {
     return chunkedDiffs; 
 }
 
-// Merges multiple diffs into one diff with all
-// additions and deletes kept.
-
-// TODO: This seems much too complicated
-
+// TODO: Simplify
 // TODO: Remove parts with '' at the end
 
-// TODO: Could merge chunks if we want
-
+/**
+ * Merges the given list of diffs into a total diff,
+ * maintaining the inserts and deletes that happened
+ * in each diff.
+ */
 function mergeDiffs(diffs) {
   if (diffs.length == 0) {
     return diffs;
