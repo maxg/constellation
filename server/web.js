@@ -184,9 +184,13 @@ exports.createFrontend = function createFrontend(config, db) {
   });
   
   app.get('/dashboard/:project/:cutoff?', authenticate, staffonly, function(req, res, next) {
+    console.log("visual in dashboard/project");
+    console.log(req.query.visual);
+    
     res.render('dashboard/collabs', {
       project: req.params.project,
       cutoff: req.params.cutoff,
+      visual: req.query.visual
     });
   });
   
