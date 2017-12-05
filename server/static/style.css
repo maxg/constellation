@@ -138,14 +138,12 @@ textarea {
 }
 
 .span-removed {
-  background: rgba(220, 145, 141, 0.5);
   color: rgba(0, 0, 0, 0.5);
-  line-height: 1.1;
+  text-decoration: line-through;
 }
 
-.span-removed-original {
-  background: rgb(238, 238, 73);
-  color: rgba(0, 0, 0, 0.5);
+.span-removed:not(.span-original) {
+  background: rgba(220, 145, 141, 0.5);
   line-height: 1.1;
 }
 

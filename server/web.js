@@ -384,6 +384,7 @@ function getChunkedDiffs(ops) {
 
     // Add an attribute to indicate if
     // a part is original code
+    // TODO: This is not the right way to do it
     if (chunkedDiffs.length > 0) {
       chunkedDiffs[0].forEach(function(part) {
         if (!part.added && !part.removed) {
