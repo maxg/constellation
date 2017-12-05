@@ -341,8 +341,15 @@ function getChunkedDiffs(ops) {
     // 10000 -> 34 diffs
     // 100000 -> 6 diffs
 
+    // If there have been no changes to the document,
+    // ops = {v:0}
+    if (!Array.isArray(ops)) {
+      return [];
+    }
+
     /* Setup the baseline of the document */ 
     var firstOp = ops[0];
+
 
     // The baseline for the next diff
     var currentBaseline = {v:0};
