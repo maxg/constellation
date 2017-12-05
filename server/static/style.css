@@ -126,12 +126,7 @@ textarea {
 .diff .diff-removed + .diff-added {
 }
 
-
-/* TODO: Not use red + green to distinguish
-   between added and removed 
-   Use strikeouts for removed, also color
-   non-original removals red */
-
+/** CSS for total diff visualization */
 .span-added {
   background: rgba(63, 196, 70, 0.7);
   line-height: 1.1;
