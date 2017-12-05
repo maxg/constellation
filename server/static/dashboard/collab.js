@@ -9,7 +9,18 @@ collab.fetch(function(err) {
 
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
-  
+
+  // Example for using the visual parameter to show different visualizations
+  if (visual == 1) {
+    showFiles_visual1(files);
+  } else if (visual == 2) {
+    showFiles_visual2(files);
+  } else {
+    showFiles_basic(files);
+  }
+});
+
+function showFiles_basic(files) {
   var list = document.querySelector('#files');
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
   files.forEach(function(file) {
@@ -38,7 +49,33 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       diff.textContent = 'Error fetching baseline: ' + errorToString(req.responseJSON, status, err);
     });
   });
-});
+}
+
+function showFiles_visual1(files) {
+  var list = document.querySelector('#files');
+
+  files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
+  files.forEach(function(file) {
+    var item = document.importNode(document.querySelector('#file').content, true);
+    var heading = item.querySelector('h4');
+    heading.textContent = file.data.filepath + " VISUALZATION 1";
+    list.appendChild(item);
+  });
+
+}
+
+function showFiles_visual2(files) {
+  var list = document.querySelector('#files');
+
+  files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
+  files.forEach(function(file) {
+    var item = document.importNode(document.querySelector('#file').content, true);
+    var heading = item.querySelector('h4');
+    heading.textContent = file.data.filepath + " VISUALZATION 2";
+    list.appendChild(item);
+  });
+
+}
 
 function updateDiff(node, baseline, text) {
   if (baseline === undefined || text === undefined) { return; }
