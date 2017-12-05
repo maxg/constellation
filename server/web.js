@@ -215,6 +215,7 @@ exports.createFrontend = function createFrontend(config, db) {
       project: req.params.project,
       milestone: req.params.milestone,
       cutoff: req.params.cutoff,
+      visual: req.query.visual,
     });
   });
   
@@ -223,6 +224,7 @@ exports.createFrontend = function createFrontend(config, db) {
       project: req.params.project,
       collabid: req.params.collabid,
       cutoff: req.params.cutoff,
+      visual: req.query.visual,
     });
   });
   
@@ -232,6 +234,7 @@ exports.createFrontend = function createFrontend(config, db) {
       collabid: req.params.collabid,
       milestone: req.params.milestone,
       cutoff: req.params.cutoff,
+      visual: req.query.visual,
     });
   });
   
