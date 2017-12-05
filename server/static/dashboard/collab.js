@@ -74,7 +74,12 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
           if (part.added) {
             elt.classList.add('span-added');
           } else if (part.removed) {
-            elt.classList.add('span-removed');
+            if (part.original) {
+              elt.classList.add('span-removed-original');
+            } else {
+              elt.classList.add('span-removed');
+            }
+
           } else {
             elt.classList.add('span-original');
           }

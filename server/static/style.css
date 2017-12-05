@@ -128,7 +128,9 @@ textarea {
 
 
 /* TODO: Not use red + green to distinguish
-   between added and removed */
+   between added and removed 
+   Use strikeouts for removed, also color
+   non-original removals red */
 
 .span-added {
   background: rgba(63, 196, 70, 0.7);
@@ -137,6 +139,12 @@ textarea {
 
 .span-removed {
   background: rgba(220, 145, 141, 0.5);
+  color: rgba(0, 0, 0, 0.5);
+  line-height: 1.1;
+}
+
+.span-removed-original {
+  background: rgb(238, 238, 73);
   color: rgba(0, 0, 0, 0.5);
   line-height: 1.1;
 }

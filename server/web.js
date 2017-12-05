@@ -331,7 +331,8 @@ function getPluginVersion(callback) {
 
 function getChunkedDiffs(ops) {
     var chunkedDiffs = [];
-    var threshold = 100000; // TODO: Tune threshold
+    // TODO: Very large threshold => no results
+    var threshold = 10000; // TODO: Tune threshold
     // 2000 -> 89 diffs
     // 10000 -> 34 diffs
     // 100000 -> 6 diffs
@@ -379,6 +380,17 @@ function getChunkedDiffs(ops) {
       }
          
       lastTs = op.m.ts;
+    }
+
+    // Add an attribute to indicate if
+    // a part is original code
+    if (chunkedDiffs.length > 0) {
+      chunkedDiffs[0].forEach(function(part) {
+        if (!part.added && !part.removed) {
+          // It's original
+          part.original = true;
+        }
+      });
     }
 
     return chunkedDiffs; 
