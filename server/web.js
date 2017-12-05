@@ -601,10 +601,15 @@ function mergeDiffs(diffs) {
   return mergedDiff;
 }
 
-
+/**
+ * If the op added/deleted text, Return the op's
+ *   text, type (insert or delete), and index at which
+ *   the operation started in the file.
+ * Otherwise, return null.
+ */
 function getOpText(op) {
-  var textOrCurors = op.op[0].p[0];
-  if (textOrCurors == 'text') {
+  var textOrCursors = op.op[0].p[0];
+  if (textOrCursors == 'text') {
     // Get type
     var type;
     var text;
