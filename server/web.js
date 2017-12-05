@@ -349,6 +349,16 @@ function getChunkedDiffs(ops) {
 
     var lastTs = firstOp.m.ts;
 
+    // Create a diff for the first part, so that
+    // we can track original code
+    var baseDiff = diff.diffLines(currentBaseline.data.text.trim(), currentBaseline.data.text.trim());
+    baseDiff.forEach(function(part) {
+      // Note: should only be one part
+      part.original = true;
+    });
+
+    chunkedDiffs.push(baseDiff);
+
     /* Apply each op, and calculate a diff if two 
        consecutive ops are far enough apart */
     for (var i = 1; i < ops.length; i++) {
@@ -380,18 +390,6 @@ function getChunkedDiffs(ops) {
       }
          
       lastTs = op.m.ts;
-    }
-
-    // Add an attribute to indicate if
-    // a part is original code
-    // TODO: This is not the right way to do it
-    if (chunkedDiffs.length > 0) {
-      chunkedDiffs[0].forEach(function(part) {
-        if (!part.added && !part.removed) {
-          // It's original
-          part.original = true;
-        }
-      });
     }
 
     return chunkedDiffs; 
