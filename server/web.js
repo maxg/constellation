@@ -183,10 +183,7 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
   
-  app.get('/dashboard/:project/:cutoff?', authenticate, staffonly, function(req, res, next) {
-    console.log("visual in dashboard/project");
-    console.log(req.query.visual);
-    
+  app.get('/dashboard/:project/:cutoff?', authenticate, staffonly, function(req, res, next) {    
     res.render('dashboard/collabs', {
       project: req.params.project,
       cutoff: req.params.cutoff,
@@ -263,9 +260,8 @@ exports.createFrontend = function createFrontend(config, db) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       var chunkedDiffs = getChunkedDiffs(ops);
       var mergedDiffs = mergeDiffs(chunkedDiffs);
-      //testMergedDiffsRegression();
       res.setHeader('Cache-Control', 'max-age=3600');
-      res.send([chunkedDiffs, mergedDiffs]);
+      res.send(mergedDiffs);
     });
   })
   
