@@ -628,5 +628,5 @@ function getOpText(op) {
   return null;
 }
 
-// For server/test
-module.exports = {'mergeDiffs': mergeDiffs};
+// Export for testing
+exports.mergeDiffs = mergeDiffs;
