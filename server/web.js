@@ -185,6 +185,7 @@ exports.createFrontend = function createFrontend(config, db) {
     res.render('dashboard/collabs', {
       project: req.params.project,
       cutoff: req.params.cutoff,
+      visual: req.query.visual,
     });
   });
   
