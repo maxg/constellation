@@ -128,7 +128,7 @@ textarea {
 
 /** CSS for total diff visualization */
 .span-added {
-  background: rgba(63, 196, 70, 0.7);
+  background: rgba(63, 196, 70, 0.5);
   line-height: 1.1;
 }
 
