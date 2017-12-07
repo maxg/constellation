@@ -186,6 +186,7 @@ exports.createFrontend = function createFrontend(config, db) {
     res.render('dashboard/collabs', {
       project: req.params.project,
       cutoff: req.params.cutoff,
+      visual: req.query.visual,
     });
   });
   
@@ -216,7 +217,7 @@ exports.createFrontend = function createFrontend(config, db) {
       project: req.params.project,
       milestone: req.params.milestone,
       cutoff: req.params.cutoff,
-      regexes: req.params.regexes,
+      visual: req.query.visual,
     });
   });
   
@@ -225,6 +226,7 @@ exports.createFrontend = function createFrontend(config, db) {
       project: req.params.project,
       collabid: req.params.collabid,
       cutoff: req.params.cutoff,
+      visual: req.query.visual,
     });
   });
   
@@ -235,7 +237,7 @@ exports.createFrontend = function createFrontend(config, db) {
       collabid: req.params.collabid,
       milestone: req.params.milestone,
       cutoff: req.params.cutoff,
-      regexes: req.params.regexes,
+      visual: req.query.visual,
     });
   });
   
@@ -263,12 +265,19 @@ exports.createFrontend = function createFrontend(config, db) {
     if (req.params.cutoff) {
       db.getHistorical(req.params.collabid, req.params.filepath, moment(req.params.cutoff), function(err, historical) {
         if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
+        console.log(req.params.filepath);
+        console.log(historical);
+        // TODO: Use historical.data.text here
+
         var regexesMap = getRegexesMap(historical, req.params.regexes);
         res.send(JSON.stringify([...regexesMap]));
       });
     } else {
       db.getFile(req.params.collabid, req.params.filepath, function(err, file) {
         if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
+        console.log(req.params.filepath);
+        console.log(file);
+        // TODO: Use file.text here
         var regexesMap = getRegexesMap(file, req.params.regexes);
         res.send(JSON.stringify([...regexesMap]));
       });
