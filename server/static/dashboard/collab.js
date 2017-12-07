@@ -22,13 +22,13 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     if (visual.length > 2) {
       regexes = visual.substring(2);
     }
-    showFiles_visual2(files, regexes);
+    showFiles_general(files, updateDiff_visual2, [regexes]);
   } else {
-    showFiles_basic(files);
+    showFiles_general(files, updateDiff_basic, []);
   }
 });
 
-function showFiles_basic(files) {
+function showFiles_general(files, updateFunction, extraArgs) {
   var list = document.querySelector('#files');
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
   files.forEach(function(file) {
@@ -41,15 +41,15 @@ function showFiles_basic(files) {
     $.ajax('/baseline/' + project + '/' + file.data.filepath).done(function(baseline) {
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
-          updateDiff_basic(diff, baseline, historical.data ? historical.data.text : undefined, file, cutoff);
+          updateFunction(diff, baseline, historical.data ? historical.data.text : undefined, file, extraArgs);
         }).fail(function(req, status, err) {
           diff.textContent = 'Error fetching code: ' + errorToString(req.responseJSON, status, err);
         });
       } else {
         file.subscribe(function() {
-          updateDiff_basic(diff, baseline, file.data.text, file);
+          updateFunction(diff, baseline, file.data.text, file, extraArgs);
           file.on('op', function() {
-            updateDiff_basic(diff, baseline, file.data.text, file);
+            updateFunction(diff, baseline, file.data.text, file, extraArgs);
           });
         });
       }
@@ -59,6 +59,7 @@ function showFiles_basic(files) {
 
   });
 }
+
 
 function showFiles_visual1(files) {
   var list = document.querySelector('#files');
@@ -73,45 +74,10 @@ function showFiles_visual1(files) {
 
 }
 
-/** Regex searching */
-function showFiles_visual2(files, regexes) {
-  console.log(regexes);
-  // TODO: Make more DRY
-
-  var list = document.querySelector('#files');
-  files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
-  files.forEach(function(file) {
-    var item = document.importNode(document.querySelector('#file').content, true);
-    var heading = item.querySelector('h4');
-    heading.textContent = file.data.filepath;
-    var diff = item.querySelector('.diff code');
-    list.appendChild(item);
-    
-    $.ajax('/baseline/' + project + '/' + file.data.filepath).done(function(baseline) {
-      if (cutoff) {
-        $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
-          updateDiff_visual2(diff, baseline, historical.data ? historical.data.text : undefined, file, cutoff, regexes);
-        }).fail(function(req, status, err) {
-          diff.textContent = 'Error fetching code: ' + errorToString(req.responseJSON, status, err);
-        });
-      } else {
-        file.subscribe(function() {
-          updateDiff_visual2(diff, baseline, file.data.text, file, null, regexes);
-          file.on('op', function() {
-            updateDiff_visual2(diff, baseline, file.data.text, file, null, regexes);
-          });
-        });
-      }
-    }).fail(function(req, status, err) {
-      diff.textContent = 'Error fetching baseline: ' + errorToString(req.responseJSON, status, err);
-    });
-
-  });
-
-}
-
-// Used for basic visual
-function updateDiff_basic(node, baseline, text) {
+/**
+ * Update the diffs for the basic visualization.
+ */
+function updateDiff_basic(node, baseline, text, file, extraArgs) {
   if (baseline === undefined || text === undefined) { return; }
   node.innerHTML = '';
   window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {
@@ -130,8 +96,12 @@ function updateDiff_basic(node, baseline, text) {
   hljs.highlightBlock(node);
 }
 
-// Used for visual2
-function updateDiff_visual2(node, baseline, text, file, cutoff, regexes) {
+/**
+ * Update the diffs for visualization 2: regex matching.
+ */
+function updateDiff_visual2(node, baseline, text, file, extraArgs) {
+  var regexes = extraArgs[0];
+
   console.log('updatediffvisual2');
   console.log(regexes);
   if (baseline === undefined || text === undefined) { return; }
