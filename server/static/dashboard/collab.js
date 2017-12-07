@@ -13,8 +13,16 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
   // Example for using the visual parameter to show different visualizations
   if (visual == 1) {
     showFiles_visual1(files);
-  } else if (visual == 2) {
-    showFiles_visual2(files);
+  } else if (visual[0] == '2') {
+    // Visual 2 indicates regexes, and looks like this:
+    // '2:@Override' searches for ''@Override' in the files
+    // '2:@Override;;void;;size' searches for '@Override', 'void', and 'size' in the file
+    // '2' searches for nothing
+    var regexes = null;
+    if (visual.length > 2) {
+      regexes = visual.substring(2);
+    }
+    showFiles_visual2(files, regexes);
   } else {
     showFiles_basic(files);
   }
@@ -33,15 +41,15 @@ function showFiles_basic(files) {
     $.ajax('/baseline/' + project + '/' + file.data.filepath).done(function(baseline) {
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
-          updateDiff(diff, baseline, historical.data ? historical.data.text : undefined, file, cutoff);
+          updateDiff_basic(diff, baseline, historical.data ? historical.data.text : undefined, file, cutoff);
         }).fail(function(req, status, err) {
           diff.textContent = 'Error fetching code: ' + errorToString(req.responseJSON, status, err);
         });
       } else {
         file.subscribe(function() {
-          updateDiff(diff, baseline, file.data.text, file);
+          updateDiff_basic(diff, baseline, file.data.text, file);
           file.on('op', function() {
-            updateDiff(diff, baseline, file.data.text, file);
+            updateDiff_basic(diff, baseline, file.data.text, file);
           });
         });
       }
@@ -65,21 +73,67 @@ function showFiles_visual1(files) {
 
 }
 
-function showFiles_visual2(files) {
-  var list = document.querySelector('#files');
+/** Regex searching */
+function showFiles_visual2(files, regexes) {
+  console.log(regexes);
+  // TODO: Make more DRY
 
+  var list = document.querySelector('#files');
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
   files.forEach(function(file) {
     var item = document.importNode(document.querySelector('#file').content, true);
     var heading = item.querySelector('h4');
-    heading.textContent = file.data.filepath + " VISUALZATION 2";
+    heading.textContent = file.data.filepath;
+    var diff = item.querySelector('.diff code');
     list.appendChild(item);
+    
+    $.ajax('/baseline/' + project + '/' + file.data.filepath).done(function(baseline) {
+      if (cutoff) {
+        $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
+          updateDiff_visual2(diff, baseline, historical.data ? historical.data.text : undefined, file, cutoff, regexes);
+        }).fail(function(req, status, err) {
+          diff.textContent = 'Error fetching code: ' + errorToString(req.responseJSON, status, err);
+        });
+      } else {
+        file.subscribe(function() {
+          updateDiff_visual2(diff, baseline, file.data.text, file, null, regexes);
+          file.on('op', function() {
+            updateDiff_visual2(diff, baseline, file.data.text, file, null, regexes);
+          });
+        });
+      }
+    }).fail(function(req, status, err) {
+      diff.textContent = 'Error fetching baseline: ' + errorToString(req.responseJSON, status, err);
+    });
+
   });
 
 }
 
-// TODO: Don't need to pass in text if we get the whole file anyway
-function updateDiff(node, baseline, text, file, cutoff) {
+// Used for basic visual
+function updateDiff_basic(node, baseline, text) {
+  if (baseline === undefined || text === undefined) { return; }
+  node.innerHTML = '';
+  window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {
+    var elt = document.createElement('div');
+    elt.classList.add('diff-part');
+    if (part.added) {
+      elt.classList.add('diff-added');
+      elt.appendChild(document.createTextNode(part.value));
+    } else if (part.removed) {
+      elt.classList.add('diff-removed');
+    } else {
+      elt.appendChild(document.createTextNode(part.value));
+    }
+    node.appendChild(elt);
+  });
+  hljs.highlightBlock(node);
+}
+
+// Used for visual2
+function updateDiff_visual2(node, baseline, text, file, cutoff, regexes) {
+  console.log('updatediffvisual2');
+  console.log(regexes);
   if (baseline === undefined || text === undefined) { return; }
   node.innerHTML = '';
 
@@ -105,6 +159,7 @@ function updateDiff(node, baseline, text, file, cutoff) {
     // ';;' is used as the delimiter between regexes
     //regexes = '%5C%28.%2A%5C%29'; // \(.*\)
     $.ajax('/regex/' + collabid + '/' + regexes + cutoffUrlPart + '/f/' + file.data.filepath).done(function(regexesJson) {
+      console.log(regexesJson);
       var regexesMap = new Map(JSON.parse(regexesJson));
 
       // Keep track of the current line number we're on
@@ -209,13 +264,6 @@ function updateDiff(node, baseline, text, file, cutoff) {
       console.log(err);
     });
   }
-
-  
-
-  
-
-
-
 }
 
 function errorToString(json, status, err) {
