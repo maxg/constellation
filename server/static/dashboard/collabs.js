@@ -19,11 +19,11 @@ function insertCollabs(collabs, atIndex) {
     root.dataset.users = users.join(',');
     var link = item.querySelector('a');
     var href = '/dashboard/' + project + '/' + collab.id
-        + (milestone ? '/m/' + milestone : '')
-        + (cutoff ? '/' + cutoff : '')
-        + (visual ? '?visual=' + visual : '');
-    // TODO: Make ?visual= persist when going from specific checkoff
-    // back to dashboard
+      + (milestone ? '/m/' + milestone : '')
+      + (cutoff ? '/' + cutoff : '')
+      + (visual ? '?visual=' + visual : '');
+    // TODO: Persist '?visual=' when going from specific
+    //   checkoff back to dashboard
     link.setAttribute('href', href);
     link.textContent = users.join('\n');
     list.insertBefore(item, list.children[atIndex + idx]);

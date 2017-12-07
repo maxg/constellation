@@ -12,6 +12,17 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
   
   // TODO: Do the file.subscribe stuff to update the view
 
+  // Example for using the visual parameter to show different visualizations
+  if (visual == 1) {
+    showFiles_visual1(files);
+  } else if (visual == 2) {
+    showFiles_visual2(files);
+  } else {
+    showFiles_basic(files);
+  }
+});
+
+function showFiles_basic(files) {
   var list = document.querySelector('#files');
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
   files.forEach(function(file) {
@@ -47,7 +58,33 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     });
 
   });
-});
+}
+
+function showFiles_visual1(files) {
+  var list = document.querySelector('#files');
+
+  files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
+  files.forEach(function(file) {
+    var item = document.importNode(document.querySelector('#file').content, true);
+    var heading = item.querySelector('h4');
+    heading.textContent = file.data.filepath + " VISUALZATION 1";
+    list.appendChild(item);
+  });
+
+}
+
+function showFiles_visual2(files) {
+  var list = document.querySelector('#files');
+
+  files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
+  files.forEach(function(file) {
+    var item = document.importNode(document.querySelector('#file').content, true);
+    var heading = item.querySelector('h4');
+    heading.textContent = file.data.filepath + " VISUALZATION 2";
+    list.appendChild(item);
+  });
+
+}
 
 
 function errorToString(json, status, err) {
