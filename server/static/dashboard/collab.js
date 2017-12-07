@@ -9,10 +9,18 @@ collab.fetch(function(err) {
 
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
-
+  
   // Example for using the visual parameter to show different visualizations
-  if (visual == 1) {
-    showFiles_visual1(files);
+  if (visual[0] == '1') {
+    // Visual 1 might require a threshold, so format of param is:
+    // 1:1000 if we want visual 1 with threshold 1000
+    // 1 if we want the default threshold
+    // 1:2 for a threshold of 2, etc.
+    var threshold = null;
+    if (visual.length > 2) {
+      threshold = visual.substring(2);
+    }
+    showFiles_visual1(files, threshold);
   } else if (visual[0] == '2') {
     // Visual 2 indicates regexes, and looks like this:
     // '2:@Override' searches for ''@Override' in the files
@@ -60,16 +68,54 @@ function showFiles_general(files, updateFunction, extraArgs) {
   });
 }
 
+/** Visual 1: Total diff */
+function showFiles_visual1(files, threshold) {
+  // TODO: Also do the subscribe thing
 
-function showFiles_visual1(files) {
   var list = document.querySelector('#files');
-
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
   files.forEach(function(file) {
-    var item = document.importNode(document.querySelector('#file').content, true);
-    var heading = item.querySelector('h4');
-    heading.textContent = file.data.filepath + " VISUALZATION 1";
-    list.appendChild(item);
+
+
+
+    var url = '/ops/' + project + '/' + collabid + '/' + file.data.filepath
+      + (cutoff ? '?cutoff=' + cutoff : '')
+      + (threshold ? (cutoff ? '&threshold=' + threshold
+                             : '?threshold=' + threshold)
+                   : '');
+
+    $.ajax(url).done(function(diff) {
+      var item = document.importNode(document.querySelector('#file').content, true);
+      var heading = item.querySelector('h4');
+      heading.textContent = file.data.filepath;
+      var codeBlock = item.querySelector('.diff code');
+      list.appendChild(item);
+
+      diff.forEach(function(part){
+        var elt = document.createElement('span');
+
+        if (part.added) {
+          elt.classList.add('span-added');
+        } else if (part.removed) {
+          elt.classList.add('span-removed');
+          if (part.original) {
+            elt.classList.add('span-original');
+          }
+        } else {
+          elt.classList.add('span-original');
+        }
+
+        elt.appendChild(document.createTextNode(part.value));
+        codeBlock.appendChild(elt);
+      });
+
+      // TODO: Add syntax highlighting?
+      // TODO: Make green less bright
+
+    }).fail(function(req, status, err) {
+      list.textContent = 'Error fetching ops: ' + errorToString(req.responseJSON, status, err);
+    });
+
   });
 
 }
@@ -235,6 +281,7 @@ function updateDiff_visual2(node, baseline, text, file, extraArgs) {
     });
   }
 }
+
 
 function errorToString(json, status, err) {
   return (json && json.code || status) + ' ' + (json && json.message || err);

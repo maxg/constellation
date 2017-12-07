@@ -132,6 +132,28 @@ textarea {
 .diff .diff-removed + .diff-added {
 }
 
+/** CSS for total diff visualization */
+.span-added {
+  background: rgba(63, 196, 70, 0.5);
+  line-height: 1.1;
+}
+
+.span-removed {
+  color: rgba(0, 0, 0, 0.5);
+  text-decoration: line-through;
+}
+
+.span-removed:not(.span-original) {
+  background: rgba(220, 145, 141, 0.5);
+  line-height: 1.1;
+}
+
+.span-original {
+  color: rgba(0, 0, 0, 0.5);
+  line-height: 0.9;
+}
+
+
 /* syntax highlighting with Eclipse colors */
 .hljs,
 .hljs-subst { color: #333; }
