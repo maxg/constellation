@@ -265,20 +265,13 @@ exports.createFrontend = function createFrontend(config, db) {
     if (req.params.cutoff) {
       db.getHistorical(req.params.collabid, req.params.filepath, moment(req.params.cutoff), function(err, historical) {
         if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
-        console.log(req.params.filepath);
-        console.log(historical);
-        // TODO: Use historical.data.text here
-
-        var regexesMap = getRegexesMap(historical, req.params.regexes);
+        var regexesMap = getRegexesMap(historical.data.text, req.params.regexes);
         res.send(JSON.stringify([...regexesMap]));
       });
     } else {
       db.getFile(req.params.collabid, req.params.filepath, function(err, file) {
         if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
-        console.log(req.params.filepath);
-        console.log(file);
-        // TODO: Use file.text here
-        var regexesMap = getRegexesMap(file, req.params.regexes);
+        var regexesMap = getRegexesMap(file.text, req.params.regexes);
         res.send(JSON.stringify([...regexesMap]));
       });
     }
@@ -356,7 +349,7 @@ function getPluginVersion(callback) {
   });
 }
 
-function getRegexesMap(file, regexes) {
+function getRegexesMap(fileText, regexes) {
   // Regex matching: https://laurikari.net/tre/about/
   // TODO: Add 'apt-get install tre-agrep libtre5 libtre-dev'
   //   to a setup script somewhere?
@@ -366,7 +359,7 @@ function getRegexesMap(file, regexes) {
     if (regex.length > 0) {
       var result = child_process.spawnSync('tre-agrep',
         ['--show-position', '--line-number', '--regexp', regex, '-'],
-        {'input': file.data.text}
+        {'input': fileText}
       );
       results.push(result);
     }
