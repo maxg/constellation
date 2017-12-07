@@ -217,16 +217,19 @@ exports.createBackend = function createBackend(config) {
       });
     },
 
-    getOps(collabid, filepath, callback) {
-      //var timestamp = moment('2017-02-21T12:14:00'); // 06-strings
-      var timestamp = moment('2017-03-10T11:43:00'); // Interfaces
-      //var timestamp = moment('2017-03-03T11:23:30'); // Sudoku
+    getOps(collabid, filepath, cutoff, callback) {
+      if (!cutoff) {
+        cutoff = moment();
+      } else {
+        cutoff = moment(cutoff);
+      }
+
       db.getDbs(function(err, mongo) {
         if (err) { return callback(err); }
         mongo.collection(FILES).findOne({ collabid, filepath }, function(err, file) {
           if (err || ! file) { return callback(err, file); }
           mongo.collection('o_'+FILES).aggregate([
-            { $match: { d: file._id, 'm.ts': { $lte: +timestamp } } },
+            { $match: { d: file._id, 'm.ts': { $lte: +cutoff } } },
             { $group: { _id: null, v: { $max: '$v' } } },
           ], function(err, results) {
             if (err) { return callback(err); }

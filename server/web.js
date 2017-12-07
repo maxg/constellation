@@ -257,9 +257,9 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
 
-  // TODO: Also take in a cutoff
+  // TODO: Better way to take in the cutoff than as a '?cutoff='' ?
   app.get('/ops/:project/:collabid/:filepath(*)', authenticate, staffonly, function(req, res, next) {
-    db.getOps(req.params.collabid, req.params.filepath, function(err, ops) {
+    db.getOps(req.params.collabid, req.params.filepath, req.query.cutoff, function(err, ops) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
       var chunkedDiffs = getChunkedDiffs(ops);
       var mergedDiffs = mergeDiffs(chunkedDiffs);

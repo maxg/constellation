@@ -60,8 +60,10 @@ function showFiles_visual1(files) {
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
   files.forEach(function(file) {
 
-    $.ajax('/ops/' + project + '/' + collabid + '/' + file.data.filepath).done(function(diff) {
+    var url = '/ops/' + project + '/' + collabid + '/' + file.data.filepath
+      + (cutoff ? '?cutoff=' + cutoff : '');
 
+    $.ajax(url).done(function(diff) {
       var item = document.importNode(document.querySelector('#file').content, true);
       var heading = item.querySelector('h4');
       heading.textContent = file.data.filepath;
@@ -87,6 +89,7 @@ function showFiles_visual1(files) {
       });
 
       // TODO: Add syntax highlighting?
+      // TODO: Make green less bright
 
     }).fail(function(req, status, err) {
       list.textContent = 'Error fetching ops: ' + errorToString(req.responseJSON, status, err);
