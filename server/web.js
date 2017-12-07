@@ -261,7 +261,7 @@ exports.createFrontend = function createFrontend(config, db) {
   app.get('/ops/:project/:collabid/:filepath(*)', authenticate, staffonly, function(req, res, next) {
     db.getOps(req.params.collabid, req.params.filepath, req.query.cutoff, function(err, ops) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
-      var chunkedDiffs = getChunkedDiffs(ops);
+      var chunkedDiffs = getChunkedDiffs(ops, req.query.threshold);
       var mergedDiffs = mergeDiffs(chunkedDiffs);
       res.setHeader('Cache-Control', 'max-age=3600');
       res.send(mergedDiffs);
@@ -332,19 +332,19 @@ function getPluginVersion(callback) {
   });
 }
 
-function getChunkedDiffs(ops) {
-    var chunkedDiffs = [];
+function getChunkedDiffs(ops, threshold) {
+    if (!threshold) {
+      threshold = 10000;
+    }
     // TODO: Very large threshold => no results
-    var threshold = 10000; // TODO: Tune threshold
-    // 2000 -> 89 diffs
-    // 10000 -> 34 diffs
-    // 100000 -> 6 diffs
 
     // If there have been no changes to the document,
     // ops = {v:0}
     if (!Array.isArray(ops)) {
       return [];
     }
+
+    var chunkedDiffs = [];
 
     /* Setup the baseline of the document */ 
     var firstOp = ops[0];

@@ -11,8 +11,16 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
   if (err) { throw err; }
   
   // Example for using the visual parameter to show different visualizations
-  if (visual == 1) {
-    showFiles_visual1(files);
+  if (visual[0] == '1') {
+    // Visual 1 might require a threshold, so format of param is:
+    // 1:1000 if we want visual 1 with threshold 1000
+    // 1 if we want the default threshold
+    // 1:2 for a threshold of 2, etc.
+    var threshold = null;
+    if (visual.length > 2) {
+      threshold = visual.substring(2);
+    }
+    showFiles_visual1(files, threshold);
   } else if (visual == 2) {
     showFiles_visual2(files);
   } else {
@@ -53,15 +61,20 @@ function showFiles_basic(files) {
 
 
 /** Visual 1: Total diff */
-function showFiles_visual1(files) {
+function showFiles_visual1(files, threshold) {
   // TODO: Also do the subscribe thing
 
   var list = document.querySelector('#files');
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
   files.forEach(function(file) {
 
+
+
     var url = '/ops/' + project + '/' + collabid + '/' + file.data.filepath
-      + (cutoff ? '?cutoff=' + cutoff : '');
+      + (cutoff ? '?cutoff=' + cutoff : '')
+      + (threshold ? (cutoff ? '&threshold=' + threshold
+                             : '?threshold=' + threshold)
+                   : '');
 
     $.ajax(url).done(function(diff) {
       var item = document.importNode(document.querySelector('#file').content, true);
