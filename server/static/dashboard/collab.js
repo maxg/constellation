@@ -131,16 +131,17 @@ function updateDiff_visual2(node, baseline, text, file, extraArgs) {
           if (regexesMap.has(currentLineNumber)) {
 
             var endOfLastRegex = 0;
+
+            // Sort by indexInLine so that {endOfLastRegex} only increases
+            regexesMap.get(currentLineNumber).sort(function(a, b) {
+              return a.indexInLine - b.indexInLine;
+            });
+
             regexesMap.get(currentLineNumber).forEach(function(match) {
               if (endOfLastRegex > match.indexInLine) {
                 // The regexes overlapped (e.g. 'Stream' and 'a')
                 // Ignore this regex
-                // TODO: Better handling of this case?
-                //   Probably won't happen that much?
-
-                // TODO: What if the regex that's first in the line
-                //   came last
-                
+                // TODO: Better handling of this case? Probably won't happen that much?
                 return;
               }
 
