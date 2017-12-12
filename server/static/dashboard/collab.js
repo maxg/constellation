@@ -95,14 +95,12 @@ function updateDiff_visual2(node, baseline, text, file, extraArgs) {
     node.innerHTML = '';
 
     var cutoffUrlPart = cutoff ? '/' + cutoff : '';
-    // ';;' is used as the delimiter between regexes
-    //regexes = '%5C%28.%2A%5C%29'; // \(.*\)
+
     $.ajax('/regex/' + collabid + '/' + regexes + cutoffUrlPart + '/f/' + file.data.filepath).done(function(regexesJson) {
-      console.log(regexesJson);
+      // Map from line number to a list of regex matches on that line number
       var regexesMap = new Map(JSON.parse(regexesJson));
 
       // Keep track of the current line number we're on
-      // TODO: -1 doesn't seem right
       var currentLineNumber = 1;
 
       // Calculate the diff and highlight it correctly
@@ -111,8 +109,7 @@ function updateDiff_visual2(node, baseline, text, file, extraArgs) {
         // Last one is always an empty string
         partLines.pop();
 
-        //console.log(partLines);
-        //console.log(part);
+        // Go through the lines in the part and highlight the regex(es)
         for (var i = 0; i < partLines.length; i++) {
           var partLine = partLines[i];
 
@@ -123,13 +120,14 @@ function updateDiff_visual2(node, baseline, text, file, extraArgs) {
           if (part.removed) {
             elt.classList.add('diff-removed');
             node.appendChild(elt);
-            //currentLineNumber += 1;
             continue;
           }
           if (part.added) {
             elt.classList.add('diff-added');
           }
 
+
+          // Highlight the regex(es) if they're there
           if (regexesMap.has(currentLineNumber)) {
 
             var endOfLastRegex = 0;
@@ -146,8 +144,7 @@ function updateDiff_visual2(node, baseline, text, file, extraArgs) {
                 return;
               }
 
-              // TODO: Make more DRY
-
+              // Create and append HTML elements
               var beforeRegexElt = document.createElement('span');
               var regexElt = document.createElement('span');
               var afterRegexElt = document.createElement('span');
@@ -171,6 +168,8 @@ function updateDiff_visual2(node, baseline, text, file, extraArgs) {
               elt.appendChild(regexElt);
               elt.appendChild(afterRegexElt);
 
+              // Increment index of last regex so we know where to split
+              // if there's another regex earlier in the line
               endOfLastRegex = match.indexInLine + match.length;
             });
 
@@ -178,10 +177,7 @@ function updateDiff_visual2(node, baseline, text, file, extraArgs) {
             elt.lastChild.appendChild(document.createTextNode('\n'));
 
           } else {
-            elt.classList.add('diff-part');
-            if (part.added) {
-              elt.classList.add('diff-added');
-            }
+            // No regex match on this line
 
             // Add newline back in for correct syntax highlighting
             elt.appendChild(document.createTextNode(partLine + '\n'));
@@ -193,14 +189,12 @@ function updateDiff_visual2(node, baseline, text, file, extraArgs) {
         
       });
 
-      // TODO: Syntax highlighting doesn't work anymore
       hljs.highlightBlock(node);
 
       
-      
     }).fail(function(req, status, err) {
-      console.log("got regex error");
-      console.log(err);
+      console.log("got regex error: " + err);
+      drawNormalDiff(baseline, text, node);
     });
   }
 }
