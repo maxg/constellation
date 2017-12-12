@@ -78,22 +78,7 @@ function showFiles_visual1(files) {
  * Update the diffs for the basic visualization.
  */
 function updateDiff_basic(node, baseline, text, file, extraArgs) {
-  if (baseline === undefined || text === undefined) { return; }
-  node.innerHTML = '';
-  window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {
-    var elt = document.createElement('div');
-    elt.classList.add('diff-part');
-    if (part.added) {
-      elt.classList.add('diff-added');
-      elt.appendChild(document.createTextNode(part.value));
-    } else if (part.removed) {
-      elt.classList.add('diff-removed');
-    } else {
-      elt.appendChild(document.createTextNode(part.value));
-    }
-    node.appendChild(elt);
-  });
-  hljs.highlightBlock(node);
+  drawNormalDiff(baseline, text, node);
 }
 
 /**
@@ -102,29 +87,13 @@ function updateDiff_basic(node, baseline, text, file, extraArgs) {
 function updateDiff_visual2(node, baseline, text, file, extraArgs) {
   var regexes = extraArgs[0];
 
-  console.log('updatediffvisual2');
-  console.log(regexes);
-  if (baseline === undefined || text === undefined) { return; }
-  node.innerHTML = '';
-
   if (!regexes) {
-    // TODO: Make more DRY w/ else code
-    window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {
-        var elt = document.createElement('div');
-        elt.classList.add('diff-part');
-        if (part.added) {
-          elt.classList.add('diff-added');
-          elt.appendChild(document.createTextNode(part.value));
-        } else if (part.removed) {
-          elt.classList.add('diff-removed');
-        } else {
-          elt.appendChild(document.createTextNode(part.value));
-        }
-        node.appendChild(elt);
-      });
-      hljs.highlightBlock(node);
+    drawNormalDiff(baseline, text, node);
 
   } else {
+    if (baseline === undefined || text === undefined) { return; }
+    node.innerHTML = '';
+
     var cutoffUrlPart = cutoff ? '/' + cutoff : '';
     // ';;' is used as the delimiter between regexes
     //regexes = '%5C%28.%2A%5C%29'; // \(.*\)
@@ -235,6 +204,29 @@ function updateDiff_visual2(node, baseline, text, file, extraArgs) {
     });
   }
 }
+
+/**
+ * Draws a normal diff inside the node element.
+ */ 
+function drawNormalDiff(baseline, text, node) {
+  if (baseline === undefined || text === undefined) { return; }
+  node.innerHTML = '';
+  window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {
+    var elt = document.createElement('div');
+    elt.classList.add('diff-part');
+    if (part.added) {
+      elt.classList.add('diff-added');
+      elt.appendChild(document.createTextNode(part.value));
+    } else if (part.removed) {
+      elt.classList.add('diff-removed');
+    } else {
+      elt.appendChild(document.createTextNode(part.value));
+    }
+    node.appendChild(elt);
+  });
+  hljs.highlightBlock(node);
+}
+
 
 function errorToString(json, status, err) {
   return (json && json.code || status) + ' ' + (json && json.message || err);
