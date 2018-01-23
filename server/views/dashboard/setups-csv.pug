@@ -1,0 +1,6 @@
+| username,timestamp
+= '\n'
+each setup in setups
+  | "#{setup.username}","#{moment(setup.time).format()}"
+  = '\n'
+

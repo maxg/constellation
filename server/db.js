@@ -10,6 +10,7 @@ const USERS = 'users';
 const FILES = 'files';
 const CHECKOFFS = 'checkoffs';
 const PINGS = 'pings';
+const SETUP = 'setup';
 
 exports.createBackend = function createBackend(config) {
   
@@ -85,6 +86,27 @@ exports.createBackend = function createBackend(config) {
     tokenUsername(token) {
       let username = token.split(':')[0];
       return token === backend.usernameToken(username) ? username : undefined;
+    },
+
+    // record a user setup
+    recordSetup(username, callback) {
+      db.getCollection(SETUP, function(err, setup) {
+        if (err) { return callback(err); }
+        setup.insert({ username, time: +new Date() }, callback);
+      });
+    },
+
+    // get all user setups
+    getSetups(since, callback) {
+      db.getCollection(SETUP, function(err, setup) {
+        if (err) { return callback(err); }
+        let query = since
+                    ? { time : { $gte: +new Date(since) } }
+                    : {}
+        setup.find(query).toArray(function(err, result) {
+          callback(err, result);
+        });
+      });
     },
     
     // fetch all project names
