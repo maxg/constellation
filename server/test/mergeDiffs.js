@@ -1,10 +1,32 @@
 const webjs = require('../web');
 const mergeDiffs = webjs.mergeDiffs;
-console.log(webjs);
-console.log(mergeDiffs);
 
 // Tests for bugs found when looking at real code
 function testMergedDiffsRegression() {
+  /* Regression #4: Crashing when you have an added part
+     that goes at the very end of the merged diff
+     and after a removed part
+
+     Real example was https://10.18.6.121:4443/dashboard/ic04-code-review/5a846b48b7975135a69e2500/m/codereviewfix/2018-02-14T12:12:00?visual=1
+  */
+
+  diff_0 = [
+    {"value": "hello ", "added": true},
+    {"value": "there", "original": true},
+    {"value": "something", "removed": true}
+  ]
+
+  diff_1 = [
+    {"value": "hello the"},
+    {"value": "re", "removed":true},
+    {"value": "6.031", "added": true}
+  ]
+
+  console.log("regression #4");
+  console.log("expect:hello =added;the=original;something=removed;re=removed;6.031=added");
+  console.log(mergeDiffs([diff_0, diff_1]));
+
+
   /* Regression #3: Not going through enough of the diff
        during a normal part  */
   diff_0 = [
