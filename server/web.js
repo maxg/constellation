@@ -497,6 +497,18 @@ function getChunkedDiffs(ops, threshold) {
       lastTs = op.m.ts;
     }
 
+    // Add the last diff
+    var chunkedDiff = diff.diffLines(
+      currentBaseline.data.text.trim(), currentDoc.data.text.trim());
+
+    // Only push diffs with changes
+    if (!(chunkedDiff.length == 1 &&
+        !chunkedDiff[0].added &&
+        !chunkedDiff[0].removed)) {
+      chunkedDiffs.push(chunkedDiff);
+    }
+
+
     return chunkedDiffs; 
 }
 
