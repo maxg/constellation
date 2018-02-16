@@ -524,6 +524,7 @@ function mergeDiffs(diffs) {
     var indexInCurrentChunkInMerged = 0;
 
     diff.forEach(function(part) {
+
       if (part.added) {
 
         var currentChunk = mergedDiff[currentChunkInMerged];
@@ -536,18 +537,28 @@ function mergeDiffs(diffs) {
           currentChunk = mergedDiff[currentChunkInMerged];
         }
 
-        // Split up this chunk into previous and next
-        var prevChunk = JSON.parse(JSON.stringify(currentChunk));
-        prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged);
-        var nextChunk = JSON.parse(JSON.stringify(currentChunk));
-        nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged);
+        if (!currentChunk) {
+          // The added part is at the very end of the file
+          mergedDiff.push(part);
 
-        // Delete the current chunk and replace it with prev, part, and next
-        mergedDiff.splice(currentChunkInMerged, 1, prevChunk, part, nextChunk);
+          // Our indexes are at the end of the last part
+          currentChunkInMerged = mergedDiff.length;
+          indexInCurrentChunkInMerged = part.value.length;
 
-        // Now, we start at the beginning of nextChunk
-        currentChunkInMerged += 2;
-        indexInCurrentChunkInMerged = 0;     
+        } else {
+          // Split up this chunk into previous and next
+          var prevChunk = JSON.parse(JSON.stringify(currentChunk));
+          prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged);
+          var nextChunk = JSON.parse(JSON.stringify(currentChunk));
+          nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged);
+
+          // Delete the current chunk and replace it with prev, part, and next
+          mergedDiff.splice(currentChunkInMerged, 1, prevChunk, part, nextChunk);
+
+          // Now, we start at the beginning of nextChunk
+          currentChunkInMerged += 2;
+          indexInCurrentChunkInMerged = 0;
+        }    
         
       } else if (part.removed) {
 
