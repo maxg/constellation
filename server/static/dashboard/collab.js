@@ -20,6 +20,10 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     if (visual.length > 2) {
       threshold = visual.substring(2);
     }
+    // TODO: Instead of showFile_visual1, define an updateDiff_visual1
+    // Then, use showFiles_general here as well
+    // This will also take care of getting updates to code in real time if looking
+    // at someone's live code
     showFiles_visual1(files, threshold);
   } else if (visual[0] == '2') {
     // Visual 2 indicates regexes, and looks like this:
@@ -30,9 +34,9 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     if (visual.length > 2) {
       regexes = visual.substring(2);
     }
-    showFiles_general(files, updateDiff_visual2, [regexes]);
+    showFiles_general(files, updateDiff_visual2, {"regexes": regexes});
   } else {
-    showFiles_general(files, updateDiff_basic, []);
+    showFiles_general(files, updateDiff_basic, {});
   }
 });
 
@@ -45,19 +49,25 @@ function showFiles_general(files, updateFunction, extraArgs) {
     heading.textContent = file.data.filepath;
     var diff = item.querySelector('.diff code');
     list.appendChild(item);
+
+    extraArgs["file"] = file;
     
     $.ajax('/baseline/' + project + '/' + file.data.filepath).done(function(baseline) {
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
-          updateFunction(diff, baseline, historical.data ? historical.data.text : undefined, file, extraArgs);
+
+
+          updateFunction(diff, baseline, historical.data ? historical.data.text : undefined, extraArgs);
+
         }).fail(function(req, status, err) {
           diff.textContent = 'Error fetching code: ' + errorToString(req.responseJSON, status, err);
         });
       } else {
         file.subscribe(function() {
-          updateFunction(diff, baseline, file.data.text, file, extraArgs);
-          file.on('op', function() {
-            updateFunction(diff, baseline, file.data.text, file, extraArgs);
+          updateFunction(diff, baseline, file.data.text, extraArgs);
+          file.on('op', function(op) {
+            extraArgs["op"] = op;
+            updateFunction(diff, baseline, file.data.text, extraArgs);
           });
         });
       }
@@ -123,7 +133,7 @@ function showFiles_visual1(files, threshold) {
 /**
  * Update the diffs for the basic visualization.
  */
-function updateDiff_basic(node, baseline, text, file, extraArgs) {
+function updateDiff_basic(node, baseline, text, extraArgs) {
   if (baseline === undefined || text === undefined) { return; }
   node.innerHTML = '';
   window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {
@@ -145,7 +155,7 @@ function updateDiff_basic(node, baseline, text, file, extraArgs) {
 /**
  * Update the diffs for visualization 2: regex matching.
  */
-function updateDiff_visual2(node, baseline, text, file, extraArgs) {
+function updateDiff_visual2(node, baseline, text, extraArgs) {
   var regexes = extraArgs[0];
 
   console.log('updatediffvisual2');

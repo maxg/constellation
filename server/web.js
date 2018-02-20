@@ -34,6 +34,7 @@ exports.createFrontend = function createFrontend(config, db) {
   app.use(logger.express(log));
   
   app.locals.config = config;
+  app.locals.moment = moment;
   
   // validate parameter against anchored regex
   function validate(regex) {
@@ -115,6 +116,9 @@ exports.createFrontend = function createFrontend(config, db) {
     let token = db.usernameToken(res.locals.authusername);
     
     if (req.params.project == setupproject) {
+      db.recordSetup(me, function(err) {
+        if (err) { log.warn({ err }, 'Error recording user setup'); }
+      });
       paired.emit(req.params.userid, { me, token });
       return res.send({ redirect: '/setup-done' });
     }
@@ -184,7 +188,15 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
   
-  app.get('/dashboard/:project/:cutoff?', authenticate, staffonly, function(req, res, next) {    
+  app.get('/dashboard/:project/:cutoff?', authenticate, staffonly, function(req, res, next) {
+    if (req.params.project == setupproject) {
+      return db.getSetups(req.params.cutoff, function(err, setups) {
+        if (err) { return res.status(400).send({ error: err.message }); }
+        res.attachment('constellation-setups.csv');
+        res.render('dashboard/setups-csv', { setups });
+      });
+    }
+
     res.render('dashboard/collabs', {
       project: req.params.project,
       cutoff: req.params.cutoff,

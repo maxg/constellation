@@ -9,16 +9,56 @@ block content
     h2 Find a partner
     h3 Collaborating on: #{project}
   
+  .row: .col-xs-12
+    h3 Where are you sitting?
+      small  please click on a section
+    svg(width=306, height=160)
+      style.
+        .section { opacity: 0.5; fill: #BC6060; }
+        .section:hover { opacity: 0.7; cursor: pointer; }
+        .section:active { opacity: 1; }
+        .section.selected { opacity: 0.9; }
+      path#F.section(d='M 50 40 l 50 20 l -8 20 l -50 -20 Z M 105 60 l 48 0 l 0 20 l -56 0 Z')
+      path#E.section(d='M 256 40 l -50 20 l 8 20 l 50 -20 Z M 153 60 l 48 0 l 8 20 l -56 0 Z')
+      path#D.section(d='M 90 85 l -50 -20 l -20 50 l 50 20 Z')
+      path#C.section(d='M 95 85 l -20 50 l 75 0 l 0 -50 Z')
+      path#B.section(d='M 156 85 l 55 0 l 20 50 l -75 0 Z')
+      path#A.section(d='M 216 85 l 50 -20 l 20 50 l -50 20 Z')
+      path#board(d='M 110 30 l 80 0 Z', stroke='black', stroke-width=3, stroke-linecap='round')
+      g(font-size=15, font-family='sans-serif', fill='black', stroke='none', text-anchor='middle')
+        text(x=150, y=50) Front
+      | ... Sorry, your browser does not support inline SVG.
+  
   .row: .col-xs-10.col-sm-8.col-md-6.col-lg-4
     form#join
       .form-group
         h3 My joincode: #[span.text-danger= joincode.join(' ')]
       .form-group
         .input-group
-          input#partner.form-control.input-lg(type='text', autofocus=true, placeholder="Enter your partner's joincode")
+          input#partner.form-control.input-lg(type='text', disabled=true, placeholder="Enter your partner's joincode")
           span.input-group-btn
             button.btn.btn-danger.btn-lg Join
     h3#status.text-primary
   
   script.
     rendezvous(!{JSON.stringify(joincode.join(' '))}, $('#join'), $('#partner'), $('#status'));
+  
+  script.
+    var project = !{JSON.stringify(project)};
+    $('.section').on('click', function onSectionSelect() {
+      var joincodebox = document.getElementById('partner');
+      joincodebox.disabled = false;
+      joincodebox.focus();
+      
+      $('.section').removeClass('selected');
+      $(this).addClass('selected');
+      
+      $.ajax({
+        url: 'https://docs.google.com/forms/d/e/1FAIpQLSeaEH9itZ-6vi7PhLhjRzFSN1rlVJBn5Pb3QaXjUzuAWf6IXw/formResponse?'
+          + $.param({
+            'entry.1593350312': project,
+            'entry.1454600059': authusername,
+            'entry.1297934788': this.id,
+          }),
+      });
+    });
