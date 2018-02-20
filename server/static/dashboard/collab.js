@@ -156,7 +156,8 @@ function updateDiff_basic(node, baseline, text, extraArgs) {
  * Update the diffs for visualization 2: regex matching.
  */
 function updateDiff_visual2(node, baseline, text, extraArgs) {
-  var regexes = extraArgs[0];
+  var regexes = extraArgs["regexes"];
+  var file = extraArgs["file"];
 
   console.log('updatediffvisual2');
   console.log(regexes);
