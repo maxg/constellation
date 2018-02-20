@@ -20,11 +20,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     if (visual.length > 2) {
       threshold = visual.substring(2);
     }
-    // TODO: Instead of showFile_visual1, define an updateDiff_visual1
-    // Then, use showFiles_general here as well
-    // This will also take care of getting updates to code in real time if looking
-    // at someone's live code
-    showFiles_visual1(files, threshold);
+    showFiles(files, updateDiff_visual1, {"threshold": threshold});
   } else if (visual[0] == '2') {
     // Visual 2 indicates regexes, and looks like this:
     // '2:@Override' searches for ''@Override' in the files
@@ -34,40 +30,49 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     if (visual.length > 2) {
       regexes = visual.substring(2);
     }
-    showFiles_general(files, updateDiff_visual2, {"regexes": regexes});
+    showFiles(files, updateDiff_visual2, {"regexes": regexes});
   } else {
-    showFiles_general(files, updateDiff_basic, {});
+    showFiles(files, updateDiff_basic, {});
   }
 });
 
-function showFiles_general(files, updateFunction, extraArgs) {
+function showFiles(files, updateFunction, extraArgs) {
   var list = document.querySelector('#files');
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
   files.forEach(function(file) {
+    console.log("file in show_files:");
+    console.log(file);
     var item = document.importNode(document.querySelector('#file').content, true);
     var heading = item.querySelector('h4');
     heading.textContent = file.data.filepath;
     var diff = item.querySelector('.diff code');
     list.appendChild(item);
 
-    extraArgs["file"] = file;
     
     $.ajax('/baseline/' + project + '/' + file.data.filepath).done(function(baseline) {
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
-
-
-          updateFunction(diff, baseline, historical.data ? historical.data.text : undefined, extraArgs);
+          // TODO: Eliminate duplicate code (here + down below, in the file.subscribe)
+          (function(filepath) {
+            extraArgs["filepath"] = filepath;
+            updateFunction(diff, baseline, historical.data ? historical.data.text : undefined, extraArgs);
+          })(file.data.filepath);
 
         }).fail(function(req, status, err) {
           diff.textContent = 'Error fetching code: ' + errorToString(req.responseJSON, status, err);
         });
       } else {
         file.subscribe(function() {
-          updateFunction(diff, baseline, file.data.text, extraArgs);
-          file.on('op', function(op) {
-            extraArgs["op"] = op;
+          (function(filepath) {
+            extraArgs["filepath"] = filepath;
             updateFunction(diff, baseline, file.data.text, extraArgs);
+          })(file.data.filepath);
+          file.on('op', function(op) {
+            (function(filepath) {
+              extraArgs["filepath"] = filepath;
+              extraArgs["op"] = op;
+              updateFunction(diff, baseline, file.data.text, extraArgs);
+            })(file.data.filepath);
           });
         });
       }
@@ -76,58 +81,6 @@ function showFiles_general(files, updateFunction, extraArgs) {
     });
 
   });
-}
-
-/** Visual 1: Total diff */
-function showFiles_visual1(files, threshold) {
-  // TODO: Also do the subscribe thing
-
-  var list = document.querySelector('#files');
-  files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
-  files.forEach(function(file) {
-
-
-
-    var url = '/ops/' + project + '/' + collabid + '/' + file.data.filepath
-      + (cutoff ? '?cutoff=' + cutoff : '')
-      + (threshold ? (cutoff ? '&threshold=' + threshold
-                             : '?threshold=' + threshold)
-                   : '');
-
-    $.ajax(url).done(function(diff) {
-      var item = document.importNode(document.querySelector('#file').content, true);
-      var heading = item.querySelector('h4');
-      heading.textContent = file.data.filepath;
-      var codeBlock = item.querySelector('.diff code');
-      list.appendChild(item);
-
-      diff.forEach(function(part){
-        var elt = document.createElement('span');
-
-        if (part.added) {
-          elt.classList.add('span-added');
-        } else if (part.removed) {
-          elt.classList.add('span-removed');
-          if (part.original) {
-            elt.classList.add('span-original');
-          }
-        } else {
-          elt.classList.add('span-original');
-        }
-
-        elt.appendChild(document.createTextNode(part.value));
-        codeBlock.appendChild(elt);
-      });
-
-      // TODO: Add syntax highlighting?
-      // TODO: Make green less bright
-
-    }).fail(function(req, status, err) {
-      list.textContent = 'Error fetching ops: ' + errorToString(req.responseJSON, status, err);
-    });
-
-  });
-
 }
 
 /**
@@ -152,12 +105,60 @@ function updateDiff_basic(node, baseline, text, extraArgs) {
   hljs.highlightBlock(node);
 }
 
+/** Update the diffs for a total diff view (includes some code history) */
+function updateDiff_visual1(node, baseline, text, extraArgs) {
+  var filepath = extraArgs["filepath"];
+
+  console.log("filepath in updateDiff_visual1:");
+  console.log(filepath);
+
+  var threshold = extraArgs["threshold"];
+
+  console.log("update function visual 1");
+  if (baseline === undefined || text === undefined) { return; }
+
+  var url = '/ops/' + project + '/' + collabid + '/' + filepath
+    + (cutoff ? '?cutoff=' + cutoff : '')
+    + (threshold ? (cutoff ? '&threshold=' + threshold
+                           : '?threshold=' + threshold)
+                 : '');
+
+  $.ajax(url).done(function(diff) {
+
+    diff.forEach(function(part){
+      var elt = document.createElement('span');
+
+      if (part.added) {
+        elt.classList.add('span-added');
+      } else if (part.removed) {
+        elt.classList.add('span-removed');
+        if (part.original) {
+          elt.classList.add('span-original');
+        }
+      } else {
+        elt.classList.add('span-original');
+      }
+
+      elt.appendChild(document.createTextNode(part.value));
+      node.appendChild(elt);
+    });
+
+    // TODO: Add syntax highlighting?
+    // TODO: Make green less bright
+
+
+  }).fail(function(req, status, err) {
+    list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
+  });
+
+}
+
 /**
  * Update the diffs for visualization 2: regex matching.
  */
 function updateDiff_visual2(node, baseline, text, extraArgs) {
   var regexes = extraArgs["regexes"];
-  var file = extraArgs["file"];
+  var filepath = extraArgs["filepath"];
 
   console.log('updatediffvisual2');
   console.log(regexes);
@@ -185,7 +186,7 @@ function updateDiff_visual2(node, baseline, text, extraArgs) {
     var cutoffUrlPart = cutoff ? '/' + cutoff : '';
     // ';;' is used as the delimiter between regexes
     //regexes = '%5C%28.%2A%5C%29'; // \(.*\)
-    $.ajax('/regex/' + collabid + '/' + regexes + cutoffUrlPart + '/f/' + file.data.filepath).done(function(regexesJson) {
+    $.ajax('/regex/' + collabid + '/' + regexes + cutoffUrlPart + '/f/' + filepath).done(function(regexesJson) {
       console.log(regexesJson);
       var regexesMap = new Map(JSON.parse(regexesJson));
 
