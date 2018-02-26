@@ -20,6 +20,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     if (visual.length > 2) {
       threshold = visual.substring(2);
     }
+    addButtonToHideDeletedCode();
     showFiles(files, updateDiff_visual1_deletesOnSide, {"threshold": threshold});
   } else if (visual[0] == '2') {
     // Visual 2 indicates regexes, and looks like this:
@@ -35,6 +36,20 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     showFiles(files, updateDiff_basic, {});
   }
 });
+
+var showDeletedCode = true;
+
+function addButtonToHideDeletedCode() {
+  $(document).ready(function() {
+    var button = $('<button>Toggle display of deleted code</button>');
+    $(button).insertBefore($("#files"));
+
+    $(button).click(function() {
+      showDeletedCode = !showDeletedCode;
+      $('.span-removed').toggle();
+    });
+  });
+}
 
 function showFiles(files, updateFunction, extraArgs) {
   var list = document.querySelector('#files');
@@ -141,6 +156,11 @@ function updateDiff_visual1(node, baseline, text, extraArgs) {
 
       elt.appendChild(document.createTextNode(part.value));
       node.appendChild(elt);
+
+      if (!showDeletedCode && part.removed) {
+        $(elt).hide();
+      }
+
     });
 
     // TODO: Add syntax highlighting?
@@ -200,6 +220,11 @@ function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
 
       elt2 = elt.cloneNode(true);
       divDeleted.appendChild(elt2);
+
+      if (!showDeletedCode && part.removed) {
+        $(elt).hide();
+        $(elt2).hide();
+      }
 
     });
 
