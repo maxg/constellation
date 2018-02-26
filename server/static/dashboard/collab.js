@@ -20,7 +20,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     if (visual.length > 2) {
       threshold = visual.substring(2);
     }
-    showFiles(files, updateDiff_visual1, {"threshold": threshold});
+    showFiles(files, updateDiff_visual1_deletesOnSide, {"threshold": threshold});
   } else if (visual[0] == '2') {
     // Visual 2 indicates regexes, and looks like this:
     // '2:@Override' searches for ''@Override' in the files
@@ -142,6 +142,69 @@ function updateDiff_visual1(node, baseline, text, extraArgs) {
       elt.appendChild(document.createTextNode(part.value));
       node.appendChild(elt);
     });
+
+    // TODO: Add syntax highlighting?
+    // TODO: Make green less bright
+
+
+  }).fail(function(req, status, err) {
+    list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
+  });
+
+}
+
+function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
+  var filepath = extraArgs["filepath"];
+
+  console.log("filepath in updateDiff_visual1:");
+  console.log(filepath);
+
+  var threshold = extraArgs["threshold"];
+
+  console.log("update function visual 1");
+  if (baseline === undefined || text === undefined) { return; }
+
+  var url = '/ops/' + project + '/' + collabid + '/' + filepath
+    + (cutoff ? '?cutoff=' + cutoff : '')
+    + (threshold ? (cutoff ? '&threshold=' + threshold
+                           : '?threshold=' + threshold)
+                 : '');
+
+  $.ajax(url).done(function(diff) {
+
+    // TODO: Revert to old visualization if the window is too small
+
+    var divNormal = document.createElement('div');
+    divNormal.classList.add('div-normal');
+    divNormal.classList.add('col-xs-6');
+    var divDeleted = document.createElement('div');
+    divDeleted.classList.add('div-deleted');
+    divDeleted.classList.add('col-xs-6');
+
+    diff.forEach(function(part){
+      var elt = document.createElement('span');
+
+      if (part.added) {
+        elt.classList.add('span-added');
+      } else if (part.removed) {
+        elt.classList.add('span-removed');
+        if (part.original) {
+          elt.classList.add('span-original');
+        }
+      } else {
+        elt.classList.add('span-original');
+      }
+
+      elt.appendChild(document.createTextNode(part.value));
+      divNormal.appendChild(elt);
+
+      elt2 = elt.cloneNode(true);
+      divDeleted.appendChild(elt2);
+
+    });
+
+    node.appendChild(divNormal);
+    node.appendChild(divDeleted);
 
     // TODO: Add syntax highlighting?
     // TODO: Make green less bright

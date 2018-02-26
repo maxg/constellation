@@ -153,6 +153,19 @@ textarea {
   line-height: 0.9;
 }
 
+/* Only show code that is part of final code in the normal div.
+Do this by hiding all removed code */
+.div-normal .span-removed {
+  background: rgba(0, 0, 0, 0);
+  color: rgba(0, 0, 0, 0);
+}
+
+/* Only show deleted code in the deleted div.
+Do this by hiding all normal code. */
+.div-deleted :not(.span-removed) {
+  background: rgba(0, 0, 0, 0);
+  color: rgba(0, 0, 0, 0);
+}
 
 /* syntax highlighting with Eclipse colors */
 .hljs,
