@@ -134,7 +134,7 @@ textarea {
 
 /** CSS for total diff visualization */
 .span-added {
-  background: rgba(63, 196, 70, 0.5);
+  background: rgba(63, 196, 70, 0.4);
   line-height: 1.1;
 }
 
@@ -144,7 +144,7 @@ textarea {
 }
 
 .span-removed:not(.span-original) {
-  background: rgba(220, 145, 141, 0.5);
+  background: rgba(220, 145, 141, 0.2);
   line-height: 1.1;
 }
 
