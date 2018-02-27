@@ -378,66 +378,99 @@ function getRegexesMap(fileText, regexes) {
   // Regex matching: https://laurikari.net/tre/about/
   // TODO: Add 'apt-get install tre-agrep libtre5 libtre-dev'
   //   to a setup script somewhere?
-  var results = [];
-  // ';;' is the delimiter
-  regexes.split(';;').forEach(function(regex) {
-    if (regex.length > 0) {
-      var result = child_process.spawnSync('tre-agrep',
-        ['--show-position', '--line-number', '--regexp', regex, '-'],
-        {'input': fileText}
-      );
-      results.push(result);
-    }
-  });
-
-  // TODO: tre-agre only finds first instance of regex in each line
-
-  // Convert regexes into easier form to display
   var regexesMap = new Map();
 
-  results.forEach(function(singleRegexMatches) {
-    var result = '';
+  // tre-agrep doesn't require that you only give it one line at a time
+  // However, tre-agrep only finds the first instance of regex in each line,
+  //   and we want to find all instances of each regex in each line.
+  // So, we split the file by line and find multiple regexes (if they exist)
+  //   for each line individually.
+  var fileLines = fileText.split("\n");
 
-    if (singleRegexMatches.stdout) {
-      // stdout returns ASCII numbers, so convert them to strings
-      singleRegexMatches.stdout.forEach(function(num) {
-        result += String.fromCharCode(num);
-      });
+  for (let lineNumber = 1; lineNumber < fileLines.length + 1; lineNumber++) {
+    // ';;' is the delimiter between regexes
+    regexes.split(';;').forEach(function(regex) {
+      if (regex.length > 0) {
 
-      var singleMatchesList = result.split('\n');
-      singleMatchesList.forEach(function(singleMatch) {
-        var values = singleMatch.split(':');
-        if (values.length < 3) {
-          // Not a legitimate match
-          return;
+        // Keeps track of what part of the line we start at, since if we're finding
+        // multiple of the same regex in the same line, we need to cut off the first
+        //   part of the line
+        var indexInLine = 0;
+
+        while (indexInLine < fileLines[lineNumber-1].length) {
+
+          var result = child_process.spawnSync('tre-agrep',
+            ['--show-position', '--line-number', '--regexp', regex, '-'],
+            {'input': fileLines[lineNumber - 1].substring(indexInLine)}
+          );
+
+          var mapValue = getRegexLocationAndLength(result.stdout);
+          if (mapValue) {
+            // Then we got a regex match
+
+            // Its actual indexInLine from the start of the entire line
+            //   depends on where our substring started (indexInLine)
+            mapValue["indexInLine"] = indexInLine + mapValue["indexInLine"];
+            // Start the next substring from where this regex ends
+            indexInLine = mapValue["indexInLine"] + mapValue["length"];
+
+            if (regexesMap.has(lineNumber)) {
+              regexesMap.set(lineNumber, regexesMap.get(lineNumber).concat([mapValue]));
+            } else {
+              regexesMap.set(lineNumber, [mapValue]);
+            }  
+          } else {
+            // If no mapValue, there are no more regexes on this line
+            // so we're done with the while loop
+            break;
+          }
+
+
         }
-        var lineNumber = parseInt(values[0]);
-        var relevantChars = values[1];
-        var indices = relevantChars.split('-');
-        var indexInLine = parseInt(indices[0]);
-        // Note: If *, only includes the len of things before the *
-        //   haven't tested if you have abc*xyz as the regex yet
-        var lengthToHighlight = parseInt(indices[1]) - parseInt(indices[0]);
 
-        var mapValue = {
-          'indexInLine': indexInLine,
-          'length': lengthToHighlight
-        };
-
-        if (regexesMap.has(lineNumber)) {
-          regexesMap.set(lineNumber, regexesMap.get(lineNumber).concat([mapValue]));
-        } else {
-          regexesMap.set(lineNumber, [mapValue]);
-        }         
-      });
-
-    } else {
-      console.log("no match stdout");
-    }
-  });
+        
+      }
+    });
+  }
 
   return regexesMap;
 }
+
+/** Get the location within a line and length of a regex match,
+ * given the result of a tre-agrep call */
+function getRegexLocationAndLength(stdout) {
+  if (!stdout) {
+    return;
+  }
+
+  // stdout returns ASCII numbers, so convert them to strings
+  var resultString = '';
+  stdout.forEach(function(num) {
+    resultString += String.fromCharCode(num);
+  });
+
+  var values = resultString.split(':');
+  if (values.length < 3) {
+    // Not a legitimate match
+    return;
+  }
+
+  var lineNumber = parseInt(values[0]);
+  var relevantChars = values[1];
+  var indices = relevantChars.split('-');
+  var indexInLine = parseInt(indices[0]);
+  // Note: If *, only includes the len of things before the *
+  //   haven't tested if you have abc*xyz as the regex yet
+  var lengthToHighlight = parseInt(indices[1]) - parseInt(indices[0]);
+
+  var mapValue = {
+    'indexInLine': indexInLine,
+    'length': lengthToHighlight
+  };
+
+  return mapValue;
+}
+
 
 function getChunkedDiffs(ops, threshold) {
     if (!threshold) {
