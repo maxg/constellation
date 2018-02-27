@@ -101,28 +101,8 @@ function showFiles(files, updateFunction, extraArgs) {
 /**
  * Update the diffs for the basic visualization.
  */
-<<<<<<< HEAD
 function updateDiff_basic(node, baseline, text, file, extraArgs) {
   drawNormalDiff(baseline, text, node);
-=======
-function updateDiff_basic(node, baseline, text, extraArgs) {
-  if (baseline === undefined || text === undefined) { return; }
-  node.innerHTML = '';
-  window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {
-    var elt = document.createElement('div');
-    elt.classList.add('diff-part');
-    if (part.added) {
-      elt.classList.add('diff-added');
-      elt.appendChild(document.createTextNode(part.value));
-    } else if (part.removed) {
-      elt.classList.add('diff-removed');
-    } else {
-      elt.appendChild(document.createTextNode(part.value));
-    }
-    node.appendChild(elt);
-  });
-  hljs.highlightBlock(node);
->>>>>>> regex-total-diff-combined
 }
 
 /** Update the diffs for a total diff view (includes some code history) */
@@ -370,7 +350,6 @@ function updateDiff_visual2(node, baseline, text, extraArgs) {
   }
 }
 
-<<<<<<< HEAD
 /**
  * Draws a normal diff inside the node element.
  */ 
@@ -392,9 +371,6 @@ function drawNormalDiff(baseline, text, node) {
   });
   hljs.highlightBlock(node);
 }
-
-=======
->>>>>>> regex-total-diff-combined
 
 function errorToString(json, status, err) {
   return (json && json.code || status) + ' ' + (json && json.message || err);
