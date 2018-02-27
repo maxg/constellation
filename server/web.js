@@ -268,14 +268,6 @@ exports.createFrontend = function createFrontend(config, db) {
   // Find the given regex in the text, using fuzzy matching
   // TODO: Better URL?
   app.get('/regex/:collabid/:regexes/:cutoff?/f/:filepath(*)', authenticate, staffonly,  function(req, res, next) {
-    // TODO: When a regex like '%5C%28.%2A%5C%29'; // \(.*\)
-    //   comes through a URL directly instead of set as a string
-    //   in collab.js, the regex is not processed correctly:
-    //   filepath: src/SquareClient.java//(.*
-    //   regex: )
-
-    // TODO: Typing \(.*\) in URL bar doesn't encode the \ or the ()
-
     if (req.params.cutoff) {
       db.getHistorical(req.params.collabid, req.params.filepath, moment(req.params.cutoff), function(err, historical) {
         if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
