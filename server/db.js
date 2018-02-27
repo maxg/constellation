@@ -2,6 +2,7 @@ const async = require('async');
 const crypto = require('crypto');
 const mongodb = require('mongodb');
 const sharedb = require('sharedb');
+const moment = require('moment');
 
 const logger = require('./logger');
 
@@ -10,6 +11,7 @@ const USERS = 'users';
 const FILES = 'files';
 const CHECKOFFS = 'checkoffs';
 const PINGS = 'pings';
+const SETUP = 'setup';
 
 exports.createBackend = function createBackend(config) {
   
@@ -85,6 +87,27 @@ exports.createBackend = function createBackend(config) {
     tokenUsername(token) {
       let username = token.split(':')[0];
       return token === backend.usernameToken(username) ? username : undefined;
+    },
+
+    // record a user setup
+    recordSetup(username, callback) {
+      db.getCollection(SETUP, function(err, setup) {
+        if (err) { return callback(err); }
+        setup.insert({ username, time: +new Date() }, callback);
+      });
+    },
+
+    // get all user setups
+    getSetups(since, callback) {
+      db.getCollection(SETUP, function(err, setup) {
+        if (err) { return callback(err); }
+        let query = since
+                    ? { time : { $gte: +new Date(since) } }
+                    : {}
+        setup.find(query).toArray(function(err, result) {
+          callback(err, result);
+        });
+      });
     },
     
     // fetch all project names
@@ -220,6 +243,38 @@ exports.createBackend = function createBackend(config) {
                 if (err) { return callback(err); }
               }
               callback(null, doc);
+            });
+          });
+        });
+      });
+    },
+
+    getOps(collabid, filepath, cutoff, callback) {
+      if (!cutoff) {
+        cutoff = moment();
+      } else {
+        cutoff = moment(cutoff);
+      }
+
+      db.getDbs(function(err, mongo) {
+        if (err) { return callback(err); }
+        mongo.collection(FILES).findOne({ collabid, filepath }, function(err, file) {
+          if (err || ! file) { return callback(err, file); }
+          mongo.collection('o_'+FILES).aggregate([
+            { $match: { d: file._id, 'm.ts': { $lte: +cutoff } } },
+            { $group: { _id: null, v: { $max: '$v' } } },
+          ], function(err, results) {
+            if (err) { return callback(err); }
+            let doc = { v: 0 };
+            if ( ! results[0]) { return callback(null, doc); }
+            let version = results[0].v;
+            mongo.collection('o_'+FILES).aggregate([
+              { $match: { d: file._id, v: { $lte: version } } },
+              { $sort: { v: 1 } },
+              { $project: { _id: 0, create: 1, op: 1, v: 1, "m.ts": 1 } },
+            ], function(err, ops) {
+              if (err) { return callback(err); }
+              callback(null, ops);
             });
           });
         });
