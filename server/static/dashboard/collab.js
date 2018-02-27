@@ -241,11 +241,8 @@ function updateDiff_visual2(node, baseline, text, extraArgs) {
     node.innerHTML = '';
 
     var cutoffUrlPart = cutoff ? '/' + cutoff : '';
-
-    // ';;' is used as the delimiter between regexes
-    //regexes = '%5C%28.%2A%5C%29'; // \(.*\)
-    $.ajax('/regex/' + collabid + '/' + regexes + cutoffUrlPart + '/f/' + filepath).done(function(regexesJson) {
-      console.log(regexesJson);
+    var ajaxRequestUrl = encodeURI('/regex/' + collabid + '/' + regexes + cutoffUrlPart + '/f/' + filepath);
+    $.ajax(ajaxRequestUrl).done(function(regexesJson) {
 
       // Map from line number to a list of regex matches on that line number
       var regexesMap = new Map(JSON.parse(regexesJson));
