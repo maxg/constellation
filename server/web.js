@@ -378,6 +378,7 @@ function getRegexesMap(fileText, regexes) {
   // Regex matching: https://laurikari.net/tre/about/
   // TODO: Add 'apt-get install tre-agrep libtre5 libtre-dev'
   //   to a setup script somewhere?
+
   var regexesMap = new Map();
 
   // tre-agrep doesn't require that you only give it one line at a time
@@ -386,10 +387,11 @@ function getRegexesMap(fileText, regexes) {
   // So, we split the file by line and find multiple regexes (if they exist)
   //   for each line individually.
   var fileLines = fileText.split("\n");
+  var regexesList = regexes.split(";;");
 
   for (let lineNumber = 1; lineNumber < fileLines.length + 1; lineNumber++) {
     // ';;' is the delimiter between regexes
-    regexes.split(';;').forEach(function(regex) {
+    regexesList.forEach(function(regex) {
       if (regex.length > 0) {
 
         // Keeps track of what part of the line we start at, since if we're finding
