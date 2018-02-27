@@ -103,6 +103,7 @@ function showFiles(files, updateFunction, extraArgs) {
  */
 function updateDiff_basic(node, baseline, text, file, extraArgs) {
   drawNormalDiff(baseline, text, node);
+  addRegexHighlighting(node, 'puzzle');
 }
 
 /** Update the diffs for a total diff view (includes some code history) */
@@ -224,6 +225,31 @@ function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
     list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
   });
 
+}
+
+/* Given a node containing each line of code and the regexes
+ *  to match, update the DOM so that the regexes are
+ *  highlighted in yellow. */
+function addRegexHighlighting(node, regexes) {
+  // A node's children are spans, each of which contain text
+  node.childNodes.forEach(function(child) {
+    var childText = child.innerText;
+    var ajaxRequestUrl = encodeURI('/regex/' + regexes);
+    $.ajax({
+      url: ajaxRequestUrl,
+      type: 'POST',
+      data: JSON.stringify({'text': childText}),
+      contentType: 'application/json',
+      success: function(regexesJson) {
+        console.log(regexesJson);
+        // TODO: Highlight the regexes
+      },
+      error: function(req, status, err) {
+        console.log("got regex error: " + err);
+        drawNormalDiff(baseline, text, node);
+      }
+    });
+  });
 }
 
 /**
@@ -366,7 +392,9 @@ function drawNormalDiff(baseline, text, node) {
     }
     node.appendChild(elt);
   });
-  hljs.highlightBlock(node);
+  
+  // Temporarily commenting out while doing regex matching; will add back in later
+  //hljs.highlightBlock(node);
 }
 
 function errorToString(json, status, err) {

@@ -30,7 +30,7 @@ exports.createFrontend = function createFrontend(config, db) {
   app.use('/public', enchilada(`${__dirname}/public`));
   app.use('/static', express.static(`${__dirname}/static`));
   app.use(bodyparser.json());
-  
+
   app.use(logger.express(log));
   
   app.locals.config = config;
@@ -282,6 +282,13 @@ exports.createFrontend = function createFrontend(config, db) {
       });
     }
   });
+
+  app.post('/regex/:regexes', authenticate, staffonly, function(req, res, next) {
+    var text = req.body.text;
+    var regexesMap = getRegexesMap(text, req.params.regexes);
+    res.send(JSON.stringify([...regexesMap]));
+  });
+
   
   app.get('/historical/:project/:collabid/:filepath(*)/:cutoff', authenticate, authorize, function(req, res, next) {
     db.getHistorical(req.params.collabid, req.params.filepath, moment(req.params.cutoff), function(err, historical) {
