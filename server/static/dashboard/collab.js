@@ -103,19 +103,15 @@ function showFiles(files, updateFunction, extraArgs) {
  */
 function updateDiff_basic(node, baseline, text, file, extraArgs) {
   drawNormalDiff(baseline, text, node);
-  addRegexHighlighting(node, 'static');
+  // TODO: Check that regex highlighting still works here
+  //addRegexHighlighting(node, 'static');
 }
 
 /** Update the diffs for a total diff view (includes some code history) */
 function updateDiff_visual1(node, baseline, text, extraArgs) {
   var filepath = extraArgs["filepath"];
-
-  console.log("filepath in updateDiff_visual1:");
-  console.log(filepath);
-
   var threshold = extraArgs["threshold"];
 
-  console.log("update function visual 1");
   if (baseline === undefined || text === undefined) { return; }
 
   var url = '/ops/' + project + '/' + collabid + '/' + filepath
@@ -161,13 +157,8 @@ function updateDiff_visual1(node, baseline, text, extraArgs) {
 
 function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
   var filepath = extraArgs["filepath"];
-
-  console.log("filepath in updateDiff_visual1:");
-  console.log(filepath);
-
   var threshold = extraArgs["threshold"];
 
-  console.log("update function visual 1");
   if (baseline === undefined || text === undefined) { return; }
 
   var url = '/ops/' + project + '/' + collabid + '/' + filepath
@@ -217,9 +208,10 @@ function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
     node.appendChild(divNormal);
     node.appendChild(divDeleted);
 
-    // TODO: Add syntax highlighting?
-    // TODO: Make green less bright
+    addRegexHighlighting(divNormal, "static");
+    addRegexHighlighting(divDeleted, "static");
 
+    // TODO: Add syntax highlighting?
 
   }).fail(function(req, status, err) {
     list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
@@ -230,6 +222,7 @@ function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
 /* Given a node containing each line of code and the regexes
  *  to match, update the DOM so that the regexes are
  *  highlighted in yellow. */
+// TODO: Use this function for the normal regex visualization
 function addRegexHighlighting(node, regexes) {
   // A node's children are spans, each of which contain text
   node.childNodes.forEach(function(child) {
@@ -255,11 +248,15 @@ function addRegexHighlighting(node, regexes) {
 
 
 function addRegexHighlighting_success(elt, regexesMap) {
+  // Don't highlight regexes on original code
+  if ($(elt).hasClass('span-original')) {
+    return;
+  }
+
   var eltText = elt.innerText;
   var partLines = eltText.split('\n');
   // Last one is always an empty string
   partLines.pop();
-
 
   // Empty elt so that we can add back each line individually
   elt.innerText = "";
@@ -269,8 +266,6 @@ function addRegexHighlighting_success(elt, regexesMap) {
     var partLine = partLines[lineNumber - 1];
 
     if (regexesMap.has(lineNumber)) {
-      var newLineElt = elt.cloneNode(true);
-
       var endOfLastRegex = 0;
 
       // Sort by indexInLine so that {endOfLastRegex} only increases
@@ -300,15 +295,24 @@ function addRegexHighlighting_success(elt, regexesMap) {
 
         regexElt.classList.add('diff-regex');
 
+        // Ensures that these spans still follow the same CSS rules
+        // as their parent
+        $(beforeRegexElt).addClass($(elt).attr('class'));
+        $(regexElt).addClass($(elt).attr('class'));
+        $(afterRegexElt).addClass($(elt).attr('class'));
+
+        // Remove styling from elt so that the colors don't appear twice
+        elt.className = '';
+
         if (endOfLastRegex > 0) {
           // Need to remove the last child, since this the three elts
           // created here represent the same characters as the last child
-          newLineElt.removeChild(newLineElt.lastChild);
+          elt.removeChild(newLineElt.lastChild);
         }
 
-        newLineElt.appendChild(beforeRegexElt);
-        newLineElt.appendChild(regexElt);
-        newLineElt.appendChild(afterRegexElt);
+        elt.appendChild(beforeRegexElt);
+        elt.appendChild(regexElt);
+        elt.appendChild(afterRegexElt);
 
         // Increment index of last regex so we know where to split
         // if there's another regex earlier in the line
@@ -316,15 +320,12 @@ function addRegexHighlighting_success(elt, regexesMap) {
       });
 
       // Add newline back in for correct syntax highlighting
-      newLineElt.lastChild.appendChild(document.createTextNode('\n'));
-
-      elt.append(newLineElt);
+      elt.lastChild.appendChild(document.createTextNode('\n'));
 
     } else {
-      // No regex match, so just add the line in the same styling as parent elt
-      var singleLineElt = elt.cloneNode(true);
-      singleLineElt.innerText = partLine;
-      elt.append(singleLineElt);
+      // No regex match, so just put the line back in as normal
+      // Add newline back in for correct syntax highlighting
+      elt.appendChild(document.createTextNode(partLine + '\n'));
     }
 
   }

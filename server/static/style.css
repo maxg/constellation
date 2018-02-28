@@ -124,13 +124,9 @@ textarea {
   background: rgba(252, 248, 227, .7);
 }
 
-/** TODO: Choose a better background color */
-.diff .diff-regex {
-  background: rgba(0, 255, 0, 0.5);
-}
-
 .diff .diff-removed + .diff-added {
 }
+
 
 /** CSS for total diff visualization */
 .span-added {
@@ -153,6 +149,11 @@ textarea {
   line-height: 0.9;
 }
 
+/* Highlight regex matches in yellow */
+.diff .diff-regex {
+  background: rgba(249, 249, 184, 1);
+}
+
 /* Only show code that is part of final code in the normal div.
 Do this by hiding all removed code */
 .div-normal .span-removed {
@@ -166,6 +167,7 @@ Do this by hiding all normal code. */
   background: rgba(0, 0, 0, 0);
   color: rgba(0, 0, 0, 0);
 }
+
 
 /* syntax highlighting with Eclipse colors */
 .hljs,
