@@ -103,7 +103,7 @@ function showFiles(files, updateFunction, extraArgs) {
  */
 function updateDiff_basic(node, baseline, text, file, extraArgs) {
   drawNormalDiff(baseline, text, node);
-  addRegexHighlighting(node, 'puzzle');
+  addRegexHighlighting(node, 'static');
 }
 
 /** Update the diffs for a total diff view (includes some code history) */
@@ -241,8 +241,9 @@ function addRegexHighlighting(node, regexes) {
       data: JSON.stringify({'text': childText}),
       contentType: 'application/json',
       success: function(regexesJson) {
-        console.log(regexesJson);
-        // TODO: Highlight the regexes
+        // Map from line number to a list of regex matches on that line number
+        var regexesMap = new Map(JSON.parse(regexesJson));
+        addRegexHighlighting_success(child, regexesMap);
       },
       error: function(req, status, err) {
         console.log("got regex error: " + err);
@@ -250,6 +251,83 @@ function addRegexHighlighting(node, regexes) {
       }
     });
   });
+}
+
+
+function addRegexHighlighting_success(elt, regexesMap) {
+  var eltText = elt.innerText;
+  var partLines = eltText.split('\n');
+  // Last one is always an empty string
+  partLines.pop();
+
+
+  // Empty elt so that we can add back each line individually
+  elt.innerText = "";
+
+  // Go through the lines in the part and highlight the regex(es)
+  for (var lineNumber = 1; lineNumber < partLines.length + 1; lineNumber++) {
+    var partLine = partLines[lineNumber - 1];
+
+    if (regexesMap.has(lineNumber)) {
+      var newLineElt = elt.cloneNode(true);
+
+      var endOfLastRegex = 0;
+
+      // Sort by indexInLine so that {endOfLastRegex} only increases
+      regexesMap.get(lineNumber).sort(function(a, b) {
+        return a.indexInLine - b.indexInLine;
+      });
+
+      regexesMap.get(lineNumber).forEach(function(match) {
+        if (endOfLastRegex > match.indexInLine) {
+          // The regexes overlapped (e.g. 'Stream' and 'a')
+          // Ignore this regex
+          // TODO: Better handling of this case? Probably won't happen that much?
+          return;
+        }
+
+        // Create and append HTML elements
+        var beforeRegexElt = document.createElement('span');
+        var regexElt = document.createElement('span');
+        var afterRegexElt = document.createElement('span');
+
+        beforeRegexElt.appendChild(document.createTextNode(
+          partLine.substring(endOfLastRegex, match.indexInLine)));
+        regexElt.appendChild(document.createTextNode(
+          partLine.substring(match.indexInLine, match.indexInLine + match.length)));
+        afterRegexElt.appendChild(document.createTextNode(
+          partLine.substring(match.indexInLine + match.length)));
+
+        regexElt.classList.add('diff-regex');
+
+        if (endOfLastRegex > 0) {
+          // Need to remove the last child, since this the three elts
+          // created here represent the same characters as the last child
+          newLineElt.removeChild(newLineElt.lastChild);
+        }
+
+        newLineElt.appendChild(beforeRegexElt);
+        newLineElt.appendChild(regexElt);
+        newLineElt.appendChild(afterRegexElt);
+
+        // Increment index of last regex so we know where to split
+        // if there's another regex earlier in the line
+        endOfLastRegex = match.indexInLine + match.length;
+      });
+
+      // Add newline back in for correct syntax highlighting
+      newLineElt.lastChild.appendChild(document.createTextNode('\n'));
+
+      elt.append(newLineElt);
+
+    } else {
+      // No regex match, so just add the line in the same styling as parent elt
+      var singleLineElt = elt.cloneNode(true);
+      singleLineElt.innerText = partLine;
+      elt.append(singleLineElt);
+    }
+
+  }
 }
 
 /**
