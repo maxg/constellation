@@ -10,7 +10,6 @@ collab.fetch(function(err) {
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
 
-  // Example for using the visual parameter to show different visualizations
   if (!visual) {
     showFiles(files, updateDiff_basic, {});
 
@@ -92,8 +91,6 @@ function showFiles(files, updateFunction, extraArgs) {
   var list = document.querySelector('#files');
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
   files.forEach(function(file) {
-    console.log("file in show_files:");
-    console.log(file);
     var item = document.importNode(document.querySelector('#file').content, true);
     var heading = item.querySelector('h4');
     heading.textContent = file.data.filepath;
@@ -135,51 +132,20 @@ function showFiles(files, updateFunction, extraArgs) {
   });
 }
 
-/** Visual 3: Combine total diff and regex highlighting */
-function updateDiff_visual3(node, baseline, text, extraArgs) {
-  if (baseline === undefined || text === undefined) { return; }
+////////////////////////////////////
+///////// UPDATE FUNCTIONS /////////
 
-  var filepath = extraArgs["filepath"];
-  var threshold = extraArgs["threshold"];
-  var url = getAjaxUrlForTotalDiff(filepath, threshold);
-
-  $.ajax(url).done(function(diff) {
-    // TODO: Revert to old visualization if the window is too small
-    var divs = addTotalDiffDeletesOnSideDom(diff, node);
-
-    var regexes = extraArgs["regexes"];
-    divs.forEach(function(div) {
-      addRegexHighlighting(div, regexes);
-    });
-
-    // TODO: Add syntax highlighting?
-
-  }).fail(function(req, status, err) {
-    list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
-  });
-}
-
-/**
+/*
  * Update the diffs for the basic visualization.
  */
 function updateDiff_basic(node, baseline, text, file, extraArgs) {
   drawNormalDiff(baseline, text, node);
-  // TODO: Check that regex highlighting still works here
-  //addRegexHighlighting(node, 'static');
 }
 
-// TODO: Put functions in a reasonable order within this file
-
-function getAjaxUrlForTotalDiff(filepath, threshold) {
-  var url = '/ops/' + project + '/' + collabid + '/' + filepath
-    + (cutoff ? '?cutoff=' + cutoff : '')
-    + (threshold ? (cutoff ? '&threshold=' + threshold
-                           : '?threshold=' + threshold)
-                 : '');
-  return url;
-}
-
-/** Update the diffs for a total diff view (includes some code history) */
+/** 
+ * Update the diffs using visual 1.
+ * Visual 1: A total diff view, that includes some code history
+ */
 function updateDiff_visual1(node, baseline, text, extraArgs) {
   if (baseline === undefined || text === undefined) { return; }
 
@@ -217,50 +183,13 @@ function updateDiff_visual1(node, baseline, text, extraArgs) {
   }).fail(function(req, status, err) {
     list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
   });
-
 }
 
-function addTotalDiffDeletesOnSideDom(diff, node) {
-  var divNormal = document.createElement('div');
-  divNormal.classList.add('div-normal');
-  divNormal.classList.add('col-xs-6');
-  var divDeleted = document.createElement('div');
-  divDeleted.classList.add('div-deleted');
-  divDeleted.classList.add('col-xs-6');
-
-  diff.forEach(function(part){
-    var elt = document.createElement('span');
-
-    if (part.added) {
-      elt.classList.add('span-added');
-    } else if (part.removed) {
-      elt.classList.add('span-removed');
-      if (part.original) {
-        elt.classList.add('span-original');
-      }
-    } else {
-      elt.classList.add('span-original');
-    }
-
-    elt.appendChild(document.createTextNode(part.value));
-    divNormal.appendChild(elt);
-
-    elt2 = elt.cloneNode(true);
-    divDeleted.appendChild(elt2);
-
-    if (!showDeletedCode && part.removed) {
-      $(elt).hide();
-      $(elt2).hide();
-    }
-
-  });
-
-  node.appendChild(divNormal);
-  node.appendChild(divDeleted);
-
-  return [divNormal, divDeleted];
-}
-
+/** 
+ * Update the diffs using visual 1.
+ * Visual 1: A total diff view, that includes some code history
+ * This visualiation moves the deleted code to the right, keeping only final code on the left.
+ */
 function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
   if (baseline === undefined || text === undefined) { return; }
 
@@ -279,13 +208,58 @@ function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
   }).fail(function(req, status, err) {
     list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
   });
-
 }
+
+ /** 
+ * Update the diffs using visual 2.
+ * Visual 2: Highights regexes.
+ */
+function updateDiff_visual2(node, baseline, text, extraArgs) {
+  drawNormalDiff(baseline, text, node);
+  var regexes = extraArgs["regexes"];
+  addRegexHighlighting(node, regexes);
+  // TODO: Without regex matching, the entire line is highlighted
+  //   in light yellow if the student added that code.
+  // However, now only the part of the line with code on it is
+  //   highlighted.
+
+  // TODO: Syntax highlighting doesn't work here
+}
+
+/** 
+ * Update the diffs using visual 3.
+ * Visual 3: Combination of total diff (visual 1 with deletes on side)
+ *   and regex highlighting (visual 2)
+ */
+function updateDiff_visual3(node, baseline, text, extraArgs) {
+  if (baseline === undefined || text === undefined) { return; }
+
+  var filepath = extraArgs["filepath"];
+  var threshold = extraArgs["threshold"];
+  var url = getAjaxUrlForTotalDiff(filepath, threshold);
+
+  $.ajax(url).done(function(diff) {
+    // TODO: Revert to old visualization if the window is too small
+    var divs = addTotalDiffDeletesOnSideDom(diff, node);
+
+    var regexes = extraArgs["regexes"];
+    divs.forEach(function(div) {
+      addRegexHighlighting(div, regexes);
+    });
+
+    // TODO: Add syntax highlighting?
+
+  }).fail(function(req, status, err) {
+    list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
+  });
+}
+
+//////////////////////////////////
+///////// HELPER METHODS /////////
 
 /* Given a node containing each line of code and the regexes
  *  to match, update the DOM so that the regexes are
  *  highlighted in yellow. */
-// TODO: Use this function for the normal regex visualization
 function addRegexHighlighting(node, regexes) {
   // A node's children are spans, each of which contain text
   node.childNodes.forEach(function(child) {
@@ -308,7 +282,7 @@ function addRegexHighlighting(node, regexes) {
   });
 }
 
-
+/** Adds regex highlighting to DOM on a successful ajax call. */
 function addRegexHighlighting_success(elt, regexesMap) {
   // Don't highlight regexes on original code
   if ($(elt).hasClass('span-original') || $(elt).hasClass('diff-original')) {
@@ -396,17 +370,57 @@ function addRegexHighlighting_success(elt, regexesMap) {
   elt.className = '';
 }
 
-/**
- * Update the diffs for visualization 2: regex matching.
- */
-function updateDiff_visual2(node, baseline, text, extraArgs) {
-  drawNormalDiff(baseline, text, node);
-  var regexes = extraArgs["regexes"];
-  addRegexHighlighting(node, regexes);
-  // TODO: Without regex matching, the entire line is highlighted
-  //   in light yellow if the student added that code.
-  // However, now only the part of the line with code on it is
-  //   highlighted.
+/** Gets the ajax URL needed if you want to get the total diff
+      for the given filepath */
+function getAjaxUrlForTotalDiff(filepath, threshold) {
+  var url = '/ops/' + project + '/' + collabid + '/' + filepath
+    + (cutoff ? '?cutoff=' + cutoff : '')
+    + (threshold ? (cutoff ? '&threshold=' + threshold
+                           : '?threshold=' + threshold)
+                 : '');
+  return url;
+}
+
+/** Adds the DOM used for visual1_deletesOnSide */
+function addTotalDiffDeletesOnSideDom(diff, node) {
+  var divNormal = document.createElement('div');
+  divNormal.classList.add('div-normal');
+  divNormal.classList.add('col-xs-6');
+  var divDeleted = document.createElement('div');
+  divDeleted.classList.add('div-deleted');
+  divDeleted.classList.add('col-xs-6');
+
+  diff.forEach(function(part){
+    var elt = document.createElement('span');
+
+    if (part.added) {
+      elt.classList.add('span-added');
+    } else if (part.removed) {
+      elt.classList.add('span-removed');
+      if (part.original) {
+        elt.classList.add('span-original');
+      }
+    } else {
+      elt.classList.add('span-original');
+    }
+
+    elt.appendChild(document.createTextNode(part.value));
+    divNormal.appendChild(elt);
+
+    elt2 = elt.cloneNode(true);
+    divDeleted.appendChild(elt2);
+
+    if (!showDeletedCode && part.removed) {
+      $(elt).hide();
+      $(elt2).hide();
+    }
+
+  });
+
+  node.appendChild(divNormal);
+  node.appendChild(divDeleted);
+
+  return [divNormal, divDeleted];
 }
 
 /**
@@ -430,9 +444,9 @@ function drawNormalDiff(baseline, text, node) {
     node.appendChild(elt);
   });
   
-  // Temporarily commenting out while doing regex matching; will add back in later
-  //hljs.highlightBlock(node);
+  hljs.highlightBlock(node);
 }
+
 
 function errorToString(json, status, err) {
   return (json && json.code || status) + ' ' + (json && json.message || err);
