@@ -14,35 +14,60 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
   if (!visual) {
     showFiles(files, updateDiff_basic, {});
 
-  } else if (visual[0] == '3') {
-    // TODO: Get the rgexes + threshold out of the visual parameter
-    addButtonToHideDeletedCode();
-    regexes = "a";
-    showFiles(files, updateDiff_visual3, {'threshold': null, 'regexes': regexes});
-
   } else if (visual[0] == '1') {
-    // Visual 1 might require a threshold, so format of param is:
-    // 1:1000 if we want visual 1 with threshold 1000
-    // 1 if we want the default threshold
-    // 1:2 for a threshold of 2, etc.
+    // Visual 1 indicates a total diff visualiation
+    // "1threshold=1000" if we want visual 1 with threshold 1000
+    // "1" if we want the default threshold
+    // "1threshold=2" for a threshold of 2, etc.
     var threshold = null;
-    if (visual.length > 2) {
-      threshold = visual.substring(2);
+    var beginningOfThreshold = visual.indexOf("threshold=");
+    if (beginningOfThreshold != -1) {
+      threshold = visual.substring(beginningOfThreshold + "threshold=".length);
     }
+
     addButtonToHideDeletedCode();
     showFiles(files, updateDiff_visual1_deletesOnSide, {"threshold": threshold});
 
   } else if (visual[0] == '2') {
     // Visual 2 indicates regexes, and looks like this:
-    // '2:@Override' searches for ''@Override' in the files
-    // '2:@Override;;void;;size' searches for '@Override', 'void', and 'size' in the file
-    // '2' searches for nothing
+    // "2regexes=Override" searches for ''@Override' in the files
+    // "2regexes=@Override;;void;;size" searches for '@Override', 'void', and 'size' in the file
+    // "2" searches for nothing
     var regexes = null;
-    if (visual.length > 2) {
-      regexes = visual.substring(2);
+    var beginningOfRegexes = visual.indexOf("regexes=");
+    if (beginningOfRegexes != -1) {
+      regexes = visual.substring(beginningOfRegexes + "regexes=".length);
     }
-    regexes = "a";
+
     showFiles(files, updateDiff_visual2, {"regexes": regexes});
+
+  } else if (visual[0] == '3') {
+    // Visual 3 indicates regexes and total diff view combined
+    // Possible formats of visual:
+    // "3regexes=\(.*\);;String"
+    // "3threshold=1000regexes=String"
+    // "3threshold=500"
+    // "3"
+    // Not allowed:
+    // "3regexes=Stringthreshold=1000"
+
+    var threshold = null;
+    var regexes = '';
+
+    var beginningOfRegexes = visual.indexOf("regexes=");
+    var beginningOfThreshold = visual.indexOf("threshold=");
+    if (beginningOfThreshold != -1 && beginningOfRegexes != -1) {
+      threshold = visual.substring(beginningOfThreshold + "threshold=".length, beginningOfRegexes);
+    } else if (beginningOfThreshold != -1) {
+      threshold = visual.substring(beginningOfThreshold + "threshold=".length);
+    }
+
+    if (beginningOfRegexes != -1) {
+      regexes = visual.substring(beginningOfRegexes + "regexes=".length);
+    }
+
+    addButtonToHideDeletedCode();
+    showFiles(files, updateDiff_visual3, {'threshold': threshold, 'regexes': regexes});
 
   } else {
     showFiles(files, updateDiff_basic, {});
@@ -278,7 +303,6 @@ function addRegexHighlighting(node, regexes) {
       },
       error: function(req, status, err) {
         console.log("got regex error: " + err);
-        drawNormalDiff(baseline, text, node);
       }
     });
   });
