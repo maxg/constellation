@@ -41,6 +41,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     if (visual.length > 2) {
       regexes = visual.substring(2);
     }
+    regexes = "a";
     showFiles(files, updateDiff_visual2, {"regexes": regexes});
 
   } else {
@@ -375,121 +376,13 @@ function addRegexHighlighting_success(elt, regexesMap) {
  * Update the diffs for visualization 2: regex matching.
  */
 function updateDiff_visual2(node, baseline, text, extraArgs) {
+  drawNormalDiff(baseline, text, node);
   var regexes = extraArgs["regexes"];
-  var filepath = extraArgs["filepath"];
-
-  if (!regexes) {
-    drawNormalDiff(baseline, text, node);
-
-  } else {
-    if (baseline === undefined || text === undefined) { return; }
-    node.innerHTML = '';
-
-    var cutoffUrlPart = cutoff ? '/' + cutoff : '';
-    var ajaxRequestUrl = encodeURI('/regex/' + collabid + '/' + regexes + cutoffUrlPart + '/f/' + filepath);
-    $.ajax(ajaxRequestUrl).done(function(regexesJson) {
-
-      // Map from line number to a list of regex matches on that line number
-      var regexesMap = new Map(JSON.parse(regexesJson));
-
-      // Keep track of the current line number we're on
-      var currentLineNumber = 1;
-
-      // Calculate the diff and highlight it correctly
-      window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {
-        var partLines = part.value.split('\n');
-        // Last one is always an empty string
-        partLines.pop();
-
-        // Go through the lines in the part and highlight the regex(es)
-        for (var i = 0; i < partLines.length; i++) {
-          var partLine = partLines[i];
-
-          var elt = document.createElement('div');
-          elt.classList.add('diff-part');
-
-          // A removed part doesn't count toward the line numbers
-          if (part.removed) {
-            elt.classList.add('diff-removed');
-            node.appendChild(elt);
-            continue;
-          }
-          if (part.added) {
-            elt.classList.add('diff-added');
-          }
-
-
-          // Highlight the regex(es) if they're there
-          if (regexesMap.has(currentLineNumber)) {
-
-            var endOfLastRegex = 0;
-
-            // Sort by indexInLine so that {endOfLastRegex} only increases
-            regexesMap.get(currentLineNumber).sort(function(a, b) {
-              return a.indexInLine - b.indexInLine;
-            });
-
-            regexesMap.get(currentLineNumber).forEach(function(match) {
-              if (endOfLastRegex > match.indexInLine) {
-                // The regexes overlapped (e.g. 'Stream' and 'a')
-                // Ignore this regex
-                // TODO: Better handling of this case? Probably won't happen that much?
-                return;
-              }
-
-              // Create and append HTML elements
-              var beforeRegexElt = document.createElement('span');
-              var regexElt = document.createElement('span');
-              var afterRegexElt = document.createElement('span');
-
-              beforeRegexElt.appendChild(document.createTextNode(
-                partLine.substring(endOfLastRegex, match.indexInLine)));
-              regexElt.appendChild(document.createTextNode(
-                partLine.substring(match.indexInLine, match.indexInLine + match.length)));
-              afterRegexElt.appendChild(document.createTextNode(
-                partLine.substring(match.indexInLine + match.length)));
-
-              regexElt.classList.add('diff-regex');
-
-              if (endOfLastRegex > 0) {
-                // Need to remove the last child, since this the three elts
-                // created here represent the same characters as the last child
-                elt.removeChild(elt.lastChild);
-              }
-
-              elt.appendChild(beforeRegexElt);
-              elt.appendChild(regexElt);
-              elt.appendChild(afterRegexElt);
-
-              // Increment index of last regex so we know where to split
-              // if there's another regex earlier in the line
-              endOfLastRegex = match.indexInLine + match.length;
-            });
-
-            // Add newline back in for correct syntax highlighting
-            elt.lastChild.appendChild(document.createTextNode('\n'));
-
-          } else {
-            // No regex match on this line
-
-            // Add newline back in for correct syntax highlighting
-            elt.appendChild(document.createTextNode(partLine + '\n'));
-          }
-
-          node.appendChild(elt);
-          currentLineNumber += 1;
-        }
-        
-      });
-
-      hljs.highlightBlock(node);
-
-      
-    }).fail(function(req, status, err) {
-      console.log("got regex error: " + err);
-      drawNormalDiff(baseline, text, node);
-    });
-  }
+  addRegexHighlighting(node, regexes);
+  // TODO: Without regex matching, the entire line is highlighted
+  //   in light yellow if the student added that code.
+  // However, now only the part of the line with code on it is
+  //   highlighted.
 }
 
 /**
