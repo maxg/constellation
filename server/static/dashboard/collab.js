@@ -9,9 +9,18 @@ collab.fetch(function(err) {
 
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
-  
+
   // Example for using the visual parameter to show different visualizations
-  if (visual[0] == '1') {
+  if (!visual) {
+    showFiles(files, updateDiff_basic, {});
+
+  } else if (visual[0] == '3') {
+    // TODO: Get the rgexes + threshold out of the visual parameter
+    addButtonToHideDeletedCode();
+    regexes = "a";
+    showFiles(files, updateDiff_visual3, {'threshold': null, 'regexes': regexes});
+
+  } else if (visual[0] == '1') {
     // Visual 1 might require a threshold, so format of param is:
     // 1:1000 if we want visual 1 with threshold 1000
     // 1 if we want the default threshold
@@ -22,6 +31,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     }
     addButtonToHideDeletedCode();
     showFiles(files, updateDiff_visual1_deletesOnSide, {"threshold": threshold});
+
   } else if (visual[0] == '2') {
     // Visual 2 indicates regexes, and looks like this:
     // '2:@Override' searches for ''@Override' in the files
@@ -32,6 +42,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       regexes = visual.substring(2);
     }
     showFiles(files, updateDiff_visual2, {"regexes": regexes});
+
   } else {
     showFiles(files, updateDiff_basic, {});
   }
@@ -98,6 +109,30 @@ function showFiles(files, updateFunction, extraArgs) {
   });
 }
 
+/** Visual 3: Combine total diff and regex highlighting */
+function updateDiff_visual3(node, baseline, text, extraArgs) {
+  if (baseline === undefined || text === undefined) { return; }
+
+  var filepath = extraArgs["filepath"];
+  var threshold = extraArgs["threshold"];
+  var url = getAjaxUrlForTotalDiff(filepath, threshold);
+
+  $.ajax(url).done(function(diff) {
+    // TODO: Revert to old visualization if the window is too small
+    var divs = addTotalDiffDeletesOnSideDom(diff, node);
+
+    var regexes = extraArgs["regexes"];
+    divs.forEach(function(div) {
+      addRegexHighlighting(div, regexes);
+    });
+
+    // TODO: Add syntax highlighting?
+
+  }).fail(function(req, status, err) {
+    list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
+  });
+}
+
 /**
  * Update the diffs for the basic visualization.
  */
@@ -107,18 +142,24 @@ function updateDiff_basic(node, baseline, text, file, extraArgs) {
   //addRegexHighlighting(node, 'static');
 }
 
-/** Update the diffs for a total diff view (includes some code history) */
-function updateDiff_visual1(node, baseline, text, extraArgs) {
-  var filepath = extraArgs["filepath"];
-  var threshold = extraArgs["threshold"];
+// TODO: Put functions in a reasonable order within this file
 
-  if (baseline === undefined || text === undefined) { return; }
-
+function getAjaxUrlForTotalDiff(filepath, threshold) {
   var url = '/ops/' + project + '/' + collabid + '/' + filepath
     + (cutoff ? '?cutoff=' + cutoff : '')
     + (threshold ? (cutoff ? '&threshold=' + threshold
                            : '?threshold=' + threshold)
                  : '');
+  return url;
+}
+
+/** Update the diffs for a total diff view (includes some code history) */
+function updateDiff_visual1(node, baseline, text, extraArgs) {
+  if (baseline === undefined || text === undefined) { return; }
+
+  var filepath = extraArgs["filepath"];
+  var threshold = extraArgs["threshold"];
+  var url = getAjaxUrlForTotalDiff(filepath, threshold);
 
   $.ajax(url).done(function(diff) {
 
@@ -146,8 +187,6 @@ function updateDiff_visual1(node, baseline, text, extraArgs) {
     });
 
     // TODO: Add syntax highlighting?
-    // TODO: Make green less bright
-
 
   }).fail(function(req, status, err) {
     list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
@@ -155,61 +194,59 @@ function updateDiff_visual1(node, baseline, text, extraArgs) {
 
 }
 
-function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
-  var filepath = extraArgs["filepath"];
-  var threshold = extraArgs["threshold"];
+function addTotalDiffDeletesOnSideDom(diff, node) {
+  var divNormal = document.createElement('div');
+  divNormal.classList.add('div-normal');
+  divNormal.classList.add('col-xs-6');
+  var divDeleted = document.createElement('div');
+  divDeleted.classList.add('div-deleted');
+  divDeleted.classList.add('col-xs-6');
 
+  diff.forEach(function(part){
+    var elt = document.createElement('span');
+
+    if (part.added) {
+      elt.classList.add('span-added');
+    } else if (part.removed) {
+      elt.classList.add('span-removed');
+      if (part.original) {
+        elt.classList.add('span-original');
+      }
+    } else {
+      elt.classList.add('span-original');
+    }
+
+    elt.appendChild(document.createTextNode(part.value));
+    divNormal.appendChild(elt);
+
+    elt2 = elt.cloneNode(true);
+    divDeleted.appendChild(elt2);
+
+    if (!showDeletedCode && part.removed) {
+      $(elt).hide();
+      $(elt2).hide();
+    }
+
+  });
+
+  node.appendChild(divNormal);
+  node.appendChild(divDeleted);
+
+  return [divNormal, divDeleted];
+}
+
+function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
   if (baseline === undefined || text === undefined) { return; }
 
-  var url = '/ops/' + project + '/' + collabid + '/' + filepath
-    + (cutoff ? '?cutoff=' + cutoff : '')
-    + (threshold ? (cutoff ? '&threshold=' + threshold
-                           : '?threshold=' + threshold)
-                 : '');
+  var filepath = extraArgs["filepath"];
+  var threshold = extraArgs["threshold"];
+  var url = getAjaxUrlForTotalDiff(filepath, threshold);
 
   $.ajax(url).done(function(diff) {
 
     // TODO: Revert to old visualization if the window is too small
 
-    var divNormal = document.createElement('div');
-    divNormal.classList.add('div-normal');
-    divNormal.classList.add('col-xs-6');
-    var divDeleted = document.createElement('div');
-    divDeleted.classList.add('div-deleted');
-    divDeleted.classList.add('col-xs-6');
-
-    diff.forEach(function(part){
-      var elt = document.createElement('span');
-
-      if (part.added) {
-        elt.classList.add('span-added');
-      } else if (part.removed) {
-        elt.classList.add('span-removed');
-        if (part.original) {
-          elt.classList.add('span-original');
-        }
-      } else {
-        elt.classList.add('span-original');
-      }
-
-      elt.appendChild(document.createTextNode(part.value));
-      divNormal.appendChild(elt);
-
-      elt2 = elt.cloneNode(true);
-      divDeleted.appendChild(elt2);
-
-      if (!showDeletedCode && part.removed) {
-        $(elt).hide();
-        $(elt2).hide();
-      }
-
-    });
-
-    node.appendChild(divNormal);
-    node.appendChild(divDeleted);
-
-    addRegexHighlighting(divNormal, "static");
-    addRegexHighlighting(divDeleted, "static");
+    addTotalDiffDeletesOnSideDom(diff, node);
 
     // TODO: Add syntax highlighting?
 
@@ -249,7 +286,7 @@ function addRegexHighlighting(node, regexes) {
 
 function addRegexHighlighting_success(elt, regexesMap) {
   // Don't highlight regexes on original code
-  if ($(elt).hasClass('span-original')) {
+  if ($(elt).hasClass('span-original') || $(elt).hasClass('diff-original')) {
     return;
   }
 
@@ -301,13 +338,10 @@ function addRegexHighlighting_success(elt, regexesMap) {
         $(regexElt).addClass($(elt).attr('class'));
         $(afterRegexElt).addClass($(elt).attr('class'));
 
-        // Remove styling from elt so that the colors don't appear twice
-        elt.className = '';
-
         if (endOfLastRegex > 0) {
           // Need to remove the last child, since this the three elts
           // created here represent the same characters as the last child
-          elt.removeChild(newLineElt.lastChild);
+          elt.removeChild(elt.lastChild);
         }
 
         elt.appendChild(beforeRegexElt);
@@ -325,10 +359,16 @@ function addRegexHighlighting_success(elt, regexesMap) {
     } else {
       // No regex match, so just put the line back in as normal
       // Add newline back in for correct syntax highlighting
-      elt.appendChild(document.createTextNode(partLine + '\n'));
-    }
 
+      var newElt = document.createElement('span');
+      $(newElt).addClass($(elt).attr('class'));
+      newElt.appendChild(document.createTextNode(partLine + '\n'));
+      elt.appendChild(newElt);
+    }
   }
+
+  // Remove styling from elt so that the colors don't appear twice
+  elt.className = '';
 }
 
 /**
@@ -467,6 +507,7 @@ function drawNormalDiff(baseline, text, node) {
     } else if (part.removed) {
       elt.classList.add('diff-removed');
     } else {
+      elt.classList.add('diff-original');
       elt.appendChild(document.createTextNode(part.value));
     }
     node.appendChild(elt);

@@ -151,7 +151,7 @@ textarea {
 
 /* Highlight regex matches in yellow */
 .diff .diff-regex {
-  background: rgba(249, 249, 184, 1);
+  background: rgba(249, 224, 34, 1);
 }
 
 /* Only show code that is part of final code in the normal div.
