@@ -98,21 +98,22 @@ function showFiles(files, updateFunction, extraArgs) {
     list.appendChild(item);
 
     $.ajax('/baseline/' + project + '/' + file.data.filepath).done(function(baseline) {
-      extraArgs["filepath"] = file.data.filepath;
+      var extraArgsForFile = Object.assign({'filepath': file.data.filepath}, extraArgs);
+
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
 
-          updateFunction(diff, baseline, historical.data ? historical.data.text : undefined, extraArgs);
+          updateFunction(diff, baseline, historical.data ? historical.data.text : undefined, extraArgsForFile);
 
         }).fail(function(req, status, err) {
           diff.textContent = 'Error fetching code: ' + errorToString(req.responseJSON, status, err);
         });
       } else {
         file.subscribe(function() {
-          updateFunction(diff, baseline, file.data.text, extraArgs);
+          updateFunction(diff, baseline, file.data.text, extraArgsForFile);
           file.on('op', function(op) {
             extraArgs["op"] = op;
-            updateFunction(diff, baseline, file.data.text, extraArgs);
+            updateFunction(diff, baseline, file.data.text, extraArgsForFile);
           });
         });
       }
