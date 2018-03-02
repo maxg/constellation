@@ -307,10 +307,14 @@ exports.createFrontend = function createFrontend(config, db) {
   app.get('/ops/:project/:collabid/:filepath(*)', authenticate, staffonly, function(req, res, next) {
     db.getOps(req.params.collabid, req.params.filepath, req.query.cutoff, function(err, ops) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
-      var chunkedDiffs = getChunkedDiffs(ops, req.query.threshold);
-      var mergedDiffs = mergeDiffs(chunkedDiffs);
-      res.setHeader('Cache-Control', 'max-age=3600');
-      res.send(mergedDiffs);
+
+      db.getBaseline(req.params.project, req.params.filepath, function(err, baseline) {
+        if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
+        var chunkedDiffs = getChunkedDiffs(ops, req.query.threshold, baseline);
+        var mergedDiffs = mergeDiffs(chunkedDiffs);
+        res.setHeader('Cache-Control', 'max-age=3600');
+        res.send(mergedDiffs);
+      });
     });
   })
   
@@ -478,7 +482,7 @@ function getRegexLocationAndLength(stdout) {
 }
 
 
-function getChunkedDiffs(ops, threshold) {
+function getChunkedDiffs(ops, threshold, baseline) {
     if (!threshold) {
       threshold = 10000;
     }
@@ -495,7 +499,6 @@ function getChunkedDiffs(ops, threshold) {
     /* Setup the baseline of the document */ 
     var firstOp = ops[0];
 
-
     // The baseline for the next diff
     var currentBaseline = {v:0};
     sharedb.ot.apply(currentBaseline, firstOp);
@@ -507,7 +510,7 @@ function getChunkedDiffs(ops, threshold) {
 
     // Create a diff for the first part, so that
     // we can track original code
-    var baseDiff = diff.diffLines(currentBaseline.data.text.trim(), currentBaseline.data.text.trim());
+    var baseDiff = diff.diffLines(baseline.trim(), currentBaseline.data.text.trim());
     baseDiff.forEach(function(part) {
       // Note: should only be one part
       part.original = true;
@@ -558,7 +561,6 @@ function getChunkedDiffs(ops, threshold) {
         !chunkedDiff[0].removed)) {
       chunkedDiffs.push(chunkedDiff);
     }
-
 
     return chunkedDiffs; 
 }
