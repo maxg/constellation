@@ -97,31 +97,22 @@ function showFiles(files, updateFunction, extraArgs) {
     var diff = item.querySelector('.diff code');
     list.appendChild(item);
 
-    
     $.ajax('/baseline/' + project + '/' + file.data.filepath).done(function(baseline) {
+      extraArgs["filepath"] = file.data.filepath;
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
-          // TODO: Eliminate duplicate code (here + down below, in the file.subscribe)
-          (function(filepath) {
-            extraArgs["filepath"] = filepath;
-            updateFunction(diff, baseline, historical.data ? historical.data.text : undefined, extraArgs);
-          })(file.data.filepath);
+
+          updateFunction(diff, baseline, historical.data ? historical.data.text : undefined, extraArgs);
 
         }).fail(function(req, status, err) {
           diff.textContent = 'Error fetching code: ' + errorToString(req.responseJSON, status, err);
         });
       } else {
         file.subscribe(function() {
-          (function(filepath) {
-            extraArgs["filepath"] = filepath;
-            updateFunction(diff, baseline, file.data.text, extraArgs);
-          })(file.data.filepath);
+          updateFunction(diff, baseline, file.data.text, extraArgs);
           file.on('op', function(op) {
-            (function(filepath) {
-              extraArgs["filepath"] = filepath;
-              extraArgs["op"] = op;
-              updateFunction(diff, baseline, file.data.text, extraArgs);
-            })(file.data.filepath);
+            extraArgs["op"] = op;
+            updateFunction(diff, baseline, file.data.text, extraArgs);
           });
         });
       }
