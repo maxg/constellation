@@ -193,7 +193,35 @@ function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
 
     // TODO: Revert to old visualization if the window is too small
 
-    addTotalDiffDeletesOnSideDom(diff, node);
+    var divs = addTotalDiffDeletesOnSideDom(diff, node);
+    divs.forEach(function(div) {
+      var children = div.childNodes;
+      for (var i = 1; i < children.length; i++) {
+        // TODO: Looking at multiple lines at the same time
+        var commonPrefixLength = hideCommonPrefixes(children[i], children[i-1]);
+        if (commonPrefixLength > 10) {
+          // Need to change the second child to hide the text in common
+          
+          /*
+          var commonElt = document.createElement('span');
+          var afterElt = document.createElement('span');
+
+          commonElt.appendChild(document.createTextNode(
+            children[i].innerText.substring(0, commonPrefixLength)));
+          afterElt.appendChild(document.createTextNode(
+            children[i].innerText.substring(commonPrefixLength)));
+
+          regexElt.classList.add('diff-regex');
+
+          // Ensures that these spans still follow the same CSS rules
+          // as their parent
+          $(commonElt).addClass($(children[is]).attr('class'));
+          $(regexElt).addClass($(elt).attr('class'));
+*/
+
+        }
+      }
+    });
 
     // TODO: Add syntax highlighting?
 
@@ -248,6 +276,33 @@ function updateDiff_visual3(node, baseline, text, extraArgs) {
 
 //////////////////////////////////
 ///////// HELPER METHODS /////////
+
+function hideCommonPrefixes(line1, line2) {
+  console.log("hide common prefixes");
+
+
+  var j = 0;
+  while (j < line1.innerText.length && j < line2.innerText.length) {
+    if (line1.innerText.charAt(j) == line2.innerText.charAt(j)) {
+      j += 1;
+    } else {
+      break;
+    }
+  }
+  return j;
+
+/*
+  if (j > 10) {
+    // Hide the prefix in the second line that's in common
+    //   with the first line
+    console.log("got j > 10 with lines ^");
+    console.log(line1.innerText);
+    console.log(line2.innerText);
+    return true;
+  }
+  */
+}
+
 
 /* Given a node containing each line of code and the regexes
  *  to match, update the DOM so that the regexes are
@@ -457,28 +512,32 @@ function addTotalDiffDeletesOnSideDom(diff, node) {
   divDeleted.classList.add('col-xs-6');
 
   diff.forEach(function(part){
-    var elt = document.createElement('span');
+    if (part.value.length > 0) {
+    
+      var elt = document.createElement('span');
 
-    if (part.added) {
-      elt.classList.add('span-added');
-    } else if (part.removed) {
-      elt.classList.add('span-removed');
-      if (part.original) {
+      if (part.added) {
+        elt.classList.add('span-added');
+      } else if (part.removed) {
+        elt.classList.add('span-removed');
+        if (part.original) {
+          elt.classList.add('span-original');
+        }
+      } else {
         elt.classList.add('span-original');
       }
-    } else {
-      elt.classList.add('span-original');
-    }
 
-    elt.appendChild(document.createTextNode(part.value));
-    divNormal.appendChild(elt);
+      elt.appendChild(document.createTextNode(part.value));
+      divNormal.appendChild(elt);
 
-    elt2 = elt.cloneNode(true);
-    divDeleted.appendChild(elt2);
+      elt2 = elt.cloneNode(true);
+      divDeleted.appendChild(elt2);
 
-    if (!showDeletedCode && part.removed) {
-      $(elt).hide();
-      $(elt2).hide();
+      if (!showDeletedCode && part.removed) {
+        $(elt).hide();
+        $(elt2).hide();
+      }
+
     }
 
   });
