@@ -253,25 +253,92 @@ function updateDiff_visual3(node, baseline, text, extraArgs) {
  *  to match, update the DOM so that the regexes are
  *  highlighted in yellow. */
 function addRegexHighlighting(node, regexes) {
-  // A node's children are spans, each of which contain text
+  var newChildNodes = [];
+
+  // TODO: Use regexes passed in
+  var myRe = RegExp('split', 'g');
+
   node.childNodes.forEach(function(child) {
-    var childText = child.innerText;
-    var ajaxRequestUrl = encodeURI('/regex/' + regexes);
-    $.ajax({
-      url: ajaxRequestUrl,
-      type: 'POST',
-      data: JSON.stringify({'text': childText}),
-      contentType: 'application/json',
-      success: function(regexesJson) {
-        // Map from line number to a list of regex matches on that line number
-        var regexesMap = new Map(JSON.parse(regexesJson));
-        addRegexHighlighting_success(child, regexesMap);
-      },
-      error: function(req, status, err) {
-        console.log("got regex error: " + err);
-      }
-    });
+    var regexesList = [];
+
+    var stringToCheck = child.innerText;
+    var myArray;
+    while ((myArray = myRe.exec(stringToCheck)) !== null) {
+      var regexLocation = {
+        'indexInLine': myArray['index'],
+        'length': myArray[0].length,
+      };
+      regexesList.push(regexLocation);
+    }
+
+    var newChildren = addRegexHighlighting_success2(child, regexesList, node, str);
+    newChildNodes = newChildNodes.concat(newChildren);
   });
+
+  // Remove the old children and add the new ones
+  while (node.firstChild) {
+    node.removeChild(node.firstChild);
+  }
+
+  newChildNodes.forEach(function(child) {
+    node.appendChild(child);
+  });
+}
+
+function addRegexHighlighting_success2(elt, regexesList, parentElt, text) {
+  // Don't highlight regexes on original code
+  if ($(elt).hasClass('span-original') || $(elt).hasClass('diff-original')) {
+    return [elt];
+  }
+
+  if (regexesList.length == 0) {
+    return [elt];
+  }
+
+  var classesToAdd = $(elt).attr('class');
+
+
+  var newElts = [];
+  var endOfLastRegex = 0;
+  var indexInParentElt = Array.from(parentElt.children).indexOf(elt);
+
+  regexesList.forEach(function(match) {
+    var beforeRegexElt = document.createElement('span');
+    var regexElt = document.createElement('span');
+    var afterRegexElt = document.createElement('span');
+
+    // Ensures that these spans still follow the same CSS rules
+    // as the original
+    $(beforeRegexElt).addClass(classesToAdd);
+    $(regexElt).addClass(classesToAdd);
+    $(afterRegexElt).addClass(classesToAdd);
+
+    regexElt.classList.add('diff-regex');
+
+    beforeRegexElt.appendChild(document.createTextNode(
+      text.substring(endOfLastRegex, match.indexInLine)));
+    regexElt.appendChild(document.createTextNode(
+      text.substring(match.indexInLine, match.indexInLine + match.length)));
+    afterRegexElt.appendChild(document.createTextNode(
+      text.substring(match.indexInLine + match.length)));
+
+    if (endOfLastRegex > 0) {
+      // Need to remove the last child, since the three elts
+      // created here represent the same characters as the last child
+      newElts.pop();
+    }
+
+    newElts.push(beforeRegexElt);
+    newElts.push(regexElt);
+    newElts.push(afterRegexElt);
+
+    // Increment index of last regex so we know where to split
+    // if there's another regex in the element
+    endOfLastRegex = match.indexInLine + match.length;
+
+  });
+
+  return newElts;
 }
 
 /** Adds regex highlighting to DOM on a successful ajax call. */
