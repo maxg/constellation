@@ -253,35 +253,36 @@ function updateDiff_visual3(node, baseline, text, extraArgs) {
  *  to match, update the DOM so that the regexes are
  *  highlighted in yellow. */
 function addRegexHighlighting(node, regexes) {
-  var newChildNodes = [];
+  regexes.split(';;').forEach(function(regex) {
+    // 'g' flag means it finds all matches, not just the first one
+    var regexp = RegExp(regex, 'g');
+    var newChildNodes = [];
 
-  // TODO: Use regexes passed in
-  var myRe = RegExp('split', 'g');
+    node.childNodes.forEach(function(child) {
+      var regexesList = [];
 
-  node.childNodes.forEach(function(child) {
-    var regexesList = [];
+      var stringToCheck = child.innerText;
+      var myArray;
+      while ((myArray = regexp.exec(stringToCheck)) !== null) {
+        var regexLocation = {
+          'indexInLine': myArray['index'],
+          'length': myArray[0].length,
+        };
+        regexesList.push(regexLocation);
+      }
 
-    var stringToCheck = child.innerText;
-    var myArray;
-    while ((myArray = myRe.exec(stringToCheck)) !== null) {
-      var regexLocation = {
-        'indexInLine': myArray['index'],
-        'length': myArray[0].length,
-      };
-      regexesList.push(regexLocation);
+      var newChildren = addRegexHighlighting_success2(child, regexesList, node, stringToCheck);
+      newChildNodes = newChildNodes.concat(newChildren);
+    });
+
+    // Remove the old children and add the new ones
+    while (node.firstChild) {
+      node.removeChild(node.firstChild);
     }
 
-    var newChildren = addRegexHighlighting_success2(child, regexesList, node, str);
-    newChildNodes = newChildNodes.concat(newChildren);
-  });
-
-  // Remove the old children and add the new ones
-  while (node.firstChild) {
-    node.removeChild(node.firstChild);
-  }
-
-  newChildNodes.forEach(function(child) {
-    node.appendChild(child);
+    newChildNodes.forEach(function(child) {
+      node.appendChild(child);
+    });
   });
 }
 
