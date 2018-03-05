@@ -454,10 +454,7 @@ function getRegexLocationAndLength(stdout) {
   }
 
   // stdout returns ASCII numbers, so convert them to strings
-  var resultString = '';
-  stdout.forEach(function(num) {
-    resultString += String.fromCharCode(num);
-  });
+  var resultString = stdout.toString('utf8');
 
   var values = resultString.split(':');
   if (values.length < 3) {
