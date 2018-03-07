@@ -194,34 +194,7 @@ function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
     // TODO: Revert to old visualization if the window is too small
 
     var divs = addTotalDiffDeletesOnSideDom(diff, node);
-    divs.forEach(function(div) {
-      var children = div.childNodes;
-      for (var i = 1; i < children.length; i++) {
-        // TODO: Looking at multiple lines at the same time
-        var commonPrefixLength = hideCommonPrefixes(children[i], children[i-1]);
-        if (commonPrefixLength > 10) {
-          // Need to change the second child to hide the text in common
-          
-          /*
-          var commonElt = document.createElement('span');
-          var afterElt = document.createElement('span');
-
-          commonElt.appendChild(document.createTextNode(
-            children[i].innerText.substring(0, commonPrefixLength)));
-          afterElt.appendChild(document.createTextNode(
-            children[i].innerText.substring(commonPrefixLength)));
-
-          regexElt.classList.add('diff-regex');
-
-          // Ensures that these spans still follow the same CSS rules
-          // as their parent
-          $(commonElt).addClass($(children[is]).attr('class'));
-          $(regexElt).addClass($(elt).attr('class'));
-*/
-
-        }
-      }
-    });
+    hideCommonPrefixes(divs);
 
     // TODO: Add syntax highlighting?
 
@@ -276,11 +249,70 @@ function updateDiff_visual3(node, baseline, text, extraArgs) {
 
 //////////////////////////////////
 ///////// HELPER METHODS /////////
+function hideCommonPrefixes(divs) {
+  divs.forEach(function(div) {
+    var children = div.childNodes;
 
-function hideCommonPrefixes(line1, line2) {
-  console.log("hide common prefixes");
+    // Since we need to add children for the common prefixes,
+    // Store all the children we should have at the end in a new list
+    var newChildNodes = [];
+    newChildNodes.push(children[0]);
+
+    for (var i = 1; i < children.length; i++) {
+      // Only consider hiding prefixes if the two lines are both deleted code
+      if (!children[i]  .classList.contains('span-removed') ||
+          !children[i-1].classList.contains('span-removed')) {
+        newChildNodes.push(children[i]);
+        continue;
+      }
+
+      // TODO: It's looking at multiple lines at the same time
+      //   if the DOM elt has multiple lines
+      var commonPrefixLength = getCommonPrefixLength(children[i], children[i-1]);
+      if (commonPrefixLength > 10) {
+        // Need to change the second child to hide the text in common
+        //   by putting spaces there instead (monospace font => correct behavior)
+  
+        var commonElt = document.createElement('span');
+        var afterElt = document.createElement('span');
+
+        commonElt.appendChild(document.createTextNode(
+          Array(commonPrefixLength+1).join(" ")));
+        afterElt.appendChild(document.createTextNode(
+          children[i].innerText.substring(commonPrefixLength)));
 
 
+        // Ensures that these spans still follow the same CSS rules
+        // as their parent
+        $(commonElt).addClass($(children[i]).attr('class'));
+        $(afterElt).addClass($(children[i]).attr('class'));
+
+        $(commonElt).addClass('span-removed-common-prefix');
+
+        newChildNodes.push(commonElt);
+        newChildNodes.push(afterElt);
+
+        // TODO: Won't work with regexes
+
+      } else {
+        // Nothing to hide, so add this child like normal
+        newChildNodes.push(children[i]);
+      }
+    }
+
+    // Remove all the old children and add all the new ones
+    while (div.firstChild) {
+      div.removeChild(div.firstChild);
+    }
+
+    newChildNodes.forEach(function(child) {
+      div.appendChild(child);
+    });
+  });
+}
+
+
+function getCommonPrefixLength(line1, line2) {
   var j = 0;
   while (j < line1.innerText.length && j < line2.innerText.length) {
     if (line1.innerText.charAt(j) == line2.innerText.charAt(j)) {

@@ -136,6 +136,9 @@ textarea {
 
 .span-removed {
   color: rgba(0, 0, 0, 0.5);
+}
+
+.span-removed:not(.span-removed-common-prefix) {
   text-decoration: line-through;
 }
 
@@ -148,6 +151,7 @@ textarea {
   color: rgba(0, 0, 0, 0.5);
   line-height: 0.9;
 }
+
 
 /* Highlight regex matches in yellow */
 .diff .diff-regex {
