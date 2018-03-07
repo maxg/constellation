@@ -253,7 +253,13 @@ function updateDiff_visual3(node, baseline, text, extraArgs) {
  *  to match, update the DOM so that the regexes are
  *  highlighted in yellow. */
 function addRegexHighlighting(node, regexes) {
-  regexes.split(';;').forEach(function(regex) {
+  var regexesSplit = regexes.split(';;');
+  if (regexesSplit.length == 1 && regexesSplit[0] == '') {
+    // No regexes given
+    return;
+  }
+
+  regexesSplit.forEach(function(regex) {
     // 'g' flag means it finds all matches, not just the first one
     var regexp = RegExp(regex, 'g');
     var newChildNodes = [];
