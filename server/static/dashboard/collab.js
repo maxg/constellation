@@ -32,7 +32,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     // "2regexes=Override" searches for ''@Override' in the files
     // "2regexes=@Override;;void;;size" searches for '@Override', 'void', and 'size' in the file
     // "2" searches for nothing
-    var regexes = null;
+    var regexes = '';
     var beginningOfRegexes = visual.indexOf("regexes=");
     if (beginningOfRegexes != -1) {
       regexes = visual.substring(beginningOfRegexes + "regexes=".length);
