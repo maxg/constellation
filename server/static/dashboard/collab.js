@@ -253,39 +253,41 @@ function hideCommonPrefixes(divs) {
   divs.forEach(function(div) {
     var children = div.childNodes;
 
+    // Split into individual lines
+    var lines = [];
+    children.forEach(function(child) {
+      var childLines = child.innerText.split('\n');
+      childLines.pop(); // Last one is always empty
+      childLines.forEach(function(childLine) {
+        var singleLine = {
+          'child': child, // We need the child to know what CSS classes to apply
+          'text': childLine
+        }
+        lines.push(singleLine);
+      });
+    });
+
     // Since we need to add children for the common prefixes,
     // Store all the children we should have at the end in a new list
     var newChildNodes = [];
-    newChildNodes.push(children[0]);
+    var firstLine = getSpanElement(lines[0].child, lines[0].text + '\n');
+    newChildNodes.push(firstLine);
 
-    for (var i = 1; i < children.length; i++) {
+    for (var i = 1; i < lines.length; i++) {
       // Only consider hiding prefixes if the two lines are both deleted code
-      if (!children[i]  .classList.contains('span-removed') ||
-          !children[i-1].classList.contains('span-removed')) {
-        newChildNodes.push(children[i]);
+      if (!lines[i]  .child.classList.contains('span-removed') ||
+          !lines[i-1].child.classList.contains('span-removed')) {
+        newChildNodes.push(getSpanElement(lines[i].child, lines[i].text + '\n'));
         continue;
       }
 
-      // TODO: It's looking at multiple lines at the same time
-      //   if the DOM elt has multiple lines
-      var commonPrefixLength = getCommonPrefixLength(children[i], children[i-1]);
+      var commonPrefixLength = getCommonPrefixLength(lines[i].text, lines[i-1].text);
       if (commonPrefixLength > 10) {
         // Need to change the second child to hide the text in common
         //   by putting spaces there instead (monospace font => correct behavior)
   
-        var commonElt = document.createElement('span');
-        var afterElt = document.createElement('span');
-
-        commonElt.appendChild(document.createTextNode(
-          Array(commonPrefixLength+1).join(" ")));
-        afterElt.appendChild(document.createTextNode(
-          children[i].innerText.substring(commonPrefixLength)));
-
-
-        // Ensures that these spans still follow the same CSS rules
-        // as their parent
-        $(commonElt).addClass($(children[i]).attr('class'));
-        $(afterElt).addClass($(children[i]).attr('class'));
+        var commonElt = getSpanElement(lines[i].child, Array(commonPrefixLength+1).join(" "));
+        var afterElt = getSpanElement(lines[i].child, lines[i].text.substring(commonPrefixLength) + '\n');
 
         $(commonElt).addClass('span-removed-common-prefix');
 
@@ -296,7 +298,7 @@ function hideCommonPrefixes(divs) {
 
       } else {
         // Nothing to hide, so add this child like normal
-        newChildNodes.push(children[i]);
+        newChildNodes.push(getSpanElement(lines[i].child, lines[i].text + '\n'));
       }
     }
 
@@ -305,34 +307,33 @@ function hideCommonPrefixes(divs) {
       div.removeChild(div.firstChild);
     }
 
+
     newChildNodes.forEach(function(child) {
       div.appendChild(child);
     });
   });
 }
 
+/* Gets a span element with the same classes as {child} and with {text} inside it */
+// TODO: better name, method signature
+function getSpanElement(child, text) {
+  var elt = document.createElement('span');
+  elt.appendChild(document.createTextNode(text));
+  $(elt).addClass($(child).attr('class'));
+  return elt;
+}
 
-function getCommonPrefixLength(line1, line2) {
+
+function getCommonPrefixLength(textLine1, textLine2) {
   var j = 0;
-  while (j < line1.innerText.length && j < line2.innerText.length) {
-    if (line1.innerText.charAt(j) == line2.innerText.charAt(j)) {
+  while (j < textLine1.length && j < textLine2.length) {
+    if (textLine1.charAt(j) == textLine2.charAt(j)) {
       j += 1;
     } else {
       break;
     }
   }
   return j;
-
-/*
-  if (j > 10) {
-    // Hide the prefix in the second line that's in common
-    //   with the first line
-    console.log("got j > 10 with lines ^");
-    console.log(line1.innerText);
-    console.log(line2.innerText);
-    return true;
-  }
-  */
 }
 
 
