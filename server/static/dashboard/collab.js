@@ -68,6 +68,22 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     addButtonToHideDeletedCode();
     showFiles(files, updateDiff_visual3, {'threshold': threshold, 'regexes': regexes});
 
+  } else if (visual[0] == '4') {
+    // Visualization 4: total diff and hiding common prefixes
+    // TODO: Duplicate code from visual 1
+
+    // "4threshold=1000" if we want visual 1 with threshold 1000
+    // "4" if we want the default threshold
+    // "4threshold=2" for a threshold of 2, etc.
+    var threshold = null;
+    var beginningOfThreshold = visual.indexOf("threshold=");
+    if (beginningOfThreshold != -1) {
+      threshold = visual.substring(beginningOfThreshold + "threshold=".length);
+    }
+
+    addButtonToHideDeletedCode();
+    showFiles(files, updateDiff_visual4_deletesOnSide, {"threshold": threshold});
+
   } else {
     showFiles(files, updateDiff_basic, {});
   }
@@ -194,7 +210,6 @@ function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
     // TODO: Revert to old visualization if the window is too small
 
     var divs = addTotalDiffDeletesOnSideDom(diff, node);
-    hideCommonPrefixes(divs);
 
     // TODO: Add syntax highlighting?
 
@@ -239,6 +254,33 @@ function updateDiff_visual3(node, baseline, text, extraArgs) {
     divs.forEach(function(div) {
       addRegexHighlighting(div, regexes);
     });
+
+    // TODO: Add syntax highlighting?
+
+  }).fail(function(req, status, err) {
+    list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
+  });
+}
+
+/**
+ * Update the diffs using visual 4.
+ * Visual 4: A total diff view, that includes some code history
+ *   This visual also hides common prefixes between two lines of code for readability.
+ * This visualiation moves the deleted code to the right, keeping only final code on the left.
+ */
+function updateDiff_visual4_deletesOnSide(node, baseline, text, extraArgs) {
+  if (baseline === undefined || text === undefined) { return; }
+
+  var filepath = extraArgs["filepath"];
+  var threshold = extraArgs["threshold"];
+  var url = getAjaxUrlForTotalDiff(filepath, threshold);
+
+  $.ajax(url).done(function(diff) {
+
+    // TODO: Revert to old visualization if the window is too small
+
+    var divs = addTotalDiffDeletesOnSideDom(diff, node);
+    hideCommonPrefixes(divs);
 
     // TODO: Add syntax highlighting?
 
