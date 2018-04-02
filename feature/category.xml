@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/constellation.feature_0.2.5.qualifier.jar" id="constellation.feature" version="0.2.5.qualifier">
+   <feature url="features/constellation.feature_0.2.6.qualifier.jar" id="constellation.feature" version="0.2.6.qualifier">
       <category name="constellation.category"/>
    </feature>
    <category-def name="constellation.category" label="Constellation"/>

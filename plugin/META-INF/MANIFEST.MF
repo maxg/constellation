@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Constellation
 Bundle-SymbolicName: constellation.plugin;singleton:=true
-Bundle-Version: 0.2.5.qualifier
+Bundle-Version: 0.2.6.qualifier
 Bundle-Activator: constellation.Activator
 Require-Bundle: org.eclipse.platform;bundle-version="4.7.0",
  org.eclipse.compare,
