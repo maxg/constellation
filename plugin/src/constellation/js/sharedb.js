@@ -43,7 +43,8 @@ function open(path, contents, callback) {
         project: CollaborationInstance.project.getName(),
         filepath: path,
         text: contents,
-        cursors: {}
+        cursors: {},
+        markers: {}
       }, function(err) {
         if (err && err.code !== 4016) { throw err; }
       });
@@ -91,6 +92,16 @@ function submitRemove(doc, offset, length) {
 
 function submitCursorUpdate(doc, offset, start, length) {
   doc.submitOp({ p: [ 'cursors', CollaborationInstance.me ], oi: length ? [ offset, start, length ] : [ offset ] });
+}
+
+function submitMarkerUpdate(doc, markers) {
+  var list = [];
+  for (var i = 0; i < markers.length; i++) {
+    var lineNumber = markers[i].getAttribute("lineNumber", 1);
+    var message = markers[i].getAttribute("message", "Missing error message");
+    list.push({ lineNumber: lineNumber, message: message });
+  }
+  doc.submitOp({ p: [ 'markers', CollaborationInstance.me ], oi: list });
 }
 
 function close(doc) {

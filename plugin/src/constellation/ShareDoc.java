@@ -3,11 +3,17 @@ package constellation;
 import static constellation.Util.startThread;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.EventObject;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceChangeEvent;
+import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
@@ -20,6 +26,7 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.ide.ResourceUtil;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 public class ShareDoc {
@@ -37,6 +44,7 @@ public class ShareDoc {
     
     private final IDocumentListener documentListener;
     private final BlockingQueue<EventObject> cursorEvents = new LinkedBlockingQueue<>();
+    private IMarker[] currentMarkers = new IMarker[] {};
     private final Thread cursorEventThread;
     
     private boolean syncing = false;
@@ -50,6 +58,23 @@ public class ShareDoc {
         this.styledText = (StyledText)editor.getAdapter(Control.class);
         this.viewer = (ISourceViewer)editor.getAdapter(ITextOperationTarget.class);
         
+        final IResource resource = ResourceUtil.getResource(editor.getEditorInput());
+        resource.getWorkspace().addResourceChangeListener(new IResourceChangeListener() {
+            @Override
+            public void resourceChanged(IResourceChangeEvent event) {
+                // runs on worker thread
+                try {
+                    final IMarker[] markers = resource.findMarkers(IMarker.PROBLEM, true, IResource.DEPTH_INFINITE);
+                    if (!Arrays.deepEquals(currentMarkers, markers)) {
+                        currentMarkers = markers;
+                        PlatformUI.getWorkbench().getDisplay().asyncExec(() -> onLocalMarkerUpdate());
+                    }
+                } catch (CoreException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, IResourceChangeEvent.POST_BUILD);
+
         this.cursors = new ShareCursorAnnotations(viewer);
         
         collab.jse.exec(js -> {
@@ -178,6 +203,11 @@ public class ShareDoc {
         collab.jse.exec(js -> js.invocable.invokeFunction("submitCursorUpdate", sharedbDoc, offset, start, length));
     }
     
+    private void onLocalMarkerUpdate() {
+        // jse.exec runs on UI thread
+        collab.jse.exec(js -> js.invocable.invokeFunction("submitMarkerUpdate", sharedbDoc, currentMarkers));
+    }
+
     private int widgetToModelOffset(int widgetOffset) {
         if (viewer instanceof ITextViewerExtension5) {
             return ((ITextViewerExtension5)viewer).widgetOffset2ModelOffset(widgetOffset);
