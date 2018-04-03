@@ -12,6 +12,7 @@ import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.text.BadLocationException;
@@ -43,8 +44,9 @@ public class ShareDoc {
     private final ShareCursorAnnotations cursors;
     
     private final IDocumentListener documentListener;
+    private final IResourceChangeListener resourceChangeListener;
     private final BlockingQueue<EventObject> cursorEvents = new LinkedBlockingQueue<>();
-    private IMarker[] currentMarkers = new IMarker[] {};
+    private Marker[] currentMarkers = new Marker[] {};
     private final Thread cursorEventThread;
     
     private boolean syncing = false;
@@ -59,15 +61,15 @@ public class ShareDoc {
         this.viewer = (ISourceViewer)editor.getAdapter(ITextOperationTarget.class);
         
         final IResource resource = ResourceUtil.getResource(editor.getEditorInput());
-        resource.getWorkspace().addResourceChangeListener(new IResourceChangeListener() {
+        ResourcesPlugin.getWorkspace().addResourceChangeListener(this.resourceChangeListener = new IResourceChangeListener() {
             @Override
             public void resourceChanged(IResourceChangeEvent event) {
                 // runs on worker thread
                 try {
-                    final IMarker[] markers = resource.findMarkers(IMarker.PROBLEM, true, IResource.DEPTH_INFINITE);
+                    final Marker[] markers = localToRemoteMarkers(resource.findMarkers(IMarker.PROBLEM, true, IResource.DEPTH_INFINITE));
                     if (!Arrays.deepEquals(currentMarkers, markers)) {
                         currentMarkers = markers;
-                        PlatformUI.getWorkbench().getDisplay().asyncExec(() -> onLocalMarkerUpdate());
+                        PlatformUI.getWorkbench().getDisplay().asyncExec(() -> onLocalMarkersUpdate());
                     }
                 } catch (CoreException e) {
                     e.printStackTrace();
@@ -121,6 +123,7 @@ public class ShareDoc {
         local.removeDocumentListener(documentListener);
         editor.getSelectionProvider().removeSelectionChangedListener(cursorEvents::add);
         styledText.removeCaretListener(cursorEvents::add);
+        ResourcesPlugin.getWorkspace().removeResourceChangeListener(resourceChangeListener);
         cursorEventThread.interrupt();
     }
     
@@ -203,9 +206,9 @@ public class ShareDoc {
         collab.jse.exec(js -> js.invocable.invokeFunction("submitCursorUpdate", sharedbDoc, offset, start, length));
     }
     
-    private void onLocalMarkerUpdate() {
+    private void onLocalMarkersUpdate() {
         // jse.exec runs on UI thread
-        collab.jse.exec(js -> js.invocable.invokeFunction("submitMarkerUpdate", sharedbDoc, currentMarkers));
+        collab.jse.exec(js -> js.invocable.invokeFunction("submitMarkersUpdate", sharedbDoc, currentMarkers));
     }
 
     private int widgetToModelOffset(int widgetOffset) {
@@ -220,5 +223,17 @@ public class ShareDoc {
             return ((ITextViewerExtension5)viewer).modelOffset2WidgetOffset(modelOffset);
         }
         return modelOffset;
+    }
+
+    private static Marker[] localToRemoteMarkers(IMarker[] localMarkers) {
+        final Marker[] remoteMarkers = new Marker[localMarkers.length];
+        for (int i = 0; i < localMarkers.length; i++) {
+            final IMarker localMarker = localMarkers[i];
+            remoteMarkers[i] = new Marker(
+                    localMarker.getAttribute(IMarker.LINE_NUMBER, 1),
+                    localMarker.getAttribute(IMarker.MESSAGE, "Missing error message"),
+                    localMarker.getAttribute(IMarker.SEVERITY, IMarker.SEVERITY_ERROR));
+        }
+        return remoteMarkers;
     }
 }

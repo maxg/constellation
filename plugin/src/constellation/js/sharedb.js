@@ -94,12 +94,11 @@ function submitCursorUpdate(doc, offset, start, length) {
   doc.submitOp({ p: [ 'cursors', CollaborationInstance.me ], oi: length ? [ offset, start, length ] : [ offset ] });
 }
 
-function submitMarkerUpdate(doc, markers) {
+function submitMarkersUpdate(doc, markers) {
   var list = [];
   for (var i = 0; i < markers.length; i++) {
-    var lineNumber = markers[i].getAttribute("lineNumber", 1);
-    var message = markers[i].getAttribute("message", "Missing error message");
-    list.push({ lineNumber: lineNumber, message: message });
+    var marker = markers[i];
+    list.push({ lineNumber: marker.lineNumber, message: marker.message, severity: marker.severity });
   }
   doc.submitOp({ p: [ 'markers', CollaborationInstance.me ], oi: list });
 }
