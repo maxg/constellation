@@ -11,23 +11,10 @@ block content
   
   .row: .col-xs-12
     h3 Where are you sitting?
-      small  please click on a section
-    svg(width=306, height=160)
-      style.
-        .section { opacity: 0.5; fill: #BC6060; }
-        .section:hover { opacity: 0.7; cursor: pointer; }
-        .section:active { opacity: 1; }
-        .section.selected { opacity: 0.9; }
-      path#F.section(d='M 50 40 l 50 20 l -8 20 l -50 -20 Z M 105 60 l 48 0 l 0 20 l -56 0 Z')
-      path#E.section(d='M 256 40 l -50 20 l 8 20 l 50 -20 Z M 153 60 l 48 0 l 8 20 l -56 0 Z')
-      path#D.section(d='M 90 85 l -50 -20 l -20 50 l 50 20 Z')
-      path#C.section(d='M 95 85 l -20 50 l 75 0 l 0 -50 Z')
-      path#B.section(d='M 156 85 l 55 0 l 20 50 l -75 0 Z')
-      path#A.section(d='M 216 85 l 50 -20 l 20 50 l -50 20 Z')
-      path#board(d='M 110 30 l 80 0 Z', stroke='black', stroke-width=3, stroke-linecap='round')
-      g(font-size=15, font-family='sans-serif', fill='black', stroke='none', text-anchor='middle')
-        text(x=150, y=50) Front
-      | ... Sorry, your browser does not support inline SVG.
+      small  please click on your seat
+    div(style='position:relative;')
+      img(src='/static/34-101.jpg', style='width:100%;')
+      canvas#map(style='position:absolute;left:0;top:0;width:100%;height:100%;')
   
   .row: .col-xs-10.col-sm-8.col-md-6.col-lg-4
     form#join
@@ -45,20 +32,109 @@ block content
   
   script.
     var project = !{JSON.stringify(project)};
-    $('.section').on('click', function onSectionSelect() {
+
+    var cursorcolor = '#f006';
+    var selectedcolor = '#f009';
+    var shadecolor = '#0007';
+    var cursorheight = 0.15; // % of image height
+
+    var bounds = { // [minX, minY, maxX, maxY] as percentages
+      A: [0.06, 0.07, 0.3, 0.475],
+      B: [0.3, 0.07, 0.5, 0.475],
+      C: [0.5, 0.07, 0.7, 0.475],
+      D: [0.7, 0.07, 0.93, 0.475],
+      E: [0, 0.475, 0.26, 0.945],
+      F: [0.26, 0.475, 0.74, 0.945],
+      G: [0.74, 0.475, 1, 0.945]
+    };
+
+    var selectionXY = undefined; // [x, y]
+
+    function getSection(canvas, event) {
+      var x = event.offsetX, y = event.offsetY, w = canvas.width, h = canvas.height;
+      for (var section in bounds) {
+        var bds = bounds[section];
+        if (x >= w * bds[0] && x <= w * bds[2]
+            && y >= h * bds[1] && y <= h * bds[3]) {
+          return section;
+        }
+      }
+    }
+
+    function render(canvas, event) {
+      canvas.width = $(canvas).width();
+      canvas.height = $(canvas).height();
+      var radius = cursorheight * canvas.height / 2;
+
+      var ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (event) { // highlight section
+        ctx.fillStyle = shadecolor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        var section = getSection(canvas, event);
+        if (section) {
+          var bds = bounds[section];
+          var x = bds[0] * canvas.width, y = bds[1] * canvas.height,
+              w = bds[2] * canvas.width - x, h = bds[3] * canvas.height - y;
+          ctx.clearRect(x, y, w, h);
+        }
+      }
+
+      if (selectionXY) { // render selection
+        ctx.fillStyle = selectedcolor;
+        ctx.beginPath();
+        ctx.arc(selectionXY[0], selectionXY[1], radius, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+
+      if (event) { // render cursor
+        ctx.fillStyle = cursorcolor;
+        ctx.beginPath();
+        ctx.arc(event.offsetX, event.offsetY, radius, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    }
+
+    $('#map').mousemove(function onMapHover(e) {
+      render(this, e);
+    });
+
+    $('#map').mouseleave(function onMapLeave() {
+      render(this, undefined);
+    });
+
+    $('#map').click(function onMapClick(e) {
+      var section = getSection(this, e);
+
+      if (section == undefined) return;
+
       var joincodebox = document.getElementById('partner');
       joincodebox.disabled = false;
       joincodebox.focus();
-      
-      $('.section').removeClass('selected');
-      $(this).addClass('selected');
-      
+
+      selectionXY = [e.offsetX, e.offsetY];
+      render(this, e);
+
+      // store section
       $.ajax({
         url: 'https://docs.google.com/forms/d/e/1FAIpQLSdBEl59ru77C2PoILS16xWyO3H0-R5Yx0GO8D28W4j5s3EOHg/formResponse?'
           + $.param({
             'entry.1593350312': project,
             'entry.1454600059': authusername,
-            'entry.1297934788': this.id,
+            'entry.1297934788': section,
+          }),
+      });
+
+      // store x, y percentages
+      $.ajax({
+        url: 'https://docs.google.com/forms/d/e/1FAIpQLScLz39qCGPieVGGTGY-YtTCSlZ67EwQV9ZrMmPlZvvOAKz8cg/formResponse?'
+          + $.param({
+            'entry.655474232': project,
+            'entry.752688410': authusername,
+            'entry.748084504': '' + (e.offsetX / this.width),
+            'entry.564356247': '' + (e.offsetY / this.height)
           }),
       });
     });
+
