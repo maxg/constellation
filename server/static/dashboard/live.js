@@ -70,6 +70,7 @@ function insertCollabs(collabs, atIndex) {
           root.classList.remove('disconnected');
           root.classList.add('connected');
           updateMatchDisplay();
+          updateErrorDisplay();
           file.on('op', function(op) {
             var optype = op[0].p[0];
             if (optype == 'text') {
