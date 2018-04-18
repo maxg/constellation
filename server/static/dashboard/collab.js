@@ -7,6 +7,15 @@ collab.fetch(function(err) {
   document.querySelector('#partners').textContent = collab.data.users.slice().sort().join(' & ')
 });
 
+/* Event Handlers for Total Diff */
+$("#cb-deleted-code").click(function() {
+  console.log("clicked deleted code checkbox");
+});
+
+$("#cb-half-width").click(function() {
+  console.log("clicked half width checkbox");
+});
+
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
 
