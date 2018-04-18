@@ -49,6 +49,7 @@ block content
     };
 
     var selectionXY = undefined; // [x, y]
+    var selectionsection = undefined; // A-G
 
     function getSection(canvas, event) {
       var x = event.offsetX, y = event.offsetY, w = canvas.width, h = canvas.height;
@@ -69,16 +70,14 @@ block content
       var ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (event) { // highlight section
+      var section = (event ? getSection(canvas, event) : undefined) || selectionsection;
+      if (section) { // highlight section
         ctx.fillStyle = shadecolor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        var section = getSection(canvas, event);
-        if (section) {
-          var bds = bounds[section];
-          var x = bds[0] * canvas.width, y = bds[1] * canvas.height,
-              w = bds[2] * canvas.width - x, h = bds[3] * canvas.height - y;
-          ctx.clearRect(x, y, w, h);
-        }
+        var bds = bounds[section];
+        var x = bds[0] * canvas.width, y = bds[1] * canvas.height,
+            w = bds[2] * canvas.width - x, h = bds[3] * canvas.height - y;
+        ctx.clearRect(x, y, w, h);
       }
 
       if (selectionXY) { // render selection
@@ -86,6 +85,12 @@ block content
         ctx.beginPath();
         ctx.arc(selectionXY[0], selectionXY[1], radius, 0, 2 * Math.PI);
         ctx.fill();
+        ctx.strokeStyle = selectedcolor;
+        var bds = bounds[selectionsection];
+        var x = bds[0] * canvas.width, y = bds[1] * canvas.height,
+            w = bds[2] * canvas.width - x, h = bds[3] * canvas.height - y;
+        ctx.rect(x, y, w, h);
+        ctx.stroke();
       }
 
       if (event) { // render cursor
@@ -114,6 +119,7 @@ block content
       joincodebox.focus();
 
       selectionXY = [e.offsetX, e.offsetY];
+      selectionsection = section;
       render(this, e);
 
       // store section

@@ -122,7 +122,7 @@ exports.createFrontend = function createFrontend(config, db) {
       paired.emit(req.params.userid, { me, token });
       return res.send({ redirect: '/setup-done' });
     }
-    
+
     join.rendezvous(req.body.me, req.body.partner, function(err, agreed) {
       if (err) { return res.status(400).send({ error: err.message }); }
       
@@ -136,14 +136,13 @@ exports.createFrontend = function createFrontend(config, db) {
       let partner = agreed.partner.username;
       let project = agreed.me.project;
       let collabid = agreed.id;
-      
       db.addUserToCollaboration(me, project, collabid, function(err) {
         paired.emit(req.params.userid, { me, token, partner, project, collabid });
         res.send({ redirect: '/edit' });
       });
     });
   });
-  
+
   app.get('/setup-done', authenticate, function(req, res, next) {
     res.render('setup-done');
   });
@@ -215,6 +214,12 @@ exports.createFrontend = function createFrontend(config, db) {
         milestones,
         users,
       });
+    });
+  });
+
+  app.get('/dashboard/:project/live', authenticate, staffonly, function(req, res, next) {
+    res.render('dashboard/live', {
+      project: req.params.project
     });
   });
   
