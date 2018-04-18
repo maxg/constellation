@@ -179,6 +179,7 @@ Do this by hiding all normal code. */
   top: 10px;
   right: 10px;
   border: 1px solid blue;
+  width: 15%;
 }
 
 #controls-total-diff {
