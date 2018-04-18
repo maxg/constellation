@@ -178,6 +178,21 @@ Do this by hiding all normal code. */
   color: rgba(0, 0, 0, 0);
 }
 
+/** Controls boxes styling */
+.controls {
+  position: fixed;
+  top: 1em;
+  right: 2em;
+  border: 1px solid blue;
+  width: 15%;
+  z-index: 1000;
+  background: white;
+}
+
+#controls-regex {
+  border: 3px solid green;
+}
+
 
 /** Controls boxes styling */
 .controls {
