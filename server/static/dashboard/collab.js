@@ -13,7 +13,17 @@ var showDeletedCode = false;
 $("#cb-deleted-code").click(function() {
   showDeletedCode = !showDeletedCode;
   $('.span-removed').toggle();
+  $('.div-deleted').toggle();
+
+  if (showDeletedCode) {
+    $('.div-normal').removeClass('col-xs-12');
+    $('.div-normal').addClass('col-xs-6');
+  } else {
+    $('.div-normal').removeClass('col-xs-6');
+    $('.div-normal').addClass('col-xs-12');
+  }
 });
+
 
 var halfWidth = true;
 
@@ -27,8 +37,6 @@ $("#cb-half-width").click(function() {
     $('.file-column').removeClass('col-xs-6');
     $('.file-column').addClass('col-xs-12');
   }
-
-  // TODO: If not showing deleted code, remove extra column
 });
 
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
@@ -622,6 +630,9 @@ function addTotalDiffDeletesOnSideDom(diff, node) {
 
   if (!showDeletedCode) {
     $('.span-removed').hide();
+    $('.div-deleted').hide();
+    $('.div-normal').removeClass('col-xs-6');
+    $('.div-normal').addClass('col-xs-12');
   }
 
   return [divNormal, divDeleted];
