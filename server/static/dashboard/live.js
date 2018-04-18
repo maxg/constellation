@@ -38,14 +38,18 @@ function insertCollabs(collabs, atIndex) {
       }
 
       function updateErrorDisplay() {
-        var error = false;
+        var maxlevel = 0;
         files.forEach(function(file) {
           for (var k in file.data.markers) {
-            if (file.data.markers[k].length > 0) error = true;
+            file.data.markers[k].forEach(function(marker) {
+              maxlevel = Math.max(maxlevel, marker.severity);
+            });
           }
         });
-        if (error) root.classList.add('error');
-        else root.classList.remove('error');
+        root.classList.remove('error');
+        root.classList.remove('warning');
+        if (maxlevel == 2) root.classList.add('error');
+        else if (maxlevel == 1) root.classList.add('warning');
       }
 
       function updateMatchDisplay() {
