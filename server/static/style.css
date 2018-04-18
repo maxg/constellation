@@ -175,11 +175,13 @@ Do this by hiding all normal code. */
 
 /** Controls boxes styling */
 .controls {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+  position: fixed;
+  top: 1em;
+  right: 2em;
   border: 1px solid blue;
   width: 15%;
+  z-index: 1000;
+  background: white;
 }
 
 #controls-total-diff {
