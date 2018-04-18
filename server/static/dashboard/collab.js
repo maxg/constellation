@@ -15,8 +15,21 @@ $("#cb-deleted-code").click(function() {
   $('.span-removed').toggle();
 });
 
+var halfWidth = true;
+
 $("#cb-half-width").click(function() {
   console.log("clicked half width checkbox");
+  halfWidth = !halfWidth;
+  if (halfWidth) {
+    $('.file-column').removeClass('col-xs-12');
+    $('.file-column').addClass('col-xs-6');
+  } else {
+    $('.file-column').removeClass('col-xs-6');
+    $('.file-column').addClass('col-xs-12');
+  }
+
+  // TODO: Default checkbox to be clicked
+  // TODO: If not showing deleted code, remove extra column
 });
 
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
