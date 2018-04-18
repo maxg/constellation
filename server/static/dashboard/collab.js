@@ -8,8 +8,11 @@ collab.fetch(function(err) {
 });
 
 /* Event Handlers for Total Diff */
+var showDeletedCode = false;
+
 $("#cb-deleted-code").click(function() {
-  console.log("clicked deleted code checkbox");
+  showDeletedCode = !showDeletedCode;
+  $('.span-removed').toggle();
 });
 
 $("#cb-half-width").click(function() {
@@ -33,7 +36,6 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       threshold = visual.substring(beginningOfThreshold + "threshold=".length);
     }
 
-    addButtonToHideDeletedCode();
     showFiles(files, updateDiff_visual1_deletesOnSide, {"threshold": threshold});
 
   } else if (visual[0] == '2') {
@@ -74,7 +76,6 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       regexes = visual.substring(beginningOfRegexes + "regexes=".length);
     }
 
-    addButtonToHideDeletedCode();
     showFiles(files, updateDiff_visual3, {'threshold': threshold, 'regexes': regexes});
 
   } else if (visual[0] == '4') {
@@ -90,7 +91,6 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       threshold = visual.substring(beginningOfThreshold + "threshold=".length);
     }
 
-    addButtonToHideDeletedCode();
     showFiles(files, updateDiff_visual4_deletesOnSide, {"threshold": threshold});
 
   } else {
@@ -98,19 +98,6 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
   }
 });
 
-var showDeletedCode = true;
-
-function addButtonToHideDeletedCode() {
-  $(document).ready(function() {
-    var button = $('<button>Toggle display of deleted code</button>');
-    $(button).insertBefore($("#files"));
-
-    $(button).click(function() {
-      showDeletedCode = !showDeletedCode;
-      $('.span-removed').toggle();
-    });
-  });
-}
 
 function showFiles(files, updateFunction, extraArgs) {
   var list = document.querySelector('#files');
@@ -127,7 +114,6 @@ function showFiles(files, updateFunction, extraArgs) {
 
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
-
           updateFunction(diff, baseline, historical.data ? historical.data.text : undefined, extraArgsForFile);
 
         }).fail(function(req, status, err) {
@@ -164,6 +150,7 @@ function updateDiff_basic(node, baseline, text, file, extraArgs) {
  * Visual 1: A total diff view, that includes some code history
  */
 function updateDiff_visual1(node, baseline, text, extraArgs) {
+
   if (baseline === undefined || text === undefined) { return; }
 
   var filepath = extraArgs["filepath"];
@@ -188,10 +175,6 @@ function updateDiff_visual1(node, baseline, text, extraArgs) {
 
       elt.appendChild(document.createTextNode(part.value));
       node.appendChild(elt);
-
-      if (!showDeletedCode && part.removed) {
-        $(elt).hide();
-      }
 
     });
 
@@ -290,6 +273,8 @@ function updateDiff_visual4_deletesOnSide(node, baseline, text, extraArgs) {
 
     var divs = addTotalDiffDeletesOnSideDom(diff, node);
     hideCommonPrefixes(divs);
+
+    // TODO: deleted code toggle doesn't work with visual 4
 
     // TODO: Add syntax highlighting?
 
@@ -616,18 +601,16 @@ function addTotalDiffDeletesOnSideDom(diff, node) {
 
       elt2 = elt.cloneNode(true);
       divDeleted.appendChild(elt2);
-
-      if (!showDeletedCode && part.removed) {
-        $(elt).hide();
-        $(elt2).hide();
-      }
-
     }
 
   });
 
   node.appendChild(divNormal);
   node.appendChild(divDeleted);
+
+  if (!showDeletedCode) {
+    $('.span-removed').hide();
+  }
 
   return [divNormal, divDeleted];
 }
