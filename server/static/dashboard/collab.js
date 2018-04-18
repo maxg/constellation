@@ -28,7 +28,6 @@ $("#cb-half-width").click(function() {
     $('.file-column').addClass('col-xs-12');
   }
 
-  // TODO: Default checkbox to be clicked
   // TODO: If not showing deleted code, remove extra column
 });
 
