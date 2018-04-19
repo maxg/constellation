@@ -20,6 +20,7 @@ function addRegexToControls(regex, isStaffSuggestion) {
   var checkboxCol = document.createElement('div');
   checkboxCol.classList.add('col-xs-3');
   var checkbox = $("<input id='" + regex + "' type='checkbox' checked>");
+  checkbox.addClass('cb-regex');
   $(checkboxCol).append(checkbox);
   
   $(row).append(label);
@@ -32,6 +33,10 @@ function addRegexToControls(regex, isStaffSuggestion) {
   // Text box to add new regexes should always be the bottom
   $(formGroup).insertBefore($('#add-regex-row'));
 }
+
+$('#controls-regex').on("click", ".cb-regex", function() {
+  console.log("clicked checkbox");
+});
 
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
