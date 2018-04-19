@@ -36,7 +36,17 @@ function addRegexToControls(regex, isStaffSuggestion) {
 
 $('#controls-regex').on("click", ".cb-regex", function() {
   console.log("clicked checkbox");
-  // TODO: get regexes
+
+  // Get currently active regexes
+  var regexes = []
+  $('.cb-regex:checkbox:checked').each(function(index) {
+    console.log($(this));
+    var regex = $(this)[0].id;
+    console.log("regex:");
+    console.log(regex);
+    regexes.push(regex);
+  });
+  console.log(regexes);
 
   // Re-render each file with new regexes
   $(".file").each(function(index) {
