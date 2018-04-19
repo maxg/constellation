@@ -36,6 +36,21 @@ function addRegexToControls(regex, isStaffSuggestion) {
 
 $('#controls-regex').on("click", ".cb-regex", function() {
   console.log("clicked checkbox");
+  // TODO: get regexes
+
+  // Re-render each file with new regexes
+  $(".file").each(function(index) {
+    console.log("got a file");
+    var baseline = $(this).data('baseline');
+    console.log("baseline:");
+    console.log(baseline);
+    var text = $(this).data('text');
+    console.log("text:");
+    console.log(text);
+
+    // TODO: Re-render file
+
+  })
 });
 
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
@@ -128,12 +143,21 @@ function showFiles(files, updateFunction, extraArgs) {
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
   files.forEach(function(file) {
     var item = document.importNode(document.querySelector('#file').content, true);
+    
+    var filePanel = item.querySelector('.file');
+
     var heading = item.querySelector('h4');
     heading.textContent = file.data.filepath;
     var diff = item.querySelector('.diff code');
     list.appendChild(item);
 
     $.ajax('/baseline/' + project + '/' + file.data.filepath).done(function(baseline) {
+      // Save data for regex updating
+      // TODO: Better way to do this?
+      $(filePanel).data('baseline', baseline);
+      $(filePanel).data('text', file.data.text); // TODO: update this data on update 
+
+
       var extraArgsForFile = Object.assign({'filepath': file.data.filepath}, extraArgs);
 
       if (cutoff) {
