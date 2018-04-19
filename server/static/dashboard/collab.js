@@ -29,7 +29,8 @@ function addRegexToControls(regex, isStaffSuggestion) {
     $(row).css('background', 'yellow');
   }
 
-  $('#controls-regex').append(formGroup);
+  // Text box to add new regexes should always be the bottom
+  $(formGroup).insertBefore($('#add-regex-row'));
 }
 
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {

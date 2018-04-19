@@ -191,8 +191,16 @@ Do this by hiding all normal code. */
 
 #controls-regex {
   border: 3px solid green;
+  width: 25%;
 }
 
+#new-regex {
+  width: 100%;
+}
+
+#add-regex {
+  border: 2px solid blue;
+}
 
 /** Controls boxes styling */
 .controls {
