@@ -7,6 +7,13 @@ collab.fetch(function(err) {
   document.querySelector('#partners').textContent = collab.data.users.slice().sort().join(' & ')
 });
 
+$("#add-regex").click(function() {
+  var newRegex = $('#new-regex-text').val();
+  $('#new-regex-text').val('');
+
+  addRegexToControls(newRegex, false);
+  updateFileDisplayWithCurrentRegexes();
+});
 
 function addRegexToControls(regex, isStaffSuggestion) {
   var formGroup = document.createElement('div');
@@ -34,7 +41,7 @@ function addRegexToControls(regex, isStaffSuggestion) {
   $(formGroup).insertBefore($('#add-regex-row'));
 }
 
-$('#controls-regex').on("click", ".cb-regex", function() {
+function updateFileDisplayWithCurrentRegexes() {
   // Get currently active regexes
   var regexes = []
   $('.cb-regex:checkbox:checked').each(function(index) {
@@ -48,6 +55,10 @@ $('#controls-regex').on("click", ".cb-regex", function() {
     var text = $(this).data('text');
     updateDiff_visual2(this, baseline, text, {'regexes': regexes});
   });
+}
+
+$('#controls-regex').on("click", ".cb-regex", function() {
+  updateFileDisplayWithCurrentRegexes();
 });
 
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
@@ -150,12 +161,15 @@ function showFiles(files, updateFunction, extraArgs) {
       // Save data for regex updating
       // TODO: Better way to do this?
       $(diff).data('baseline', baseline);
-      $(diff).data('text', file.data.text); // TODO: update this data on update 
+      $(diff).data('text', file.data.text); // TODO: update this data on update
 
       var extraArgsForFile = Object.assign({'filepath': file.data.filepath}, extraArgs);
 
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
+
+          $(diff).data('text', historical.data.text); // TODO: update this data on update
+
           updateFunction(diff, baseline, historical.data ? historical.data.text : undefined, extraArgsForFile);
 
         }).fail(function(req, status, err) {
