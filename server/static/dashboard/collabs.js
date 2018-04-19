@@ -12,8 +12,8 @@ collabs.on('insert', insertCollabs);
 function insertCollabs(collabs, atIndex) {
   var list = document.querySelector('#collabs');
 
-  var hasPrefixesCount = 0;
-  var totalPairsCount = 0;
+  //var hasPrefixesCount = 0;
+  //var totalPairsCount = 0;
 
   collabs.forEach(function(collab, idx) {
     var item = document.importNode(document.querySelector('#collab').content, true);
@@ -32,30 +32,41 @@ function insertCollabs(collabs, atIndex) {
     link.textContent = users.join('\n');
     list.insertBefore(item, list.children[atIndex + idx]);
 
+
     // Figure out if hide common prefix is triggered on this collab
-    // TODO: Need to do for every file
-    var filepath = "src/CharSet1.java";
     var threshold = 10000; // Default threshold
     var collabid = collab.id;
-    var url = getAjaxUrlForTotalDiff(filepath, threshold, project, collabid, cutoff);
 
-    $.ajax(url).done(function(diff) {
-      var hasPrefixes = hasCommonPrefixes(diff);
-     if (hasPrefixes) {
-       $(link).css('background-color', 'yellow');
-       hasPrefixesCount++;
-     }
-     totalPairsCount++;
-
-     // TODO: This prints after every pair but should only print at the end
-     console.log("hasPrefixes:" + hasPrefixesCount);
-     console.log("totalPairsCount:" + totalPairsCount);
-      
-    }).fail(function(req, status, err) {
-      list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
+    connection.createFetchQuery('files', { collabid: collab.id }, {}, function(err, files) {
+      files.forEach(function(file) {
+        var filepath = file.data.filepath;        
+        var url = getAjaxUrlForTotalDiff(filepath, threshold, project, collabid, cutoff);
+        $.ajax(url).done(function(diff) {
+          var hasPrefixes = hasCommonPrefixes(diff);
+          if (hasPrefixes) {
+            $(link).css('background-color', 'yellow');
+          }
+        }).fail(function(req, status, err) {
+          list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
+        });
+      });
     });
+
+    // Because of async, can't get total pairs who have prefixes vs. don't
+    /* 
+    if (hasPrefixesAnyFile) {
+      $(link).css('background-color', 'yellow');
+      hasPrefixesCount++;
+    }
+    totalPairsCount++;
+
+    // TODO: This prints after every pair but should only print at the end
+    console.log("hasPrefixes:" + hasPrefixesCount);
+    console.log("totalPairsCount:" + totalPairsCount);
+    */
+
   });
-  
+
   deduplicate();
 }
 
