@@ -178,28 +178,55 @@ Do this by hiding all normal code. */
   color: rgba(0, 0, 0, 0);
 }
 
-/** Controls boxes styling */
+/** General controls box styling */
 .controls {
   position: fixed;
   top: 1em;
   right: 2em;
-  border: 1px solid blue;
   width: 15%;
   z-index: 1000;
   background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
+/** Regex controls box styling */
 #controls-regex {
-  border: 3px solid green;
   width: 25%;
 }
 
-#new-regex {
+#new-regex-text {
+  height: 70%;
+}
+
+.cb-regex {
   width: 100%;
+  cursor: pointer;
+}
+
+#add-regex-row {
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 
 #add-regex {
-  border: 2px solid blue;
+  text-align: center;
+  cursor: pointer;
+}
+
+.add-regex-btn {
+  background: rgba(0, 255, 0, 0.5);
+  padding: 3px;
+  border-radius: 4px;
+  width: 20px;
+}
+
+.regex-row {
+  border-bottom: 0.5px solid #ccc;
+}
+
+.staffSuggestion {
+  background: rgba(51, 122, 183, 0.2);
 }
 
 /** Controls boxes styling */

@@ -16,13 +16,11 @@ $("#add-regex").click(function() {
 });
 
 function addRegexToControls(regex, isStaffSuggestion) {
-  var formGroup = document.createElement('div');
-  formGroup.classList.add('form-group');
   var row = document.createElement('div');
   row.classList.add('row');
-  formGroup.appendChild(row);
+  row.classList.add('regex-row');
 
-  var label = $("<label>").text(regex);
+  var label = $("<p>").text(regex);
   label.addClass('col-xs-9');
   var checkboxCol = document.createElement('div');
   checkboxCol.classList.add('col-xs-3');
@@ -34,11 +32,11 @@ function addRegexToControls(regex, isStaffSuggestion) {
   $(row).append(checkboxCol);
 
   if (isStaffSuggestion) {
-    $(row).css('background', 'yellow');
+    row.classList.add('staffSuggestion');
   }
 
   // Text box to add new regexes should always be the bottom
-  $(formGroup).insertBefore($('#add-regex-row'));
+  $(row).insertBefore($('#add-regex-row'));
 }
 
 function updateFileDisplayWithCurrentRegexes() {
