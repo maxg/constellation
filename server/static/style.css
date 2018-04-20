@@ -178,14 +178,11 @@ Do this by hiding all normal code. */
   position: fixed;
   top: 1em;
   right: 2em;
-  border: 1px solid blue;
   width: 15%;
   z-index: 1000;
   background: white;
-}
-
-#controls-total-diff {
-  border: 5px solid yellow;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 /* syntax highlighting with Eclipse colors */

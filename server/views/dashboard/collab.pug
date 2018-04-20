@@ -37,18 +37,15 @@ block content
           .col-xs-1: p#grader.form-control-static: i no grader
 
   if visual == 1
-    #controls-total-diff.controls.row
-
-      .form-group 
-        .row
-          label.col-xs-9 deleted code
-          .col-xs-3 
-            input#cb-deleted-code(type='checkbox')
-      .form-group
-        .row
-          label.col-xs-9 half-width files 
-          .col-xs-3
-            input#cb-half-width(type='checkbox' checked)
+    #controls-total-diff.controls.col-xs-12
+      .row
+        p.col-xs-9 deleted code
+        .col-xs-3 
+          input#cb-deleted-code(type='checkbox')
+      .row
+        p.col-xs-9 half-width files 
+        .col-xs-3
+          input#cb-half-width(type='checkbox' checked)
 
   
   #files.row
