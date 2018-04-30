@@ -16,92 +16,6 @@ var parameters;
 var showDeletedCode = false;
 
 
-
-///////////////////////////////////
-///////////// DISPLAY CHANGES
-
-///////////////////
-//// Event Handlers
-
-/* Toggle whether deleted code is displayed or not */
-$("#cb-deleted-code").click(function() {
-  showDeletedCode = !showDeletedCode;
-  $('.span-removed').toggle();
-  $('.div-deleted').toggle();
-
-  if (showDeletedCode) {
-    $('.div-normal').removeClass('col-xs-12');
-    $('.div-normal').addClass('col-xs-6');
-  } else {
-    $('.div-normal').removeClass('col-xs-6');
-    $('.div-normal').addClass('col-xs-12');
-  }
-});
-
-/* Add the user-typed regex to the list and update the display */
-$("#add-regex").click(function() {
-  var newRegex = $('#new-regex-text').val();
-  $('#new-regex-text').val('');
-  addRegexToControls(newRegex);
-  updateFileDisplayWithCurrentRegexes();
-});
-
-/* When a regex is checked or un-checked, update the display */
-$('#visual-controls').on("click", ".cb-regex", function() {
-  updateFileDisplayWithCurrentRegexes();
-});
-
-/////////////////////
-//// Helper functions
-
-/* Hide deleted code */
-function hideDeletedCode() {
-  $('.span-removed').hide();
-  $('.div-deleted').hide();
-  $('.div-normal').removeClass('col-xs-6');
-  $('.div-normal').addClass('col-xs-12');
-}
-
-/* Add the given regex to the controls box */
-function addRegexToControls(regex) {
-  var row = document.createElement('div');
-  row.classList.add('row');
-  row.classList.add('regex-row');
-
-  var label = $("<p>").text(regex);
-  label.addClass('col-xs-10');
-  var checkboxCol = document.createElement('div');
-  checkboxCol.classList.add('col-xs-2');
-  var checkbox = $("<input id='" + regex + "' type='checkbox' checked>");
-  checkbox.addClass('cb-regex');
-  $(checkboxCol).append(checkbox);
-  
-  $(row).append(checkboxCol);
-  $(row).append(label);
-
-  // Text box to add new regexes should always be the bottom
-  $(row).insertBefore($('#add-regex-row'));
-}
-
-/* Display filetext based on what regexes are currently selected */
-function updateFileDisplayWithCurrentRegexes() {
-  // Get currently active regexes
-  var regexes = []
-  $('.cb-regex:checkbox:checked').each(function(index) {
-    var regex = $(this)[0].id;
-    regexes.push(regex);
-  });
-
-  // Re-render each file with new regexes
-  $(".file").each(function(index) {
-    var baseline = $(this).data('baseline');
-    var text = $(this).data('text');
-    var filepath = $(this).data('filepath');
-    // TODO: Change the parameters val, rather than passing in regexes again?
-    updateFunction(this, baseline, text, {'regexes': regexes, 'filepath': filepath});
-  });
-}
-
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
 
@@ -763,4 +677,90 @@ function drawNormalDiff(baseline, text, node) {
 
 function errorToString(json, status, err) {
   return (json && json.code || status) + ' ' + (json && json.message || err);
+}
+
+
+///////////////////////////////////
+///////////// DISPLAY CHANGES
+
+///////////////////
+//// Event Handlers
+
+/* Toggle whether deleted code is displayed or not */
+$("#cb-deleted-code").click(function() {
+  showDeletedCode = !showDeletedCode;
+  $('.span-removed').toggle();
+  $('.div-deleted').toggle();
+
+  if (showDeletedCode) {
+    $('.div-normal').removeClass('col-xs-12');
+    $('.div-normal').addClass('col-xs-6');
+  } else {
+    $('.div-normal').removeClass('col-xs-6');
+    $('.div-normal').addClass('col-xs-12');
+  }
+});
+
+/* Add the user-typed regex to the list and update the display */
+$("#add-regex").click(function() {
+  var newRegex = $('#new-regex-text').val();
+  $('#new-regex-text').val('');
+  addRegexToControls(newRegex);
+  updateFileDisplayWithCurrentRegexes();
+});
+
+/* When a regex is checked or un-checked, update the display */
+$('#visual-controls').on("click", ".cb-regex", function() {
+  updateFileDisplayWithCurrentRegexes();
+});
+
+/////////////////////
+//// Helper functions
+
+/* Hide deleted code */
+function hideDeletedCode() {
+  $('.span-removed').hide();
+  $('.div-deleted').hide();
+  $('.div-normal').removeClass('col-xs-6');
+  $('.div-normal').addClass('col-xs-12');
+}
+
+/* Add the given regex to the controls box */
+function addRegexToControls(regex) {
+  var row = document.createElement('div');
+  row.classList.add('row');
+  row.classList.add('regex-row');
+
+  var label = $("<p>").text(regex);
+  label.addClass('col-xs-10');
+  var checkboxCol = document.createElement('div');
+  checkboxCol.classList.add('col-xs-2');
+  var checkbox = $("<input id='" + regex + "' type='checkbox' checked>");
+  checkbox.addClass('cb-regex');
+  $(checkboxCol).append(checkbox);
+  
+  $(row).append(checkboxCol);
+  $(row).append(label);
+
+  // Text box to add new regexes should always be the bottom
+  $(row).insertBefore($('#add-regex-row'));
+}
+
+/* Display filetext based on what regexes are currently selected */
+function updateFileDisplayWithCurrentRegexes() {
+  // Get currently active regexes
+  var regexes = []
+  $('.cb-regex:checkbox:checked').each(function(index) {
+    var regex = $(this)[0].id;
+    regexes.push(regex);
+  });
+
+  // Re-render each file with new regexes
+  $(".file").each(function(index) {
+    var baseline = $(this).data('baseline');
+    var text = $(this).data('text');
+    var filepath = $(this).data('filepath');
+    // TODO: Change the parameters val, rather than passing in regexes again?
+    updateFunction(this, baseline, text, {'regexes': regexes, 'filepath': filepath});
+  });
 }
