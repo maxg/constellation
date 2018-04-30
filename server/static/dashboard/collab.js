@@ -88,7 +88,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
 
     regexes.forEach(function(regex) {
       addRegexToControls(regex);
-    })
+    });
 
     showFiles(files, updateDiff_visual2, {"regexes": regexes});
 
@@ -115,7 +115,12 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
 
     if (beginningOfRegexes != -1) {
       regexes = visual.substring(beginningOfRegexes + "regexes=".length);
+      regexes = regexes.split(';;');
     }
+
+    regexes.forEach(function(regex) {
+      addRegexToControls(regex);
+    });
 
     showFiles(files, updateDiff_visual3, {'threshold': threshold, 'regexes': regexes});
 
