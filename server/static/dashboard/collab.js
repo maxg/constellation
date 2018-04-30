@@ -15,6 +15,15 @@ var parameters;
 /* Event Handlers for Total Diff */
 var showDeletedCode = false;
 
+
+
+///////////////////////////////////
+///////////// DISPLAY CHANGES
+
+///////////////////
+//// Event Handlers
+
+/* Toggle whether deleted code is displayed or not */
 $("#cb-deleted-code").click(function() {
   showDeletedCode = !showDeletedCode;
   $('.span-removed').toggle();
@@ -29,6 +38,23 @@ $("#cb-deleted-code").click(function() {
   }
 });
 
+/* Add the user-typed regex to the list and update the display */
+$("#add-regex").click(function() {
+  var newRegex = $('#new-regex-text').val();
+  $('#new-regex-text').val('');
+  addRegexToControls(newRegex);
+  updateFileDisplayWithCurrentRegexes();
+});
+
+/* When a regex is checked or un-checked, update the display */
+$('#visual-controls').on("click", ".cb-regex", function() {
+  updateFileDisplayWithCurrentRegexes();
+});
+
+/////////////////////
+//// Helper functions
+
+/* Hide deleted code */
 function hideDeletedCode() {
   $('.span-removed').hide();
   $('.div-deleted').hide();
@@ -36,14 +62,7 @@ function hideDeletedCode() {
   $('.div-normal').addClass('col-xs-12');
 }
 
-$("#add-regex").click(function() {
-  var newRegex = $('#new-regex-text').val();
-  $('#new-regex-text').val('');
-
-  addRegexToControls(newRegex);
-  updateFileDisplayWithCurrentRegexes();
-});
-
+/* Add the given regex to the controls box */
 function addRegexToControls(regex) {
   var row = document.createElement('div');
   row.classList.add('row');
@@ -64,6 +83,7 @@ function addRegexToControls(regex) {
   $(row).insertBefore($('#add-regex-row'));
 }
 
+/* Display filetext based on what regexes are currently selected */
 function updateFileDisplayWithCurrentRegexes() {
   // Get currently active regexes
   var regexes = []
@@ -81,10 +101,6 @@ function updateFileDisplayWithCurrentRegexes() {
     updateFunction(this, baseline, text, {'regexes': regexes, 'filepath': filepath});
   });
 }
-
-$('#visual-controls').on("click", ".cb-regex", function() {
-  updateFileDisplayWithCurrentRegexes();
-});
 
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
