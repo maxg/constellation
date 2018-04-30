@@ -237,6 +237,24 @@ exports.createBackend = function createBackend(config) {
         });
       });
     },
+
+    getOps(project, callback) {
+      db.getDbs(function(err, mongo) {
+        if (err) { return callback(err); }
+        mongo.collection(FILES).find(
+          { project },
+          { _id: 1 }
+        ).toArray(function(err, files) {
+          let ids = files.map(file => file._id);
+          mongo.collection('o_'+FILES).find(
+            { d: { $in: ids } },
+            { _id: 0, 'm.ts': 1, d: 1, create: 1, op: 1, v: 1 }
+          ).toArray(function(err, ops) {
+            callback(err, ops);
+          });
+        });
+      });
+    },
     
     ping(collabid) {
       async.autoInject({

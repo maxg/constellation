@@ -267,6 +267,17 @@ exports.createFrontend = function createFrontend(config, db) {
       res.send(historical);
     });
   });
+
+  app.get('/replay/:project', authenticate, staffonly, function(req, res, next) {
+    res.render('replay', { project: req.params.project });
+  });
+
+  app.get('/ops/:project', authenticate, staffonly, function(req, res, next) {
+    db.getOps(req.params.project, function(err, ops) {
+      if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
+      res.json(ops);
+    });
+  });
   
   app.get('/hello/:version', function(req, res, next) {
     getPluginVersion(function(err, version) {
