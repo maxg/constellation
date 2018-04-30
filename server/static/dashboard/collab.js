@@ -7,6 +7,35 @@ collab.fetch(function(err) {
   document.querySelector('#partners').textContent = collab.data.users.slice().sort().join(' & ')
 });
 
+// Update function and required parameters to perform the update function,
+//   based on the visual being used
+var updateFunction;
+var parameters;
+
+/* Event Handlers for Total Diff */
+var showDeletedCode = false;
+
+$("#cb-deleted-code").click(function() {
+  showDeletedCode = !showDeletedCode;
+  $('.span-removed').toggle();
+  $('.div-deleted').toggle();
+
+  if (showDeletedCode) {
+    $('.div-normal').removeClass('col-xs-12');
+    $('.div-normal').addClass('col-xs-6');
+  } else {
+    $('.div-normal').removeClass('col-xs-6');
+    $('.div-normal').addClass('col-xs-12');
+  }
+});
+
+function hideDeletedCode() {
+  $('.span-removed').hide();
+  $('.div-deleted').hide();
+  $('.div-normal').removeClass('col-xs-6');
+  $('.div-normal').addClass('col-xs-12');
+}
+
 $("#add-regex").click(function() {
   var newRegex = $('#new-regex-text').val();
   $('#new-regex-text').val('');
@@ -47,7 +76,9 @@ function updateFileDisplayWithCurrentRegexes() {
   $(".file").each(function(index) {
     var baseline = $(this).data('baseline');
     var text = $(this).data('text');
-    updateDiff_visual2(this, baseline, text, {'regexes': regexes});
+    var filepath = $(this).data('filepath');
+    // TODO: Change the parameters val, rather than passing in regexes again?
+    updateFunction(this, baseline, text, {'regexes': regexes, 'filepath': filepath});
   });
 }
 
@@ -58,8 +89,11 @@ $('#visual-controls').on("click", ".cb-regex", function() {
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
 
+  // TODO: Default updateFunc to updateDiff_basic, parameters to {}
+
   if (!visual) {
-    showFiles(files, updateDiff_basic, {});
+    updateFunction = updateDiff_basic;
+    parameters = {};
 
   } else if (visual[0] == '1') {
     // Visual 1 indicates a total diff visualiation
@@ -72,7 +106,8 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       threshold = visual.substring(beginningOfThreshold + "threshold=".length);
     }
 
-    showFiles(files, updateDiff_visual1_deletesOnSide, {"threshold": threshold});
+    updateFunction = updateDiff_visual1_deletesOnSide;
+    parameters = {"threshold": threshold};
 
   } else if (visual[0] == '2') {
     // Visual 2 indicates regexes, and looks like this:
@@ -90,7 +125,8 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       addRegexToControls(regex);
     });
 
-    showFiles(files, updateDiff_visual2, {"regexes": regexes});
+    updateFunction = updateDiff_visual2;
+    parameters = {"regexes": regexes};
 
   } else if (visual[0] == '3') {
     // Visual 3 indicates regexes and total diff view combined
@@ -122,7 +158,8 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       addRegexToControls(regex);
     });
 
-    showFiles(files, updateDiff_visual3, {'threshold': threshold, 'regexes': regexes});
+    updateFunction = updateDiff_visual3;
+    parameters = {'threshold': threshold, 'regexes': regexes};
 
   } else if (visual[0] == '4') {
     // Visualization 4: total diff and hiding common prefixes
@@ -137,11 +174,15 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       threshold = visual.substring(beginningOfThreshold + "threshold=".length);
     }
 
-    showFiles(files, updateDiff_visual4_deletesOnSide, {"threshold": threshold});
+    updateFunction = updateDiff_visual4_deletesOnSide;
+    parameters = {"threshold": threshold};
 
   } else {
-    showFiles(files, updateDiff_basic, {});
+    updateFunction = updateDiff_basic;
+    parameters = {};
   }
+
+  showFiles(files, updateFunction, parameters);
 });
 
 
@@ -161,6 +202,7 @@ function showFiles(files, updateFunction, extraArgs) {
       // TODO: Better way to do this?
       $(diff).data('baseline', baseline);
       $(diff).data('text', file.data.text); // TODO: update this data on update
+      $(diff).data('filepath', file.data.filepath);
 
       var extraArgsForFile = Object.assign({'filepath': file.data.filepath}, extraArgs);
 
@@ -302,6 +344,7 @@ function updateDiff_visual3(node, baseline, text, extraArgs) {
     var divs = addTotalDiffDeletesOnSideDom(diff, node);
 
     var regexes = extraArgs["regexes"];
+
     divs.forEach(function(div) {
       addRegexHighlighting(div, regexes);
     });
@@ -309,6 +352,9 @@ function updateDiff_visual3(node, baseline, text, extraArgs) {
     if (!showDeletedCode) {
       hideDeletedCode();
     }
+
+    // TODO: Bug, after un-checking a regex, it appends the same text
+    //   over and over so there's 6 filetexts in a row
 
     // TODO: Add syntax highlighting?
 
