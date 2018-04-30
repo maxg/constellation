@@ -24,21 +24,6 @@ $("#cb-deleted-code").click(function() {
   }
 });
 
-
-var halfWidth = true;
-
-$("#cb-half-width").click(function() {
-  console.log("clicked half width checkbox");
-  halfWidth = !halfWidth;
-  if (halfWidth) {
-    $('.file-column').removeClass('col-xs-12');
-    $('.file-column').addClass('col-xs-6');
-  } else {
-    $('.file-column').removeClass('col-xs-6');
-    $('.file-column').addClass('col-xs-12');
-  }
-});
-
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
 
