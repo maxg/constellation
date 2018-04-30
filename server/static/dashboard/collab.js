@@ -1,3 +1,6 @@
+/////////////////////////////
+//////// GLOBAL VARIABLES
+
 var connection = new window.sharedb.Connection(new WebSocket(shareURL));
 
 var collab = connection.get('collabs', collabid);
@@ -7,56 +10,47 @@ collab.fetch(function(err) {
   document.querySelector('#partners').textContent = collab.data.users.slice().sort().join(' & ')
 });
 
-// Update function and required parameters to perform the update function,
-//   based on the visual being used
+// Update function to use (based on which visual is being used)
 var updateFunction;
+
+// Parameters required to use updateFunction
 var parameters;
 
-/* Event Handlers for Total Diff */
+// Whether deleted code is currently shown or not
 var showDeletedCode = false;
 
+/////////////////////////////
+//////// MAIN CODE
 
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
 
-  // TODO: Default updateFunc to updateDiff_basic, parameters to {}
+  updateFunction = updateDiff_basic;
+  parameters = {};
 
-  if (!visual) {
-    updateFunction = updateDiff_basic;
-    parameters = {};
-
-  } else if (visual[0] == '1') {
+  if (visual[0] == '1') {
     // Visual 1 indicates a total diff visualiation
     // "1threshold=1000" if we want visual 1 with threshold 1000
     // "1" if we want the default threshold
     // "1threshold=2" for a threshold of 2, etc.
-    var threshold = null;
-    var beginningOfThreshold = visual.indexOf("threshold=");
-    if (beginningOfThreshold != -1) {
-      threshold = visual.substring(beginningOfThreshold + "threshold=".length);
-    }
 
+    var threshold = getThresholdFromUrl(visual);
+    parameters["threshold"] = threshold;
     updateFunction = updateDiff_visual1_deletesOnSide;
-    parameters = {"threshold": threshold};
 
   } else if (visual[0] == '2') {
     // Visual 2 indicates regexes, and looks like this:
     // "2regexes=Override" searches for ''@Override' in the files
     // "2regexes=@Override;;void;;size" searches for '@Override', 'void', and 'size' in the file
     // "2" searches for nothing
-    var regexes = '';
-    var beginningOfRegexes = visual.indexOf("regexes=");
-    if (beginningOfRegexes != -1) {
-      regexes = visual.substring(beginningOfRegexes + "regexes=".length);
-      regexes = regexes.split(';;');
-    }
+
+    var regexes = getRegexesFromUrl(visual);
+    parameters['regexes'] = regexes;
+    updateFunction = updateDiff_visual2;
 
     regexes.forEach(function(regex) {
       addRegexToControls(regex);
     });
-
-    updateFunction = updateDiff_visual2;
-    parameters = {"regexes": regexes};
 
   } else if (visual[0] == '3') {
     // Visual 3 indicates regexes and total diff view combined
@@ -68,28 +62,15 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     // Not allowed:
     // "3regexes=Stringthreshold=1000"
 
-    var threshold = null;
-    var regexes = '';
-
-    var beginningOfRegexes = visual.indexOf("regexes=");
-    var beginningOfThreshold = visual.indexOf("threshold=");
-    if (beginningOfThreshold != -1 && beginningOfRegexes != -1) {
-      threshold = visual.substring(beginningOfThreshold + "threshold=".length, beginningOfRegexes);
-    } else if (beginningOfThreshold != -1) {
-      threshold = visual.substring(beginningOfThreshold + "threshold=".length);
-    }
-
-    if (beginningOfRegexes != -1) {
-      regexes = visual.substring(beginningOfRegexes + "regexes=".length);
-      regexes = regexes.split(';;');
-    }
+    var threshold = getThresholdFromUrl(visual);
+    var regexes = getRegexesFromUrl(visual);
+    parameters['threshold'] = threshold;
+    parameters['regexes'] = regexes;
+    updateFunction = updateDiff_visual3;
 
     regexes.forEach(function(regex) {
       addRegexToControls(regex);
     });
-
-    updateFunction = updateDiff_visual3;
-    parameters = {'threshold': threshold, 'regexes': regexes};
 
   } else if (visual[0] == '4') {
     // Visualization 4: total diff and hiding common prefixes
@@ -98,22 +79,49 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     // "4threshold=1000" if we want visual 1 with threshold 1000
     // "4" if we want the default threshold
     // "4threshold=2" for a threshold of 2, etc.
-    var threshold = null;
-    var beginningOfThreshold = visual.indexOf("threshold=");
-    if (beginningOfThreshold != -1) {
-      threshold = visual.substring(beginningOfThreshold + "threshold=".length);
-    }
-
+    
+    var threshold = getThresholdFromUrl(visual);
+    parameters["threshold"] = threshold;
     updateFunction = updateDiff_visual4_deletesOnSide;
-    parameters = {"threshold": threshold};
-
-  } else {
-    updateFunction = updateDiff_basic;
-    parameters = {};
   }
 
   showFiles(files, updateFunction, parameters);
 });
+
+
+/** Get the regexes value from the given URL string.
+      Returns the regexes as a list. */
+function getRegexesFromUrl(url) {
+  var regexes = '';
+  var beginningOfRegexes = url.indexOf("regexes=");
+  if (beginningOfRegexes != -1) {
+    regexes = url.substring(beginningOfRegexes + "regexes=".length);
+  }
+
+  // The URL can have both threshold= and regexes=, so need to filter that out
+  if (regexes.indexOf("threshold=") != -1) {
+    regexes = regexes.substring(0, regexes.indexOf("threshold="));
+  }
+
+  regexes = regexes.split(';;');
+  return regexes;
+}
+
+/** Get the threshold value from the given URL string */
+function getThresholdFromUrl(url) {
+  var threshold = null;
+  var beginningOfThreshold = url.indexOf("threshold=");
+  if (beginningOfThreshold != -1) {
+    threshold = url.substring(beginningOfThreshold + "threshold=".length);
+  }
+
+  // The URL can have both threshold= and regexes=, so need to filter that out
+  if (threshold && threshold.indexOf("regexes=") != -1) {
+    threshold = threshold.substring(0, threshold.indexOf("regexes="));
+  }
+
+  return threshold;
+}
 
 
 function showFiles(files, updateFunction, extraArgs) {
@@ -727,6 +735,8 @@ function hideDeletedCode() {
 
 /* Add the given regex to the controls box */
 function addRegexToControls(regex) {
+  if (regex == '') { return; }
+  
   var row = document.createElement('div');
   row.classList.add('row');
   row.classList.add('regex-row');
