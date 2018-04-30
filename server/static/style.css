@@ -4,6 +4,12 @@ body {
   font-family: 'Rubik', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
+.container {
+  width: auto;
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
 #user {
   position: absolute;
   top: 10px;
