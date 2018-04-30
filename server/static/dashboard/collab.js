@@ -24,6 +24,13 @@ $("#cb-deleted-code").click(function() {
   }
 });
 
+function hideDeletedCode() {
+  $('.span-removed').hide();
+  $('.div-deleted').hide();
+  $('.div-normal').removeClass('col-xs-6');
+  $('.div-normal').addClass('col-xs-12');
+}
+
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
 
@@ -208,6 +215,10 @@ function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
 
     var divs = addTotalDiffDeletesOnSideDom(diff, node);
 
+    if (!showDeletedCode) {
+      hideDeletedCode();
+    }
+
     // TODO: Add syntax highlighting?
 
   }).fail(function(req, status, err) {
@@ -251,6 +262,10 @@ function updateDiff_visual3(node, baseline, text, extraArgs) {
     divs.forEach(function(div) {
       addRegexHighlighting(div, regexes);
     });
+
+    if (!showDeletedCode) {
+      hideDeletedCode();
+    }
 
     // TODO: Add syntax highlighting?
 
@@ -612,13 +627,6 @@ function addTotalDiffDeletesOnSideDom(diff, node) {
 
   node.appendChild(divNormal);
   node.appendChild(divDeleted);
-
-  if (!showDeletedCode) {
-    $('.span-removed').hide();
-    $('.div-deleted').hide();
-    $('.div-normal').removeClass('col-xs-6');
-    $('.div-normal').addClass('col-xs-12');
-  }
 
   return [divNormal, divDeleted];
 }

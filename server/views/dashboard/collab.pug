@@ -36,7 +36,7 @@ block content
               | &nbsp;#[span.glyphicon.glyphicon-ok]+
           .col-xs-1: p#grader.form-control-static: i no grader
 
-  if visual == 1
+  if visual[0] == 3 || visual[0] == 1
     #controls-total-diff.controls.col-xs-12
       .row
         .col-xs-2
