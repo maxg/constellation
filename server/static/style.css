@@ -178,21 +178,16 @@ Do this by hiding all normal code. */
   color: rgba(0, 0, 0, 0);
 }
 
-/** General controls box styling */
-.controls {
+/** Controls box styling */
+#visual-controls {
   position: fixed;
   top: 1em;
   right: 2em;
-  width: 15%;
+  width: 25%;
   z-index: 1000;
   background: white;
   border: 1px solid #ccc;
   border-radius: 4px;
-}
-
-/** Regex controls box styling */
-#controls-regex {
-  width: 25%;
 }
 
 #new-regex-text {
@@ -224,6 +219,8 @@ Do this by hiding all normal code. */
 .regex-row {
   border-bottom: 0.5px solid #ccc;
 }
+
+
 
 /* syntax highlighting with Eclipse colors */
 .hljs,

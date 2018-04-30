@@ -36,8 +36,15 @@ block content
               | &nbsp;#[span.glyphicon.glyphicon-ok]+
           .col-xs-1: p#grader.form-control-static: i no grader
 
-  if visual[0] == 3 || visual[0] == 1
-    #controls-total-diff.controls.col-xs-12
+  //-
+    Can't have controls box end after later if statements.
+    So, need to output HTML
+    https://github.com/pugjs/pug/issues/1422
+
+  if visual[0] == 1 || visual[0] == 2 || visual[0] == 3
+    | <div id="visual-controls" class="col-xs-12">
+
+  if visual[0] == 1 || visual[0] == 3
       .row
         .col-xs-2
           input#cb-deleted-code(type='checkbox')
