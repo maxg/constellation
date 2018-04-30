@@ -21,15 +21,15 @@ function addRegexToControls(regex) {
   row.classList.add('regex-row');
 
   var label = $("<p>").text(regex);
-  label.addClass('col-xs-9');
+  label.addClass('col-xs-10');
   var checkboxCol = document.createElement('div');
-  checkboxCol.classList.add('col-xs-3');
+  checkboxCol.classList.add('col-xs-2');
   var checkbox = $("<input id='" + regex + "' type='checkbox' checked>");
   checkbox.addClass('cb-regex');
   $(checkboxCol).append(checkbox);
   
-  $(row).append(label);
   $(row).append(checkboxCol);
+  $(row).append(label);
 
   // Text box to add new regexes should always be the bottom
   $(row).insertBefore($('#add-regex-row'));
