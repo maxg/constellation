@@ -11,11 +11,11 @@ $("#add-regex").click(function() {
   var newRegex = $('#new-regex-text').val();
   $('#new-regex-text').val('');
 
-  addRegexToControls(newRegex, false);
+  addRegexToControls(newRegex);
   updateFileDisplayWithCurrentRegexes();
 });
 
-function addRegexToControls(regex, isStaffSuggestion) {
+function addRegexToControls(regex) {
   var row = document.createElement('div');
   row.classList.add('row');
   row.classList.add('regex-row');
@@ -30,10 +30,6 @@ function addRegexToControls(regex, isStaffSuggestion) {
   
   $(row).append(label);
   $(row).append(checkboxCol);
-
-  if (isStaffSuggestion) {
-    row.classList.add('staffSuggestion');
-  }
 
   // Text box to add new regexes should always be the bottom
   $(row).insertBefore($('#add-regex-row'));
@@ -91,7 +87,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     }
 
     regexes.forEach(function(regex) {
-      addRegexToControls(regex, true);
+      addRegexToControls(regex);
     })
 
     showFiles(files, updateDiff_visual2, {"regexes": regexes});
