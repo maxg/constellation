@@ -451,7 +451,7 @@ function addRegexHighlighting(node, regexes) {
       }
 
       // Create the new children based on the found regexes and store them
-      var newChildren = addRegexHighlighting_success(child, foundRegexes, node, stringToCheck);
+      var newChildren = addRegexHighlightingWithinElement(child, foundRegexes);
       newChildNodes = newChildNodes.concat(newChildren);
     });
 
@@ -460,24 +460,27 @@ function addRegexHighlighting(node, regexes) {
   });
 }
 
-function addRegexHighlighting_success(elt, regexesList, parentElt, text) {
+/**
+ * Given an element and the locations of matching regexes within that
+ *   element, returns a list of elements that highlight those regexes
+ *   at the given locations.
+ */
+function addRegexHighlightingWithinElement(elt, regexesLocations) {
   // Don't highlight regexes on original code
   if ($(elt).hasClass('span-original') || $(elt).hasClass('diff-original')) {
     return [elt];
   }
 
-  if (regexesList.length == 0) {
+  if (regexesLocations.length == 0) {
     return [elt];
   }
 
   var classesToAdd = $(elt).attr('class');
-
-
   var newElts = [];
   var endOfLastRegex = 0;
-  var indexInParentElt = Array.from(parentElt.children).indexOf(elt);
+  var text = elt.innerText;
 
-  regexesList.forEach(function(match) {
+  regexesLocations.forEach(function(match) {
     var beforeRegexElt = document.createElement('span');
     var regexElt = document.createElement('span');
     var afterRegexElt = document.createElement('span');
