@@ -189,9 +189,9 @@ function updateDiff_basic(node, baseline, text, file, extraArgs) {
 /** 
  * Update the diffs using visual 1.
  * Visual 1: A total diff view, that includes some code history
+ * DEPRECATED (updateDiff_visual1_deletesOnSide is preferred)
  */
 function updateDiff_visual1(node, baseline, text, extraArgs) {
-
   if (baseline === undefined || text === undefined) { return; }
 
   var filepath = extraArgs["filepath"];
@@ -199,7 +199,6 @@ function updateDiff_visual1(node, baseline, text, extraArgs) {
   var url = getAjaxUrlForTotalDiff(filepath, threshold);
 
   $.ajax(url).done(function(diff) {
-
     diff.forEach(function(part){
       var elt = document.createElement('span');
 
@@ -216,7 +215,6 @@ function updateDiff_visual1(node, baseline, text, extraArgs) {
 
       elt.appendChild(document.createTextNode(part.value));
       node.appendChild(elt);
-
     });
 
     // TODO: Add syntax highlighting?
@@ -239,10 +237,7 @@ function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
   var url = getAjaxUrlForTotalDiff(filepath, threshold);
 
   $.ajax(url).done(function(diff) {
-
-    // TODO: Revert to old visualization if the window is too small
-
-    var divs = addTotalDiffDeletesOnSideDom(diff, node);
+    addTotalDiffDeletesOnSideDom(diff, node);
 
     if (!showDeletedCode) {
       hideDeletedCode();
@@ -268,7 +263,7 @@ function updateDiff_visual2(node, baseline, text, extraArgs) {
   // However, now only the part of the line with code on it is
   //   highlighted.
 
-  // TODO: Syntax highlighting doesn't work here
+  // TODO: Syntax highlighting
 }
 
 /** 
@@ -284,11 +279,8 @@ function updateDiff_visual3(node, baseline, text, extraArgs) {
   var url = getAjaxUrlForTotalDiff(filepath, threshold);
 
   $.ajax(url).done(function(diff) {
-    // TODO: Revert to old visualization if the window is too small
     var divs = addTotalDiffDeletesOnSideDom(diff, node);
-
     var regexes = extraArgs["regexes"];
-
     divs.forEach(function(div) {
       addRegexHighlighting(div, regexes);
     });
@@ -309,9 +301,8 @@ function updateDiff_visual3(node, baseline, text, extraArgs) {
 
 /**
  * Update the diffs using visual 4.
- * Visual 4: A total diff view, that includes some code history
+ * Visual 4: A total diff view, that includes some code history (visual 1)
  *   This visual also hides common prefixes between two lines of code for readability.
- * This visualiation moves the deleted code to the right, keeping only final code on the left.
  */
 function updateDiff_visual4_deletesOnSide(node, baseline, text, extraArgs) {
   if (baseline === undefined || text === undefined) { return; }
@@ -321,9 +312,6 @@ function updateDiff_visual4_deletesOnSide(node, baseline, text, extraArgs) {
   var url = getAjaxUrlForTotalDiff(filepath, threshold);
 
   $.ajax(url).done(function(diff) {
-
-    // TODO: Revert to old visualization if the window is too small
-
     var divs = addTotalDiffDeletesOnSideDom(diff, node);
     hideCommonPrefixes(divs);
 
