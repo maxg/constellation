@@ -250,7 +250,11 @@ exports.createBackend = function createBackend(config) {
             { d: { $in: ids } },
             { _id: 0, 'm.ts': 1, d: 1, create: 1, op: 1, v: 1 }
           ).toArray(function(err, ops) {
-            callback(err, ops);
+            let newcollabids = {};
+            ids.forEach(id => {
+              newcollabids[id.split('-')[0]] = mongodb.ObjectID().toString();
+            });
+            callback(err, { ops, newcollabids });
           });
         });
       });

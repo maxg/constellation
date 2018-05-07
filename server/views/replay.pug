@@ -5,6 +5,16 @@ append head
 
 block content
 
+  .row: .col-xs-12
+    label.col-xs-3 Target Project
+    input#targetProject.col-xs-6(type='text')
+  .row: .col-xs-12
+    label.col-xs-3 Start Timestamp
+    input#startTimestamp.col-xs-6(type='text')
+  .row: .col-xs-12
+    button#startReplay.btn.btn-success.col-xs-5 Start Replay
+    button#stopReplay.btn.btn-info.col-xs-4 Stop Replay
+
   script.
     var shareURL = !{JSON.stringify(shareURL)};
     var project = !{JSON.stringify(project)};
