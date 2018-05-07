@@ -386,13 +386,7 @@ function hideCommonPrefixes(div) {
     }
   }
 
-  // Remove all the old children and add all the new ones
-  while (div.firstChild) {
-    div.removeChild(div.firstChild);
-  }
-  newChildNodes.forEach(function(child) {
-    div.appendChild(child);
-  });
+  replaceChildren(div, newChildNodes);
 }
 
 /**
@@ -423,9 +417,11 @@ function getCommonPrefixLength(textLine1, textLine2) {
 }
 
 
-/* Given a node containing each line of code and the regexes
- *  to match, update the DOM so that the regexes are
- *  highlighted in yellow. */
+/**
+ * Given a node containing lines of code and regexes
+ *  to find withing that code, update the DOM so that
+ *  the regexes are highlighted in yellow.
+ */
 function addRegexHighlighting(node, regexes) {
   if (regexes.length == 1 && regexes[0] == '') {
     // No regexes given
@@ -433,39 +429,38 @@ function addRegexHighlighting(node, regexes) {
   }
 
   regexes.forEach(function(regex) {
-    // 'g' flag means it finds all matches, not just the first one
-    var regexp = RegExp(regex, 'g');
+    // Since we need to add children for the common prefixes,
+    // Store all the children we should have at the end in a new list
     var newChildNodes = [];
 
     node.childNodes.forEach(function(child) {
-      var regexesList = [];
-
+      var foundRegexes = [];
       var stringToCheck = child.innerText;
-      var myArray;
-      while ((myArray = regexp.exec(stringToCheck)) !== null) {
+
+      // 'g' flag means it finds all matches, not just the first one
+      var regexFinder = RegExp(regex, 'g');
+      var myArray; // Used to store the results from the regexFinder
+
+      // Find all the regex matches
+      while ((myArray = regexFinder.exec(stringToCheck)) !== null) {
         var regexLocation = {
           'indexInLine': myArray['index'],
           'length': myArray[0].length,
         };
-        regexesList.push(regexLocation);
+        foundRegexes.push(regexLocation);
       }
 
-      var newChildren = addRegexHighlighting_success2(child, regexesList, node, stringToCheck);
+      // Create the new children based on the found regexes and store them
+      var newChildren = addRegexHighlighting_success(child, foundRegexes, node, stringToCheck);
       newChildNodes = newChildNodes.concat(newChildren);
     });
 
-    // Remove the old children and add the new ones
-    while (node.firstChild) {
-      node.removeChild(node.firstChild);
-    }
+    replaceChildren(node, newChildNodes);
 
-    newChildNodes.forEach(function(child) {
-      node.appendChild(child);
-    });
   });
 }
 
-function addRegexHighlighting_success2(elt, regexesList, parentElt, text) {
+function addRegexHighlighting_success(elt, regexesList, parentElt, text) {
   // Don't highlight regexes on original code
   if ($(elt).hasClass('span-original') || $(elt).hasClass('diff-original')) {
     return [elt];
@@ -521,93 +516,21 @@ function addRegexHighlighting_success2(elt, regexesList, parentElt, text) {
   return newElts;
 }
 
-/** Adds regex highlighting to DOM on a successful ajax call. */
-function addRegexHighlighting_success(elt, regexesMap) {
-  // Don't highlight regexes on original code
-  if ($(elt).hasClass('span-original') || $(elt).hasClass('diff-original')) {
-    return;
+/**
+ * Replace {node}'s current children with the children
+ *   in {newChildNodes}.
+ */
+function replaceChildren(node, newChildNodes) {
+  // Remove the old children
+  while (node.firstChild) {
+    node.removeChild(node.firstChild);
   }
-
-  var eltText = elt.innerText;
-  var partLines = eltText.split('\n');
-  // Last one is always an empty string
-  partLines.pop();
-
-  // Empty elt so that we can add back each line individually
-  elt.innerText = "";
-
-  // Go through the lines in the part and highlight the regex(es)
-  for (var lineNumber = 1; lineNumber < partLines.length + 1; lineNumber++) {
-    var partLine = partLines[lineNumber - 1];
-
-    if (regexesMap.has(lineNumber)) {
-      var endOfLastRegex = 0;
-
-      // Sort by indexInLine so that {endOfLastRegex} only increases
-      regexesMap.get(lineNumber).sort(function(a, b) {
-        return a.indexInLine - b.indexInLine;
-      });
-
-      regexesMap.get(lineNumber).forEach(function(match) {
-        if (endOfLastRegex > match.indexInLine) {
-          // The regexes overlapped (e.g. 'Stream' and 'a')
-          // Ignore this regex
-          // TODO: Better handling of this case? Probably won't happen that much?
-          return;
-        }
-
-        // Create and append HTML elements
-        var beforeRegexElt = document.createElement('span');
-        var regexElt = document.createElement('span');
-        var afterRegexElt = document.createElement('span');
-
-        beforeRegexElt.appendChild(document.createTextNode(
-          partLine.substring(endOfLastRegex, match.indexInLine)));
-        regexElt.appendChild(document.createTextNode(
-          partLine.substring(match.indexInLine, match.indexInLine + match.length)));
-        afterRegexElt.appendChild(document.createTextNode(
-          partLine.substring(match.indexInLine + match.length)));
-
-        regexElt.classList.add('diff-regex');
-
-        // Ensures that these spans still follow the same CSS rules
-        // as their parent
-        $(beforeRegexElt).addClass($(elt).attr('class'));
-        $(regexElt).addClass($(elt).attr('class'));
-        $(afterRegexElt).addClass($(elt).attr('class'));
-
-        if (endOfLastRegex > 0) {
-          // Need to remove the last child, since this the three elts
-          // created here represent the same characters as the last child
-          elt.removeChild(elt.lastChild);
-        }
-
-        elt.appendChild(beforeRegexElt);
-        elt.appendChild(regexElt);
-        elt.appendChild(afterRegexElt);
-
-        // Increment index of last regex so we know where to split
-        // if there's another regex earlier in the line
-        endOfLastRegex = match.indexInLine + match.length;
-      });
-
-      // Add newline back in for correct syntax highlighting
-      elt.lastChild.appendChild(document.createTextNode('\n'));
-
-    } else {
-      // No regex match, so just put the line back in as normal
-      // Add newline back in for correct syntax highlighting
-
-      var newElt = document.createElement('span');
-      $(newElt).addClass($(elt).attr('class'));
-      newElt.appendChild(document.createTextNode(partLine + '\n'));
-      elt.appendChild(newElt);
-    }
-  }
-
-  // Remove styling from elt so that the colors don't appear twice
-  elt.className = '';
+  // Add the new children
+  newChildNodes.forEach(function(child) {
+    node.appendChild(child);
+  });
 }
+
 
 /** Gets the ajax URL needed if you want to get the total diff
       for the given filepath */
