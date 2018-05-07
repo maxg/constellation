@@ -534,9 +534,10 @@ function replaceChildren(node, newChildNodes) {
   });
 }
 
-
-/** Gets the ajax URL needed if you want to get the total diff
-      for the given filepath */
+/**
+ * Get the Ajax URL that returns the total diff for {filepath}
+ *   using {threshold}.
+ */
 function getAjaxUrlForTotalDiff(filepath, threshold) {
   var url = '/ops/' + project + '/' + collabid + '/' + filepath
     + (cutoff ? '?cutoff=' + cutoff : '')
@@ -546,7 +547,12 @@ function getAjaxUrlForTotalDiff(filepath, threshold) {
   return url;
 }
 
-/** Adds the DOM used for visual1_deletesOnSide */
+/**
+ * Creates and returns the DOM for a total diff visualization
+ *   where the deleted code is shown on the right.
+ *   (for visual1_deletesOnSide).
+ * Adds that DOM inside {node}.
+ */
 function addTotalDiffDeletesOnSideDom(diff, node) {
   var divNormal = document.createElement('div');
   divNormal.classList.add('div-normal');
@@ -555,7 +561,7 @@ function addTotalDiffDeletesOnSideDom(diff, node) {
   divDeleted.classList.add('div-deleted');
   divDeleted.classList.add('col-xs-6');
 
-  diff.forEach(function(part){
+  diff.forEach(function(part) {
     if (part.value.length > 0) {
     
       var elt = document.createElement('span');
@@ -612,6 +618,9 @@ function drawNormalDiff(baseline, text, node) {
 }
 
 
+/**
+ * Convert an error to a string.
+ */
 function errorToString(json, status, err) {
   return (json && json.code || status) + ' ' + (json && json.message || err);
 }
