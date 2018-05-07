@@ -313,7 +313,9 @@ function updateDiff_visual4_deletesOnSide(node, baseline, text, extraArgs) {
 
   $.ajax(url).done(function(diff) {
     var divs = addTotalDiffDeletesOnSideDom(diff, node);
-    hideCommonPrefixes(divs);
+    divs.forEach(function(div) {
+      hideCommonPrefixes(div);
+    });
 
     // TODO: deleted code toggle doesn't work with visual 4
 
@@ -326,68 +328,72 @@ function updateDiff_visual4_deletesOnSide(node, baseline, text, extraArgs) {
 
 //////////////////////////////////
 ///////// HELPER METHODS /////////
-function hideCommonPrefixes(divs) {
-  divs.forEach(function(div) {
-    var children = div.childNodes;
 
-    // Split into individual lines
-    var lines = [];
-    children.forEach(function(child) {
-      var childLines = child.innerText.split('\n');
-      childLines.pop(); // Last one is always empty
-      childLines.forEach(function(childLine) {
-        var singleLine = {
-          'child': child, // We need the child to know what CSS classes to apply
-          'text': childLine
-        }
-        lines.push(singleLine);
-      });
+/**
+ * Given a div with lines of text, hide common prefixes between
+ *   every two consecutive lines.
+ * If a common prefix is found, that text is removed from the second line.
+ */
+function hideCommonPrefixes(div) {
+  var children = div.childNodes;
+
+  // Split into individual lines
+  var lines = [];
+  children.forEach(function(child) {
+    var childLines = child.innerText.split('\n');
+    childLines.pop(); // Last one is always empty
+    childLines.forEach(function(childLine) {
+      var singleLine = {
+        'child': child, // We need the child to know what CSS classes to apply
+        'text': childLine
+      }
+      lines.push(singleLine);
     });
+  });
 
-    // Since we need to add children for the common prefixes,
-    // Store all the children we should have at the end in a new list
-    var newChildNodes = [];
-    var firstLine = getSpanElement(lines[0].child, lines[0].text + '\n');
-    newChildNodes.push(firstLine);
+  // Since we need to add children for the common prefixes,
+  // Store all the children we should have at the end in a new list
+  var newChildNodes = [];
+  var firstLine = getSpanElement(lines[0].child, lines[0].text + '\n');
+  newChildNodes.push(firstLine);
 
-    for (var i = 1; i < lines.length; i++) {
-      // Only consider hiding prefixes if the two lines are both deleted code
-      if (!lines[i]  .child.classList.contains('span-removed') ||
-          !lines[i-1].child.classList.contains('span-removed')) {
-        newChildNodes.push(getSpanElement(lines[i].child, lines[i].text + '\n'));
-        continue;
-      }
-
-      var commonPrefixLength = getCommonPrefixLength(lines[i].text, lines[i-1].text);
-      if (commonPrefixLength > 10) {
-        // Need to change the second child to hide the text in common
-        //   by putting spaces there instead (monospace font => correct behavior)
-  
-        var commonElt = getSpanElement(lines[i].child, Array(commonPrefixLength+1).join(" "));
-        var afterElt = getSpanElement(lines[i].child, lines[i].text.substring(commonPrefixLength) + '\n');
-
-        $(commonElt).addClass('span-removed-common-prefix');
-
-        newChildNodes.push(commonElt);
-        newChildNodes.push(afterElt);
-
-        // TODO: Won't work with regexes
-
-      } else {
-        // Nothing to hide, so add this child like normal
-        newChildNodes.push(getSpanElement(lines[i].child, lines[i].text + '\n'));
-      }
+  for (var i = 1; i < lines.length; i++) {
+    // Only consider hiding prefixes if the two lines are both deleted code
+    if (!lines[i]  .child.classList.contains('span-removed') ||
+        !lines[i-1].child.classList.contains('span-removed')) {
+      newChildNodes.push(getSpanElement(lines[i].child, lines[i].text + '\n'));
+      continue;
     }
 
-    // Remove all the old children and add all the new ones
-    while (div.firstChild) {
-      div.removeChild(div.firstChild);
+    var commonPrefixLength = getCommonPrefixLength(lines[i].text, lines[i-1].text);
+    if (commonPrefixLength > 10) {
+      // Need to change the second child to hide the text in common
+      //   by putting spaces there instead (monospace font => correct behavior)
+
+      var commonElt = getSpanElement(lines[i].child, Array(commonPrefixLength+1).join(" "));
+      var afterElt = getSpanElement(lines[i].child, lines[i].text.substring(commonPrefixLength) + '\n');
+
+      $(commonElt).addClass('span-removed-common-prefix');
+
+      newChildNodes.push(commonElt);
+      newChildNodes.push(afterElt);
+
+      // TODO: Won't work with regexes
+
+    } else {
+      // Nothing to hide, so add this child like normal
+      newChildNodes.push(getSpanElement(lines[i].child, lines[i].text + '\n'));
     }
+  }
+
+  // Remove all the old children and add all the new ones
+  while (div.firstChild) {
+    div.removeChild(div.firstChild);
+  }
 
 
-    newChildNodes.forEach(function(child) {
-      div.appendChild(child);
-    });
+  newChildNodes.forEach(function(child) {
+    div.appendChild(child);
   });
 }
 
