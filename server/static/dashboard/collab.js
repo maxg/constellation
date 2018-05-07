@@ -1,5 +1,5 @@
-/////////////////////////////
-//////// GLOBAL VARIABLES
+/////////////////////////////////////////////
+///////////// GLOBAL VARIABLES //////////////
 
 var connection = new window.sharedb.Connection(new WebSocket(shareURL));
 
@@ -19,9 +19,15 @@ var parameters;
 // Whether deleted code is currently shown or not
 var showDeletedCode = false;
 
-/////////////////////////////
-//////// MAIN CODE
 
+
+//////////////////////////////////////
+///////////// MAIN CODE //////////////
+
+/**
+ * Fetch the files for this collab, determine which visual to use,
+ *   and display the files accordingly.
+ */
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
 
@@ -88,6 +94,10 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
   showFiles(files, updateFunction, parameters);
 });
 
+/**
+ * Display the files using the provided updateFunction and passing
+ *   extraArgs to that updateFunction.
+ */
 function showFiles(files, updateFunction, extraArgs) {
   var list = document.querySelector('#files');
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
@@ -136,48 +146,9 @@ function showFiles(files, updateFunction, extraArgs) {
 
 
 
-/////////////////////////////
-//////// HELPER FUNCTIONS
-
-/** Get the regexes value from the given URL string.
-      Returns the regexes as a list. */
-function getRegexesFromUrl(url) {
-  var regexes = '';
-  var beginningOfRegexes = url.indexOf("regexes=");
-  if (beginningOfRegexes != -1) {
-    regexes = url.substring(beginningOfRegexes + "regexes=".length);
-  }
-
-  // The URL can have both threshold= and regexes=, so need to filter that out
-  if (regexes.indexOf("threshold=") != -1) {
-    regexes = regexes.substring(0, regexes.indexOf("threshold="));
-  }
-
-  regexes = regexes.split(';;');
-  return regexes;
-}
-
-/** Get the threshold value from the given URL string */
-function getThresholdFromUrl(url) {
-  var threshold = null;
-  var beginningOfThreshold = url.indexOf("threshold=");
-  if (beginningOfThreshold != -1) {
-    threshold = url.substring(beginningOfThreshold + "threshold=".length);
-  }
-
-  // The URL can have both threshold= and regexes=, so need to filter that out
-  if (threshold && threshold.indexOf("regexes=") != -1) {
-    threshold = threshold.substring(0, threshold.indexOf("regexes="));
-  }
-
-  return threshold;
-}
-
-
-
-
-////////////////////////////////////
-///////// UPDATE FUNCTIONS /////////
+/////////////////////////////////////////////
+///////////// UPDATE FUNCTIONS //////////////
+// Displays DOM differently for different visualizations.
 
 /*
  * Update the diffs for the basic visualization.
@@ -326,8 +297,48 @@ function updateDiff_visual4_deletesOnSide(node, baseline, text, extraArgs) {
   });
 }
 
-//////////////////////////////////
-///////// HELPER METHODS /////////
+
+
+/////////////////////////////////////////////
+///////////// HELPER FUNCTIONS //////////////
+
+/**
+ * Get the regexes value from the given URL string.
+ * Returns the regexes as a list.
+ */
+function getRegexesFromUrl(url) {
+  var regexes = '';
+  var beginningOfRegexes = url.indexOf("regexes=");
+  if (beginningOfRegexes != -1) {
+    regexes = url.substring(beginningOfRegexes + "regexes=".length);
+  }
+
+  // The URL can have both threshold= and regexes=, so need to filter that out
+  if (regexes.indexOf("threshold=") != -1) {
+    regexes = regexes.substring(0, regexes.indexOf("threshold="));
+  }
+
+  regexes = regexes.split(';;');
+  return regexes;
+}
+
+/**
+ * Get the threshold value from the given URL string
+ */
+function getThresholdFromUrl(url) {
+  var threshold = null;
+  var beginningOfThreshold = url.indexOf("threshold=");
+  if (beginningOfThreshold != -1) {
+    threshold = url.substring(beginningOfThreshold + "threshold=".length);
+  }
+
+  // The URL can have both threshold= and regexes=, so need to filter that out
+  if (threshold && threshold.indexOf("regexes=") != -1) {
+    threshold = threshold.substring(0, threshold.indexOf("regexes="));
+  }
+
+  return threshold;
+}
 
 /**
  * Given a div with lines of text, hide common prefixes between
@@ -415,7 +426,6 @@ function getCommonPrefixLength(textLine1, textLine2) {
   }
   return j;
 }
-
 
 /**
  * Given a node containing lines of code and regexes
@@ -625,44 +635,6 @@ function errorToString(json, status, err) {
   return (json && json.code || status) + ' ' + (json && json.message || err);
 }
 
-
-///////////////////////////////////
-///////////// DISPLAY CHANGES
-
-///////////////////
-//// Event Handlers
-
-/* Toggle whether deleted code is displayed or not */
-$("#cb-deleted-code").click(function() {
-  showDeletedCode = !showDeletedCode;
-  $('.span-removed').toggle();
-  $('.div-deleted').toggle();
-
-  if (showDeletedCode) {
-    $('.div-normal').removeClass('col-xs-12');
-    $('.div-normal').addClass('col-xs-6');
-  } else {
-    $('.div-normal').removeClass('col-xs-6');
-    $('.div-normal').addClass('col-xs-12');
-  }
-});
-
-/* Add the user-typed regex to the list and update the display */
-$("#add-regex").click(function() {
-  var newRegex = $('#new-regex-text').val();
-  $('#new-regex-text').val('');
-  addRegexToControls(newRegex);
-  updateFileDisplayWithCurrentRegexes();
-});
-
-/* When a regex is checked or un-checked, update the display */
-$('#visual-controls').on("click", ".cb-regex", function() {
-  updateFileDisplayWithCurrentRegexes();
-});
-
-/////////////////////
-//// Helper functions
-
 /**
  * Hide all DOM with deleted code.
  */
@@ -718,3 +690,36 @@ function updateFileDisplayWithCurrentRegexes() {
     updateFunction(this, baseline, text, {'regexes': regexes, 'filepath': filepath});
   });
 }
+
+
+
+///////////////////////////////////////////
+///////////// EVENT HANDLERS //////////////
+
+/* Toggle whether deleted code is displayed or not */
+$("#cb-deleted-code").click(function() {
+  showDeletedCode = !showDeletedCode;
+  $('.span-removed').toggle();
+  $('.div-deleted').toggle();
+
+  if (showDeletedCode) {
+    $('.div-normal').removeClass('col-xs-12');
+    $('.div-normal').addClass('col-xs-6');
+  } else {
+    $('.div-normal').removeClass('col-xs-6');
+    $('.div-normal').addClass('col-xs-12');
+  }
+});
+
+/* Add the user-typed regex to the list and update the display */
+$("#add-regex").click(function() {
+  var newRegex = $('#new-regex-text').val();
+  $('#new-regex-text').val('');
+  addRegexToControls(newRegex);
+  updateFileDisplayWithCurrentRegexes();
+});
+
+/* When a regex is checked or un-checked, update the display */
+$('#visual-controls').on("click", ".cb-regex", function() {
+  updateFileDisplayWithCurrentRegexes();
+});
