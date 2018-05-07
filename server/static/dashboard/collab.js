@@ -663,7 +663,9 @@ $('#visual-controls').on("click", ".cb-regex", function() {
 /////////////////////
 //// Helper functions
 
-/* Hide deleted code */
+/**
+ * Hide all DOM with deleted code.
+ */
 function hideDeletedCode() {
   $('.span-removed').hide();
   $('.div-deleted').hide();
@@ -671,7 +673,9 @@ function hideDeletedCode() {
   $('.div-normal').addClass('col-xs-12');
 }
 
-/* Add the given regex to the controls box */
+/**
+ * Add the given regex to the controls box DOM.
+ */
 function addRegexToControls(regex) {
   if (regex == '') { return; }
 
@@ -694,7 +698,9 @@ function addRegexToControls(regex) {
   $(row).insertBefore($('#add-regex-row'));
 }
 
-/* Display filetext based on what regexes are currently selected */
+/**
+ * Update the file display based on what regexes are currently selected.
+ */
 function updateFileDisplayWithCurrentRegexes() {
   // Get currently active regexes
   var regexes = []
