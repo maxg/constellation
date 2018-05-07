@@ -354,14 +354,14 @@ function hideCommonPrefixes(div) {
   // Since we need to add children for the common prefixes,
   // Store all the children we should have at the end in a new list
   var newChildNodes = [];
-  var firstLine = getSpanElement(lines[0].child, lines[0].text + '\n');
+  var firstLine = createSpanElement(lines[0].text + '\n', lines[0].child);
   newChildNodes.push(firstLine);
 
   for (var i = 1; i < lines.length; i++) {
     // Only consider hiding prefixes if the two lines are both deleted code
     if (!lines[i]  .child.classList.contains('span-removed') ||
         !lines[i-1].child.classList.contains('span-removed')) {
-      newChildNodes.push(getSpanElement(lines[i].child, lines[i].text + '\n'));
+      newChildNodes.push(createSpanElement(lines[i].text + '\n', lines[i].child));
       continue;
     }
 
@@ -370,8 +370,8 @@ function hideCommonPrefixes(div) {
       // Need to change the second child to hide the text in common
       //   by putting spaces there instead (monospace font => correct behavior)
 
-      var commonElt = getSpanElement(lines[i].child, Array(commonPrefixLength+1).join(" "));
-      var afterElt = getSpanElement(lines[i].child, lines[i].text.substring(commonPrefixLength) + '\n');
+      var commonElt = createSpanElement(Array(commonPrefixLength+1).join(" "), lines[i].child);
+      var afterElt = createSpanElement(lines[i].text.substring(commonPrefixLength) + '\n', lines[i].child);
 
       $(commonElt).addClass('span-removed-common-prefix');
 
@@ -381,8 +381,8 @@ function hideCommonPrefixes(div) {
       // TODO: Won't work with regexes
 
     } else {
-      // Nothing to hide, so add this child like normal
-      newChildNodes.push(getSpanElement(lines[i].child, lines[i].text + '\n'));
+      // There is no common prefix, so add this child like normal
+      newChildNodes.push(createSpanElement(lines[i].text + '\n', lines[i].child));
     }
   }
 
@@ -390,23 +390,26 @@ function hideCommonPrefixes(div) {
   while (div.firstChild) {
     div.removeChild(div.firstChild);
   }
-
-
   newChildNodes.forEach(function(child) {
     div.appendChild(child);
   });
 }
 
-/* Gets a span element with the same classes as {child} and with {text} inside it */
-// TODO: better name, method signature
-function getSpanElement(child, text) {
+/**
+ * Creates a span element with {text} as its text and with
+ * the same classes as {child}.
+ */
+function createSpanElement(text, child) {
   var elt = document.createElement('span');
   elt.appendChild(document.createTextNode(text));
   $(elt).addClass($(child).attr('class'));
   return elt;
 }
 
-
+/**
+ * Gets the length of the common prefix between textLine1 and textLine2.
+ * For example, getCommonPrefixLength("hello", "here") = 2.
+ */
 function getCommonPrefixLength(textLine1, textLine2) {
   var j = 0;
   while (j < textLine1.length && j < textLine2.length) {
