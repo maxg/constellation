@@ -88,42 +88,6 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
   showFiles(files, updateFunction, parameters);
 });
 
-
-/** Get the regexes value from the given URL string.
-      Returns the regexes as a list. */
-function getRegexesFromUrl(url) {
-  var regexes = '';
-  var beginningOfRegexes = url.indexOf("regexes=");
-  if (beginningOfRegexes != -1) {
-    regexes = url.substring(beginningOfRegexes + "regexes=".length);
-  }
-
-  // The URL can have both threshold= and regexes=, so need to filter that out
-  if (regexes.indexOf("threshold=") != -1) {
-    regexes = regexes.substring(0, regexes.indexOf("threshold="));
-  }
-
-  regexes = regexes.split(';;');
-  return regexes;
-}
-
-/** Get the threshold value from the given URL string */
-function getThresholdFromUrl(url) {
-  var threshold = null;
-  var beginningOfThreshold = url.indexOf("threshold=");
-  if (beginningOfThreshold != -1) {
-    threshold = url.substring(beginningOfThreshold + "threshold=".length);
-  }
-
-  // The URL can have both threshold= and regexes=, so need to filter that out
-  if (threshold && threshold.indexOf("regexes=") != -1) {
-    threshold = threshold.substring(0, threshold.indexOf("regexes="));
-  }
-
-  return threshold;
-}
-
-
 function showFiles(files, updateFunction, extraArgs) {
   var list = document.querySelector('#files');
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
@@ -169,6 +133,48 @@ function showFiles(files, updateFunction, extraArgs) {
 
   });
 }
+
+
+
+/////////////////////////////
+//////// HELPER FUNCTIONS
+
+/** Get the regexes value from the given URL string.
+      Returns the regexes as a list. */
+function getRegexesFromUrl(url) {
+  var regexes = '';
+  var beginningOfRegexes = url.indexOf("regexes=");
+  if (beginningOfRegexes != -1) {
+    regexes = url.substring(beginningOfRegexes + "regexes=".length);
+  }
+
+  // The URL can have both threshold= and regexes=, so need to filter that out
+  if (regexes.indexOf("threshold=") != -1) {
+    regexes = regexes.substring(0, regexes.indexOf("threshold="));
+  }
+
+  regexes = regexes.split(';;');
+  return regexes;
+}
+
+/** Get the threshold value from the given URL string */
+function getThresholdFromUrl(url) {
+  var threshold = null;
+  var beginningOfThreshold = url.indexOf("threshold=");
+  if (beginningOfThreshold != -1) {
+    threshold = url.substring(beginningOfThreshold + "threshold=".length);
+  }
+
+  // The URL can have both threshold= and regexes=, so need to filter that out
+  if (threshold && threshold.indexOf("regexes=") != -1) {
+    threshold = threshold.substring(0, threshold.indexOf("regexes="));
+  }
+
+  return threshold;
+}
+
+
+
 
 ////////////////////////////////////
 ///////// UPDATE FUNCTIONS /////////
@@ -736,7 +742,7 @@ function hideDeletedCode() {
 /* Add the given regex to the controls box */
 function addRegexToControls(regex) {
   if (regex == '') { return; }
-  
+
   var row = document.createElement('div');
   row.classList.add('row');
   row.classList.add('regex-row');
