@@ -286,6 +286,8 @@ function updateDiff_visual4_deletesOnSide(node, baseline, text, extraArgs) {
     console.log("diff:");
     console.log(diff);
     var divs = addTotalDiffDeletesOnSideDom(diff, node);
+    console.log("divs:");
+    console.log(divs);
     divs.forEach(function(div) {
       hideCommonPrefixes(div);
     });
@@ -348,11 +350,15 @@ function getThresholdFromUrl(url) {
  * If a common prefix is found, that text is removed from the second line.
  */
 function hideCommonPrefixes(div) {
+  console.log("HIDING COMMON PREFIXES");
   var children = div.childNodes;
 
   // Split into individual lines
   var lines = [];
   children.forEach(function(child) {
+    console.log("part data:");
+    console.log($(child).data('part'));
+
     var childLines = child.innerText.split('\n');
     childLines.pop(); // Last one is always empty
     childLines.forEach(function(childLine) {
@@ -577,6 +583,8 @@ function addTotalDiffDeletesOnSideDom(diff, node) {
     if (part.value.length > 0) {
     
       var elt = document.createElement('span');
+      // Save part data for hide common prefix
+      $(elt).data('part', part);
 
       if (part.added) {
         elt.classList.add('span-added');
