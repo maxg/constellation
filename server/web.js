@@ -575,200 +575,112 @@ function mergeDiffs(diffs) {
     return diffs;
   }
 
-  mergedDiff = JSON.parse(JSON.stringify(diffs[0]));
-  for (var i = 1; i < diffs.length; i++) {
-    var diff = JSON.parse(JSON.stringify(diffs[i]));
+  // This algorithm uses a two-list strategy.
+  // As we merge one diff with all the previous diffs,
+  //   we push parts that we've already processed
+  //   onto processedParts and pull from {toBeProcessedParts}
+  //   as we merge in the current diff.
 
-    // Index into mergedDiff for what chunk we're currently on
-    var currentChunkInMerged = 0;
+  var processedParts = [];
+  var toBeProcessedParts = [];
 
-    // Index within the current chunk
-    var indexInCurrentChunkInMerged = 0;
+  // TODO: Other way to handle base case?
+  diffs[0].forEach(function(part) {
+    processedParts.push(part);
+  });
 
+  // Process the remaining diffs
+  diffs.slice(1).forEach(function(diff) {
+    // When starting a new diff, all the old diffs
+    // become "to be processed", so we need to
+    // shift all the elements
+    toBeProcessedParts = processedParts;
+    processedParts = [];
+
+    // Process each part of this diff
     diff.forEach(function(part) {
-
-      if (part.added) {
-
-        var currentChunk = mergedDiff[currentChunkInMerged];
-
-        // Skip through the already removed chunks
-        // This preserves order if I remove something,
-        //   and then add something later in the same place
-        while (currentChunk && currentChunk.removed) {
-          currentChunkInMerged += 1;
-          currentChunk = mergedDiff[currentChunkInMerged];
-        }
-
-        if (!currentChunk) {
-          // The added part is at the very end of the file
-          mergedDiff.push(part);
-
-          // Our indexes are at the end of the last part
-          currentChunkInMerged = mergedDiff.length;
-          indexInCurrentChunkInMerged = part.value.length;
-
-        } else {
-          // Split up this chunk into previous and next
-          var prevChunk = JSON.parse(JSON.stringify(currentChunk));
-          prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged);
-          var nextChunk = JSON.parse(JSON.stringify(currentChunk));
-          nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged);
-
-          // Delete the current chunk and replace it with prev, part, and next
-          mergedDiff.splice(currentChunkInMerged, 1, prevChunk, part, nextChunk);
-
-          // Now, we start at the beginning of nextChunk
-          currentChunkInMerged += 2;
-          indexInCurrentChunkInMerged = 0;
-        }    
-        
-      } else if (part.removed) {
-
-        var currentChunk = mergedDiff[currentChunkInMerged];
-
-        // Skip through the already removed chunks
-        while (currentChunk && currentChunk.removed) {
-          currentChunkInMerged += 1;
-          currentChunk = mergedDiff[currentChunkInMerged];
-        }
-
-        if (indexInCurrentChunkInMerged + part.value.length < currentChunk.value.length) {
-          // The remove is within a single chunk
-          var prevChunk = JSON.parse(JSON.stringify(currentChunk));
-          prevChunk.value = prevChunk.value.substring(0, indexInCurrentChunkInMerged);
-          var deletedChunk = JSON.parse(JSON.stringify(currentChunk));
-          deletedChunk.value = deletedChunk.value.substring(indexInCurrentChunkInMerged, indexInCurrentChunkInMerged + part.value.length);
-          deletedChunk.removed = true;
-          deletedChunk.added = false;
-          var nextChunk = JSON.parse(JSON.stringify(currentChunk));
-          nextChunk.value = nextChunk.value.substring(indexInCurrentChunkInMerged + part.value.length);
-
-          // Delete the current chunk and replace it
-          mergedDiff.splice(currentChunkInMerged, 1, prevChunk, deletedChunk, nextChunk);
-
-          // Starting at the beginning of nextChunk
-          currentChunkInMerged += 2;
-          indexInCurrentChunkInMerged = 0;
-
-        } else {
-          // The remove goes over multiple chunks
-
-          // Split the first chunk into a normal part and deleted part
-          var normalChunk = JSON.parse(JSON.stringify(currentChunk));
-          normalChunk.value = normalChunk.value.substring(0, indexInCurrentChunkInMerged);
-          var firstDeletedChunk = JSON.parse(JSON.stringify(currentChunk));
-          firstDeletedChunk.value = firstDeletedChunk.value.substring(indexInCurrentChunkInMerged);
-          firstDeletedChunk.removed = true;
-          firstDeletedChunk.added = false;
-
-          // TODO: Remove parts with '' value
-
-          // Delete the current chunk and replace it with prev and next
-          mergedDiff.splice(currentChunkInMerged, 1, normalChunk, firstDeletedChunk);
-
-          // Start our while loop at the beginning of the next chunk
-          currentChunkInMerged += 2;
-          indexInCurrentChunkInMerged = 0;
-          if (!mergedDiff[currentChunkInMerged]) {
-            return;
-          }
-
-          var numSeenCharacters = 0;
-          var numCharactersLeft = part.value.length - firstDeletedChunk.value.length;
-          
-          // Mark all chunks in the middle as removed
-          // and find the chunk at the end that must be partially removed
-          while (numSeenCharacters < numCharactersLeft) {
-            var currentChunk = mergedDiff[currentChunkInMerged];
-            if (currentChunk.removed) {
-              // This chunk is not included this diff, so keep going
-              currentChunkInMerged += 1;
-
-            } else if (numSeenCharacters + currentChunk.value.length < numCharactersLeft) {
-              // This whole chunk should be considered removed
-              currentChunk.removed = true;
-              currentChunk.added = false;
-              numSeenCharacters = numSeenCharacters + currentChunk.value.length;
-              currentChunkInMerged += 1;
-
-            } else {
-              // The last chunk is partly removed, partly not removed
-              break;
-            }
-          }
-
-          // Split last chunk, since remove might end
-          // in the middle of a chunk
-          currentChunk = mergedDiff[currentChunkInMerged];
-          if (!currentChunk) {
-            return;
-          }
-          
-          // We have this many more characters to remove 
-          numCharactersToDelete = numCharactersLeft - numSeenCharacters;
-
-          var lastDeletedChunk = JSON.parse(JSON.stringify(currentChunk));
-          lastDeletedChunk.value = lastDeletedChunk.value.substring(0, numCharactersToDelete);
-          lastDeletedChunk.removed = true;
-          lastDeletedChunk.added = false;
-          var nextNormalChunk = JSON.parse(JSON.stringify(currentChunk));
-          nextNormalChunk.value = nextNormalChunk.value.substring(numCharactersToDelete);
-
-
-          // Delete the current chunk and replace it with prev and next
-          mergedDiff.splice(currentChunkInMerged, 1, lastDeletedChunk, nextNormalChunk);
-
-          // Start at the beginning of the normal chunk
-          currentChunkInMerged += 1;
-          indexInCurrentChunkInMerged = 0;
-
-        }
-
-        
-      } else {
-        // Part is not removed or added,
-        // So we just need to change our currentChunkInMerged
-        // and indexInCurrentChunkInMerged
-
-        var currentChunk = mergedDiff[currentChunkInMerged];
-
-        // Check if we stay in the same chunk after this part
-        if (indexInCurrentChunkInMerged + part.value.length < currentChunk.value.length) {
-          indexInCurrentChunkInMerged += part.value.length;
-          return;
-        }
-
-        // Start out by going through the first chunk
-        var numSeenCharacters = currentChunk.value.length - indexInCurrentChunkInMerged;
-        
-        currentChunkInMerged += 1;
-        currentChunk = mergedDiff[currentChunkInMerged];
-    
-        // Find the chunk at the end
-        while (currentChunk && numSeenCharacters < part.value.length) {
-          if (currentChunk.removed) {
-            // A removed chunk should not be counted, so keep going
-            currentChunkInMerged += 1;
-
-          } else if (numSeenCharacters + currentChunk.value.length < part.value.length) {
-            // We can go completely through this chunk,
-            // so move on to next chunk
-            numSeenCharacters = numSeenCharacters + currentChunk.value.length;
-            currentChunkInMerged += 1;
-
-          } else {
-            // We can't go through a whole chunk
-            break;
-          }
-          currentChunk = mergedDiff[currentChunkInMerged];
-        }
-
-        indexInCurrentChunkInMerged = part.value.length - numSeenCharacters;
+      // Push any removed parts onto {processedParts},
+      //   since future diffs will never have to deal
+      //   with parts that were removed in the past
+      var currentPart = toBeProcessedParts[0];
+      while (currentPart && currentPart.removed) {
+        var partToShift = toBeProcessedParts.shift();
+        processedParts.push(partToShift);
+        currentPart = toBeProcessedParts[0];
       }
-    });
-  }
 
-  return mergedDiff;
+      // Process the part
+      if (part.added) {
+        processedParts.push(part);
+      } else  {
+        // Removed parts and normal parts can be processed
+        //   the same way
+        processPart(processedParts, toBeProcessedParts, part);
+      }
+
+    });
+
+  });
+  // The final product is all the processed parts
+  return processedParts;
+}
+
+// mutates arrays
+// TODO: Spec
+function processPart(processedParts, toBeProcessedParts, part) {
+  // Processing a removed part and an normal part is the same
+  //   because you may have to go through many toBeProcessed parts
+  //   if the current part overlaps multiple parts.
+  // The only difference is what the value of 'removed' and 'added'
+  //   should be when you process the parts.
+
+  var totalCharsSeen = 0;
+  var maxChars = part.value.length;
+
+  while (totalCharsSeen < maxChars) {
+
+    var nextPart = toBeProcessedParts.shift();
+
+    // Parts that are already removed don't count toward
+    //   our characters seen, so just process them
+    //   and move on
+    if (nextPart.removed) {
+      processedParts.push(nextPart);
+      continue;
+    }
+
+    if (totalCharsSeen + nextPart.value.length <= maxChars) {
+      // This entire part can be processed
+      var nextPartProcessed = {
+        'value': nextPart.value,
+        'removed': part.removed,
+        // If this part is being removed, then 'added' should become
+        //   false but otherwise it should keep its original value
+        'added': (part.removed) ? false : nextPart.added
+      }
+      nextPart.removed = part.removed;
+      processedParts.push(nextPartProcessed); 
+      totalCharsSeen += nextPart.value.length;
+
+    } else {
+      // This part only goes partly through {nextPart}
+      var numCharsOverlap = maxChars - totalCharsSeen;
+      var nextPartProcessed = {
+        'value': nextPart.value.substring(0, numCharsOverlap),
+        'removed': part.removed,
+        'added': (part.removed) ? false : nextPart.added
+      }
+      var nextPartUnprocessed = {
+        'value': nextPart.value.substring(numCharsOverlap),
+        'removed': nextPart.removed,
+        'added': nextPart.added
+      }
+      processedParts.push(nextPartProcessed);
+      toBeProcessedParts.unshift(nextPartUnprocessed);
+
+      break;
+    }
+  }
 }
 
 /**
