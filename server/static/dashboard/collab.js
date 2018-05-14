@@ -562,13 +562,14 @@ function updateFileDisplayWithCurrentRegexes() {
     regexes.push(regex);
   });
 
+  parameters['regexes'] = regexes;
+
   // Re-render each file with new regexes
   $(".file").each(function(index) {
     var baseline = $(this).data('baseline');
     var text = $(this).data('text');
     var filepath = $(this).data('filepath');
-    // TODO: Change the parameters val, rather than passing in regexes again?
-    updateFunction(this, baseline, text, {'regexes': regexes, 'filepath': filepath});
+    updateFunction(this, baseline, text, {'filepath': filepath});
   });
 }
 
