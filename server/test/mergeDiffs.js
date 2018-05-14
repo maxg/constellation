@@ -22,9 +22,8 @@ function testMergedDiffsRegression() {
     {"value": "6.031", "added": true}
   ]
 
-  //console.log("regression #4");
-  //console.log("expect:hello =added;the=original;re=removed;something=removed;6.031=added");
-  //console.log(mergeDiffs([diff_0, diff_1]));
+  console.log("expect:hello =added;the=original;re=removed;something=removed;6.031=added");
+  console.log(mergeDiffs([diff_0, diff_1]));
 
 
   /* Regression #3: Not going through enough of the diff
@@ -58,8 +57,8 @@ function testMergedDiffsRegression() {
     {"count":30,"value":"    }\n    \n    \n    //////\n    // observers:\n    \n public int size();\n    \n    public boolean contains(E e);\n    \n    \n    \n    //////\n    // producers:\n    \n    // TODO\n    \n    //////\n    // mutators:\n    \n    public void add(E e);\n    public void remove(E e);\n    \n    \n     \n        \n    \n    \n    \n}"},
   ];
 
-  //console.log("expect:public Set<E> CharSet1() to be all together");
-  //console.log(mergeDiffs([diff_0, diff_1]));
+  console.log("expect:public Set<E> CharSet1() to be all together");
+  console.log(mergeDiffs([diff_0, diff_1]));
 
   /* Regression #1, causing bugs #1 and #2 
     TODO: Only test case not passing right now
@@ -73,7 +72,7 @@ function testMergedDiffsRegression() {
       {'value': '\n    public Set<E> CharSet1() {\n        m\n    }\n', 'added': true},
       {'value': '    \n'},
       {'value': '    \n', 'added': true},
-      {'value': '     //////\n'}
+      {'value': '    //////\n'}
     ];
 
     diff_2 = [
@@ -85,16 +84,39 @@ function testMergedDiffsRegression() {
 
     /* Expect:
         // TODO\n---------------------removed
-    \n--------------------------------added
+        \n--------------------------------added
         public Set<E> CharSet1() {\n--added
-            m\n-----------------------added then removed(2)
-           \n-------------------------added(2)
+            m\n-----------------------removed
+           \n-------------------------added
         }\n---------------------------added
         \n----------------------------same
         \n----------------------------added
         //////\n------------------------same 
     */  
     console.log('expect: see comments');
+    console.log(mergeDiffs([diff_0, diff_1, diff_2]));
+
+    /** Simplified version of ^ */
+    diff_0 = [
+      {'value': 'agc'},
+    ];
+
+    diff_1 = [
+      {'value': 'a', 'removed': true},
+      {'value': 'bde', 'added': true},
+      {'value': 'g'},
+      {'value': 'h', 'added': true},
+      {'value': 'c'}
+    ];
+
+    diff_2 = [
+      {'value': 'b'},
+      {'value': 'd', 'removed': true},
+      {'value': 'f', 'added': true},
+      {'value': 'eghc'}
+    ]
+
+    console.log("a=removed;b=added;d:removed;f:added;e:added;g=original;h:added;c:original");
     console.log(mergeDiffs([diff_0, diff_1, diff_2]));
 
     /* Bug #2 minimized */
@@ -109,8 +131,8 @@ function testMergedDiffsRegression() {
       {'value': 'short', 'added': true},
       {'value': 'ing'}
     ];
-    //console.log('expect:some=same,muchlongthing=added,th=same,short=added,ing=same');
-    //console.log(mergeDiffs([diff_0, diff_1]));
+    console.log('expect:some=same,muchlongthing=added,th=same,short=added,ing=same');
+    console.log(mergeDiffs([diff_0, diff_1]));
 
     /* Bug #1 minimized */
     diff_0 = [
@@ -122,8 +144,8 @@ function testMergedDiffsRegression() {
       {'value': 'else', 'added': true},
       {'value': 'ething'}
     ];
-    //console.log('expect:som=removed,else=added,ething=same');
-    //console.log(mergeDiffs([diff_0, diff_1]));
+    console.log('expect:som=removed,else=added,ething=same');
+    console.log(mergeDiffs([diff_0, diff_1]));
 }
 
 function testMergedDiffsRemove() {
@@ -322,8 +344,8 @@ function testMergedDiffsAdd() {
   console.log(mergeDiffs([diff_0, diff_1, diff_2]));
 }
 
-//testMergedDiffsAdd();
-//testMergedDiffsRemove();
+testMergedDiffsAdd();
+testMergedDiffsRemove();
 testMergedDiffsRegression();
 
 /*
