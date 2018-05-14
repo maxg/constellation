@@ -311,9 +311,9 @@ exports.createFrontend = function createFrontend(config, db) {
       db.getBaseline(req.params.project, req.params.filepath, function(err, baseline) {
         if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
         var chunkedDiffs = getChunkedDiffs(ops, req.query.threshold, baseline);
-        var mergedDiffs = mergeDiffs(chunkedDiffs);
+        var flatDiff = flattenDiffs(chunkedDiffs);
         res.setHeader('Cache-Control', 'max-age=3600');
-        res.send(mergedDiffs);
+        res.send(flatDiff);
       });
     });
   })
@@ -562,15 +562,14 @@ function getChunkedDiffs(ops, threshold, baseline) {
     return chunkedDiffs; 
 }
 
-// TODO: Simplify
 // TODO: Remove parts with '' at the end
 
 /**
- * Merges the given list of diffs into a total diff,
- * maintaining the inserts and deletes that happened
- * in each diff.
+ * Flattens the given list of diffs into one diff,
+ *   maintaining the adds and removes that happened
+ *   in each diff.
  */
-function mergeDiffs(diffs) {
+function flattenDiffs(diffs) {
   if (diffs.length == 0) {
     return diffs;
   }
@@ -578,11 +577,11 @@ function mergeDiffs(diffs) {
   // This algorithm uses a two-list strategy.
   // As we merge one diff with all the previous diffs,
   //   we push parts that we've already processed
-  //   onto processedParts and pull from {toBeProcessedParts}
+  //   onto processedParts and pull from {unprocessedParts}
   //   as we merge in the current diff.
 
   var processedParts = [];
-  var toBeProcessedParts = [];
+  var unprocessedParts = [];
 
   // TODO: Other way to handle base case?
   diffs[0].forEach(function(part) {
@@ -594,7 +593,7 @@ function mergeDiffs(diffs) {
     // When starting a new diff, all the old diffs
     // become "to be processed", so we need to
     // shift all the elements
-    toBeProcessedParts = processedParts;
+    unprocessedParts = processedParts;
     processedParts = [];
 
     // Process each part of this diff
@@ -602,11 +601,11 @@ function mergeDiffs(diffs) {
       // Push any removed parts onto {processedParts},
       //   since future diffs will never have to deal
       //   with parts that were removed in the past
-      var currentPart = toBeProcessedParts[0];
+      var currentPart = unprocessedParts[0];
       while (currentPart && currentPart.removed) {
-        var partToShift = toBeProcessedParts.shift();
+        var partToShift = unprocessedParts.shift();
         processedParts.push(partToShift);
-        currentPart = toBeProcessedParts[0];
+        currentPart = unprocessedParts[0];
       }
 
       // Process the part
@@ -615,7 +614,7 @@ function mergeDiffs(diffs) {
       } else  {
         // Removed parts and normal parts can be processed
         //   the same way
-        processPart(processedParts, toBeProcessedParts, part);
+        processPart(processedParts, unprocessedParts, part);
       }
 
     });
@@ -627,7 +626,7 @@ function mergeDiffs(diffs) {
 
 // mutates arrays
 // TODO: Spec
-function processPart(processedParts, toBeProcessedParts, part) {
+function processPart(processedParts, unprocessedParts, part) {
   // Processing a removed part and an normal part is the same
   //   because you may have to go through many toBeProcessed parts
   //   if the current part overlaps multiple parts.
@@ -639,7 +638,7 @@ function processPart(processedParts, toBeProcessedParts, part) {
 
   while (totalCharsSeen < maxChars) {
 
-    var nextPart = toBeProcessedParts.shift();
+    var nextPart = unprocessedParts.shift();
 
     // Parts that are already removed don't count toward
     //   our characters seen, so just process them
@@ -676,7 +675,7 @@ function processPart(processedParts, toBeProcessedParts, part) {
         'added': nextPart.added
       }
       processedParts.push(nextPartProcessed);
-      toBeProcessedParts.unshift(nextPartUnprocessed);
+      unprocessedParts.unshift(nextPartUnprocessed);
 
       break;
     }
@@ -716,4 +715,4 @@ function getOpText(op) {
 }
 
 // Export for testing
-exports.mergeDiffs = mergeDiffs;
+exports.flattenDiffs = flattenDiffs;
