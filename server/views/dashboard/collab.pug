@@ -42,16 +42,16 @@ block content
     https://github.com/pugjs/pug/issues/1422
 
   if visual
-    if visual[0] == 1 || visual[0] == 2 || visual[0] == 3 || visual[0] == 4
+    if visual[0] == 1 || visual[0] == 2 || visual[0] == 3 || visual[0] == 4 || visual[0] == 5
       | <div id="visual-controls" class="col-xs-12">
 
-    if visual[0] == 1 || visual[0] == 3 || visual[0] == 4
+    if visual[0] == 1 || visual[0] == 3 || visual[0] == 4 || visual[0] == 5
         .row
           .col-xs-2
             input#cb-deleted-code(type='checkbox')
           p.col-xs-10 deleted code
     
-    if visual[0] == 2 || visual[0] == 3
+    if visual[0] == 2 || visual[0] == 3 || visual[0] == 5
         .row: .col-xs-12: h5 Pattern Matches
         #add-regex-row.row
           .col-xs-2

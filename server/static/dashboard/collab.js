@@ -89,6 +89,19 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     var threshold = getThresholdFromUrl(visual);
     parameters["threshold"] = threshold;
     updateFunction = updateDiff_visual4_deletesOnSide;
+  } else if (visual[0] == '5') {
+    // Visualization 5: total diff + regex matching + hiding common prefixes
+
+    var threshold = getThresholdFromUrl(visual);
+    var regexes = getRegexesFromUrl(visual);
+    parameters['threshold'] = threshold;
+    parameters['regexes'] = regexes;
+    updateFunction = updateDiff_visual5;
+
+    regexes.forEach(function(regex) {
+      addRegexToControls(regex);
+    });
+
   }
 
   showFiles(files, updateFunction, parameters);
@@ -301,7 +314,41 @@ function updateDiff_visual4_deletesOnSide(node, baseline, text, extraArgs) {
   });
 }
 
+// TODO: Duplicate code
+function updateDiff_visual5(node, baseline, text, extraArgs) {
+  if (baseline === undefined || text === undefined) { return; }
 
+  var filepath = extraArgs["filepath"];
+  var threshold = extraArgs["threshold"];
+  var url = getAjaxUrlForTotalDiff(filepath, threshold);
+
+  $.ajax(url).done(function(diff) {
+    var divs = addTotalDiffDeletesOnSideDom(diff, node);
+    var regexes = extraArgs["regexes"];
+
+    divs.forEach(function(div) {
+      hideCommonPrefixes(div);
+    });
+    
+    divs.forEach(function(div) {
+      addRegexHighlighting(div, regexes);
+    });
+
+    
+
+    if (!showDeletedCode) {
+      hideDeletedCode();
+    }
+
+    // TODO: Bug, after un-checking a regex, it appends the same text
+    //   over and over so there's 6 filetexts in a row
+
+    // TODO: Add syntax highlighting?
+
+  }).fail(function(req, status, err) {
+    list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
+  });
+}
 
 /////////////////////////////////////////////
 ///////////// HELPER FUNCTIONS //////////////
