@@ -378,8 +378,11 @@ function hideCommonPrefixes(div) {
 
   for (var i = 1; i < lines.length; i++) {
     // Only consider hiding prefixes if the two lines are both deleted code
-    if (!lines[i]  .child.classList.contains('span-removed') ||
-        !lines[i-1].child.classList.contains('span-removed')) {
+    // And are from different snapshots
+    if ((!lines[i]  .child.classList.contains('span-removed')) ||
+        (!lines[i-1].child.classList.contains('span-removed')) ||
+        ($(lines[i].  child).data('part').snapshotNumber ==
+         $(lines[i-1].child).data('part').snapshotNumber )) {
       newChildNodes.push(createSpanElement(lines[i].text + '\n', lines[i].child));
       continue;
     }
@@ -601,6 +604,7 @@ function addTotalDiffDeletesOnSideDom(diff, node) {
       divNormal.appendChild(elt);
 
       elt2 = elt.cloneNode(true);
+      $(elt2).data('part', part);
       divDeleted.appendChild(elt2);
     }
 
