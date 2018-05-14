@@ -35,9 +35,12 @@ function chunkOpsIntoDiffs(ops, threshold, baseline) {
   baseDiff.forEach(function(part) {
     // Note: should only be one part
     part.original = true;
+    part.snapshotNumber = 0;
   });
 
   chunkedDiffs.push(baseDiff);
+
+  var snapshotNumber = 1;
 
   /* Apply each op, and calculate a diff if two 
      consecutive ops are far enough apart */
@@ -53,6 +56,10 @@ function chunkOpsIntoDiffs(ops, threshold, baseline) {
       if (!(chunkedDiff.length == 1 && 
           !chunkedDiff[0].added &&
           !chunkedDiff[0].removed)) {
+        chunkedDiff.forEach(function(part) {
+          part.snapshotNumber = snapshotNumber;
+        });
+        snapshotNumber += 1;
         chunkedDiffs.push(chunkedDiff);
       }
 
@@ -80,6 +87,9 @@ function chunkOpsIntoDiffs(ops, threshold, baseline) {
   if (!(chunkedDiff.length == 1 &&
       !chunkedDiff[0].added &&
       !chunkedDiff[0].removed)) {
+    chunkedDiff.forEach(function(part) {
+      part.snapshotNumber = snapshotNumber;
+    });
     chunkedDiffs.push(chunkedDiff);
   }
 
@@ -174,6 +184,7 @@ function processPart(processedParts, unprocessedParts, part) {
       // This entire part can be processed
       var nextPartProcessed = {
         'value': nextPart.value,
+        'snapshotNumber': nextPart.snapshotNumber,
         'removed': part.removed,
         // If this part is being removed, then 'added' should become
         //   false but otherwise it should keep its original value
@@ -188,11 +199,13 @@ function processPart(processedParts, unprocessedParts, part) {
       var numCharsOverlap = maxChars - totalCharsSeen;
       var nextPartProcessed = {
         'value': nextPart.value.substring(0, numCharsOverlap),
+        'snapshotNumber': nextPart.snapshotNumber,
         'removed': part.removed,
         'added': (part.removed) ? false : nextPart.added
       }
       var nextPartUnprocessed = {
         'value': nextPart.value.substring(numCharsOverlap),
+        'snapshotNumber': nextPart.snapshotNumber,
         'removed': nextPart.removed,
         'added': nextPart.added
       }
