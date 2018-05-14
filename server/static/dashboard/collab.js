@@ -11,20 +11,11 @@ collab.fetch(function(err) {
 });
 
 // Parameters required to use updateFunction
+// TODO: Reconcile parameters and extraArgs
 var parameters = {};
 
 // Whether deleted code is currently shown or not
 var showDeletedCode = false;
-
-// A map from visual number to the update function to be used
-var updateFunctionMap = new Map([
-  [0, updateDiff_basic],
-  [1, updateDiff_visual1_deletesOnSide],
-  [2, updateDiff_visual2],
-  [3, updateDiff_visual3],
-  [4, updateDiff_visual4_deletesOnSide],
-  [5, updateDiff_visual5]]);
-
 
 
 //////////////////////////////////////
@@ -60,20 +51,19 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     });
   }
 
-  var visualNumber = parseInt(visual[0]);
-  if (!visualNumber || visualNumber > 5) {
-    visualNumber = 0;
+  if (visual[0] == '4' ||
+      visual[0] == '5') {
+    parameters['hideCommonPrefixes'] = true;
   }
-  var updateFunction = updateFunctionMap.get(visualNumber);
 
-  showFiles(files, updateFunction, parameters);
+  showFiles(files, parameters);
 });
 
 /**
  * Display the files using the provided updateFunction and passing
  *   extraArgs to that updateFunction.
  */
-function showFiles(files, updateFunction, extraArgs) {
+function showFiles(files, extraArgs) {
   var list = document.querySelector('#files');
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
   files.forEach(function(file) {
@@ -125,192 +115,60 @@ function showFiles(files, updateFunction, extraArgs) {
 ///////////// UPDATE FUNCTIONS //////////////
 // Displays DOM differently for different visualizations.
 
-/*
- * Update the diffs for the basic visualization.
- */
-function updateDiff_basic(node, baseline, text, file, extraArgs) {
-  drawNormalDiff(baseline, text, node);
-}
-
-/** 
- * Update the diffs using visual 1.
- * Visual 1: A total diff view, that includes some code history
- * DEPRECATED (updateDiff_visual1_deletesOnSide is preferred)
- */
-function updateDiff_visual1(node, baseline, text, extraArgs) {
+function updateFunction(node, baseline, text, extraArgs) {
   if (baseline === undefined || text === undefined) { return; }
 
-  var filepath = extraArgs["filepath"];
-  var threshold = extraArgs["threshold"];
-  var url = getAjaxUrlForTotalDiff(filepath, threshold);
+  var threshold = parameters['threshold'];
+  var regexes = parameters['regexes'];
+  var hideCommon = parameters['hideCommonPrefixes'];
 
-  $.ajax(url).done(function(diff) {
-    diff.forEach(function(part){
-      var elt = document.createElement('span');
+  if (!threshold) {
+    // No treshold means no total diff
+    drawNormalDiff(baseline, text, node);
 
-      if (part.added) {
-        elt.classList.add('span-added');
-      } else if (part.removed) {
-        elt.classList.add('span-removed');
-        if (part.original) {
-          elt.classList.add('span-original');
-        }
-      } else {
-        elt.classList.add('span-original');
+    if (regexes) {
+      addRegexHighlighting(node, regexes);
+      // TODO: Without regex matching, the entire line is highlighted
+      //   in light yellow if the student added that code.
+      // However, now only the part of the line with code on it is
+      //   highlighted.
+    }
+
+  } else {
+    // Get the flattened diff to display in total diff style
+    var filepath = extraArgs["filepath"];
+    var url = getAjaxUrlForTotalDiff(filepath, threshold);
+
+    $.ajax(url).done(function(diff) {
+      var divs = addTotalDiffDeletesOnSideDom(diff, node);
+
+      if (hideCommon) {
+        divs.forEach(function(div) {
+          hideCommonPrefixes(div);
+        });
       }
 
-      elt.appendChild(document.createTextNode(part.value));
-      node.appendChild(elt);
+      if (regexes) {
+        divs.forEach(function(div) {
+          addRegexHighlighting(div, regexes);
+        })
+      }
+
+      // TODO: Bug, after un-checking a regex, it appends the same text
+      //   over and over so there's 6 filetexts in a row
+
+      if (!showDeletedCode) {
+        hideDeletedCode();
+      }
+
+      // TODO: Add syntax highlighting?
+
+    }).fail(function(req, status, err) {
+      list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
     });
-
-    // TODO: Add syntax highlighting?
-
-  }).fail(function(req, status, err) {
-    list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
-  });
+  }
 }
 
-/** 
- * Update the diffs using visual 1.
- * Visual 1: A total diff view, that includes some code history
- * This visualiation moves the deleted code to the right, keeping only final code on the left.
- */
-function updateDiff_visual1_deletesOnSide(node, baseline, text, extraArgs) {
-  if (baseline === undefined || text === undefined) { return; }
-
-  var filepath = extraArgs["filepath"];
-  var threshold = extraArgs["threshold"];
-  var url = getAjaxUrlForTotalDiff(filepath, threshold);
-
-  $.ajax(url).done(function(diff) {
-    addTotalDiffDeletesOnSideDom(diff, node);
-
-    if (!showDeletedCode) {
-      hideDeletedCode();
-    }
-
-    // TODO: Add syntax highlighting?
-
-  }).fail(function(req, status, err) {
-    list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
-  });
-}
-
- /** 
- * Update the diffs using visual 2.
- * Visual 2: Highights regexes.
- */
-function updateDiff_visual2(node, baseline, text, extraArgs) {
-  drawNormalDiff(baseline, text, node);
-  var regexes = extraArgs["regexes"];
-  addRegexHighlighting(node, regexes);
-  // TODO: Without regex matching, the entire line is highlighted
-  //   in light yellow if the student added that code.
-  // However, now only the part of the line with code on it is
-  //   highlighted.
-
-  // TODO: Syntax highlighting
-}
-
-/** 
- * Update the diffs using visual 3.
- * Visual 3: Combination of total diff (visual 1 with deletes on side)
- *   and regex highlighting (visual 2)
- */
-function updateDiff_visual3(node, baseline, text, extraArgs) {
-  if (baseline === undefined || text === undefined) { return; }
-
-  var filepath = extraArgs["filepath"];
-  var threshold = extraArgs["threshold"];
-  var url = getAjaxUrlForTotalDiff(filepath, threshold);
-
-  $.ajax(url).done(function(diff) {
-    var divs = addTotalDiffDeletesOnSideDom(diff, node);
-    var regexes = extraArgs["regexes"];
-    divs.forEach(function(div) {
-      addRegexHighlighting(div, regexes);
-    });
-
-    if (!showDeletedCode) {
-      hideDeletedCode();
-    }
-
-    // TODO: Bug, after un-checking a regex, it appends the same text
-    //   over and over so there's 6 filetexts in a row
-
-    // TODO: Add syntax highlighting?
-
-  }).fail(function(req, status, err) {
-    list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
-  });
-}
-
-/**
- * Update the diffs using visual 4.
- * Visual 4: A total diff view, that includes some code history (visual 1)
- *   This visual also hides common prefixes between two lines of code for readability.
- */
-function updateDiff_visual4_deletesOnSide(node, baseline, text, extraArgs) {
-  if (baseline === undefined || text === undefined) { return; }
-
-  var filepath = extraArgs["filepath"];
-  var threshold = extraArgs["threshold"];
-  var url = getAjaxUrlForTotalDiff(filepath, threshold);
-
-  $.ajax(url).done(function(diff) {
-    console.log("diff:");
-    console.log(diff);
-    var divs = addTotalDiffDeletesOnSideDom(diff, node);
-    console.log("divs:");
-    console.log(divs);
-    divs.forEach(function(div) {
-      hideCommonPrefixes(div);
-    });
-
-    // TODO: deleted code toggle doesn't work with visual 4
-
-    // TODO: Add syntax highlighting?
-
-  }).fail(function(req, status, err) {
-    list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
-  });
-}
-
-// TODO: Duplicate code
-function updateDiff_visual5(node, baseline, text, extraArgs) {
-  if (baseline === undefined || text === undefined) { return; }
-
-  var filepath = extraArgs["filepath"];
-  var threshold = extraArgs["threshold"];
-  var url = getAjaxUrlForTotalDiff(filepath, threshold);
-
-  $.ajax(url).done(function(diff) {
-    var divs = addTotalDiffDeletesOnSideDom(diff, node);
-    var regexes = extraArgs["regexes"];
-
-    divs.forEach(function(div) {
-      hideCommonPrefixes(div);
-    });
-    
-    divs.forEach(function(div) {
-      addRegexHighlighting(div, regexes);
-    });
-
-    
-
-    if (!showDeletedCode) {
-      hideDeletedCode();
-    }
-
-    // TODO: Bug, after un-checking a regex, it appends the same text
-    //   over and over so there's 6 filetexts in a row
-
-    // TODO: Add syntax highlighting?
-
-  }).fail(function(req, status, err) {
-    list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
-  });
-}
 
 /////////////////////////////////////////////
 ///////////// HELPER FUNCTIONS //////////////
@@ -350,7 +208,7 @@ function getThresholdFromUrl(url) {
     threshold = threshold.substring(0, threshold.indexOf("regexes="));
   }
 
-  return threshold;
+  return (threshold) ? threshold : 10000;
 }
 
 /**
