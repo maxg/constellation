@@ -10,14 +10,20 @@ collab.fetch(function(err) {
   document.querySelector('#partners').textContent = collab.data.users.slice().sort().join(' & ')
 });
 
-// Update function to use (based on which visual is being used)
-var updateFunction;
-
 // Parameters required to use updateFunction
-var parameters;
+var parameters = {};
 
 // Whether deleted code is currently shown or not
 var showDeletedCode = false;
+
+// A map from visual number to the update function to be used
+var updateFunctionMap = new Map([
+  [0, updateDiff_basic],
+  [1, updateDiff_visual1_deletesOnSide],
+  [2, updateDiff_visual2],
+  [3, updateDiff_visual3],
+  [4, updateDiff_visual4_deletesOnSide],
+  [5, updateDiff_visual5]]);
 
 
 
@@ -31,78 +37,34 @@ var showDeletedCode = false;
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
 
-  updateFunction = updateDiff_basic;
-  parameters = {};
+  // Visual 1: total diff
+  // Visual 2: Regex matching
+  // Visual 3: total diff + regex matching
+  // Visual 4: total diff + hide common prefix
+  // Visual 5: total diff + regex matching + hide common prefix
 
-  if (visual[0] == '1') {
-    // Visual 1 indicates a total diff visualiation
-    // "1threshold=1000" if we want visual 1 with threshold 1000
-    // "1" if we want the default threshold
-    // "1threshold=2" for a threshold of 2, etc.
+  if (visual[0] == '1' ||
+      visual[0] == '3' ||
+      visual[0] == '4' ||
+      visual[0] == '5') {
+    parameters["threshold"] = getThresholdFromUrl(visual);
+  }  
 
-    var threshold = getThresholdFromUrl(visual);
-    parameters["threshold"] = threshold;
-    updateFunction = updateDiff_visual1_deletesOnSide;
-
-  } else if (visual[0] == '2') {
-    // Visual 2 indicates regexes, and looks like this:
-    // "2regexes=Override" searches for ''@Override' in the files
-    // "2regexes=@Override;;void;;size" searches for '@Override', 'void', and 'size' in the file
-    // "2" searches for nothing
-
+  if (visual[0] == '2' ||
+      visual[0] == '3' ||
+      visual[0] == '5') {
     var regexes = getRegexesFromUrl(visual);
     parameters['regexes'] = regexes;
-    updateFunction = updateDiff_visual2;
-
     regexes.forEach(function(regex) {
       addRegexToControls(regex);
     });
-
-  } else if (visual[0] == '3') {
-    // Visual 3 indicates regexes and total diff view combined
-    // Possible formats of visual:
-    // "3regexes=\(.*\);;String"
-    // "3threshold=1000regexes=String"
-    // "3threshold=500"
-    // "3"
-    // Not allowed:
-    // "3regexes=Stringthreshold=1000"
-
-    var threshold = getThresholdFromUrl(visual);
-    var regexes = getRegexesFromUrl(visual);
-    parameters['threshold'] = threshold;
-    parameters['regexes'] = regexes;
-    updateFunction = updateDiff_visual3;
-
-    regexes.forEach(function(regex) {
-      addRegexToControls(regex);
-    });
-
-  } else if (visual[0] == '4') {
-    // Visualization 4: total diff and hiding common prefixes
-    // TODO: Duplicate code from visual 1
-
-    // "4threshold=1000" if we want visual 1 with threshold 1000
-    // "4" if we want the default threshold
-    // "4threshold=2" for a threshold of 2, etc.
-    
-    var threshold = getThresholdFromUrl(visual);
-    parameters["threshold"] = threshold;
-    updateFunction = updateDiff_visual4_deletesOnSide;
-  } else if (visual[0] == '5') {
-    // Visualization 5: total diff + regex matching + hiding common prefixes
-
-    var threshold = getThresholdFromUrl(visual);
-    var regexes = getRegexesFromUrl(visual);
-    parameters['threshold'] = threshold;
-    parameters['regexes'] = regexes;
-    updateFunction = updateDiff_visual5;
-
-    regexes.forEach(function(regex) {
-      addRegexToControls(regex);
-    });
-
   }
+
+  var visualNumber = parseInt(visual[0]);
+  if (!visualNumber || visualNumber > 5) {
+    visualNumber = 0;
+  }
+  var updateFunction = updateFunctionMap.get(visualNumber);
 
   showFiles(files, updateFunction, parameters);
 });
