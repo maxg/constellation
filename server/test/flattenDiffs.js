@@ -1,8 +1,8 @@
-const webjs = require('../web');
-const mergeDiffs = webjs.mergeDiffs;
+const diffing = require('../diffing');
+const flattenDiffs = diffing.flattenDiffs;
 
 // Tests for bugs found when looking at real code
-function testMergedDiffsRegression() {
+function testFlattenDiffsRegression() {
   /* Regression #4: Crashing when you have an added part
      that goes at the very end of the merged diff
      and after a removed part
@@ -23,7 +23,7 @@ function testMergedDiffsRegression() {
   ]
 
   console.log("expect:hello =added;the=original;re=removed;something=removed;6.031=added");
-  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log(flattenDiffs([diff_0, diff_1]));
 
 
   /* Regression #3: Not going through enough of the diff
@@ -58,7 +58,7 @@ function testMergedDiffsRegression() {
   ];
 
   console.log("expect:public Set<E> CharSet1() to be all together");
-  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log(flattenDiffs([diff_0, diff_1]));
 
   /* Regression #1, causing bugs #1 and #2 
     TODO: Only test case not passing right now
@@ -94,7 +94,7 @@ function testMergedDiffsRegression() {
         //////\n------------------------same 
     */  
     console.log('expect: see comments');
-    console.log(mergeDiffs([diff_0, diff_1, diff_2]));
+    console.log(flattenDiffs([diff_0, diff_1, diff_2]));
 
     /** Simplified version of ^ */
     diff_0 = [
@@ -117,7 +117,7 @@ function testMergedDiffsRegression() {
     ]
 
     console.log("a=removed;b=added;d:removed;f:added;e:added;g=original;h:added;c:original");
-    console.log(mergeDiffs([diff_0, diff_1, diff_2]));
+    console.log(flattenDiffs([diff_0, diff_1, diff_2]));
 
     /* Bug #2 minimized */
     diff_0 = [
@@ -132,7 +132,7 @@ function testMergedDiffsRegression() {
       {'value': 'ing'}
     ];
     console.log('expect:some=same,muchlongthing=added,th=same,short=added,ing=same');
-    console.log(mergeDiffs([diff_0, diff_1]));
+    console.log(flattenDiffs([diff_0, diff_1]));
 
     /* Bug #1 minimized */
     diff_0 = [
@@ -145,10 +145,10 @@ function testMergedDiffsRegression() {
       {'value': 'ething'}
     ];
     console.log('expect:som=removed,else=added,ething=same');
-    console.log(mergeDiffs([diff_0, diff_1]));
+    console.log(flattenDiffs([diff_0, diff_1]));
 }
 
-function testMergedDiffsRemove() {
+function testFlattenDiffsRemove() {
   /* Remove exactly 1 chunk */ 
   diff_0 = [
     {'value': 'hello'},
@@ -159,7 +159,7 @@ function testMergedDiffsRemove() {
     {'value': ' there', 'removed': true},
   ]
   console.log('expect:hello=same, there=removed');
-  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log(flattenDiffs([diff_0, diff_1]));
   
 
   /* Remove everything */
@@ -171,7 +171,7 @@ function testMergedDiffsRemove() {
     {'value': 'hello there', 'removed': true},
   ]
   console.log('expect:hello=removed, there=removed');
-  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log(flattenDiffs([diff_0, diff_1]));
   
 
   /* Remove in the middle of two parts */
@@ -186,7 +186,7 @@ function testMergedDiffsRemove() {
     {'value': 'ere'},
   ]
   console.log('expect:hel=same,lo=removed, th=removed,ere=added');
-  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log(flattenDiffs([diff_0, diff_1]));
 
   /* Remove over many complete parts */ 
   diff_0 = [
@@ -203,7 +203,7 @@ function testMergedDiffsRemove() {
   ]
   console.log('expect:hello=same, there=removed, Constellation=removed' + 
     '. you are=removed,cool.=added');
-  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log(flattenDiffs([diff_0, diff_1]));
 
   /* Remove part of 1 chunk */
   diff_0 = [
@@ -215,7 +215,7 @@ function testMergedDiffsRemove() {
     {'value': 'hing'},
   ];
   console.log('expect:so=same,met=removed,hing=same');
-  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log(flattenDiffs([diff_0, diff_1]));
 
   /* Remove with a remove in the middle of previous diff  */
   diff_0 = [
@@ -232,7 +232,7 @@ function testMergedDiffsRemove() {
     {'value': 'ng'}
   ]
   console.log('expect:so=same,met=removed,hi=removed,ng=same');
-  console.log(mergeDiffs([diff_0, diff_1, diff_2]));
+  console.log(flattenDiffs([diff_0, diff_1, diff_2]));
 
   /* Multiple removes in diff_1 */
   diff_0 = [
@@ -246,10 +246,10 @@ function testMergedDiffsRemove() {
     {'value': 'y'},
   ];
   console.log('expect:so=removed,mething xx=same,x yy=removed,y=same');
-  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log(flattenDiffs([diff_0, diff_1]));
 }
 
-function testMergedDiffsAdd() {
+function testFlattenDiffsAdd() {
   /** Adding at the end */
 
   diff_0 = [
@@ -262,7 +262,7 @@ function testMergedDiffsAdd() {
     {'value': ' again', 'added': true},
   ]
   console.log("expect:hello=same, there=added, again=added");
-  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log(flattenDiffs([diff_0, diff_1]));
 
   /** Adding at the very beginning  */
   diff_0 = [
@@ -275,7 +275,7 @@ function testMergedDiffsAdd() {
     {'value': 'hello there'},
   ]
   console.log("expect:why =added,hello=same, there=added");
-  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log(flattenDiffs([diff_0, diff_1]));
  
 
  /* Adding at beginning of a chunk in the middle */
@@ -290,7 +290,7 @@ function testMergedDiffsAdd() {
     {'value': ' there'},
   ]
   console.log('expect:hello=same,xxxx=added, there=added');
-  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log(flattenDiffs([diff_0, diff_1]));
 
 
   /** Adding in the middle of a chunk */
@@ -305,7 +305,7 @@ function testMergedDiffsAdd() {
     {'value': 'ere'},
   ]
   console.log('expect:hello=same, th=added,xxxx=added,ere=added');
-  console.log(mergeDiffs([diff_0, diff_1]));
+  console.log(flattenDiffs([diff_0, diff_1]));
 
   /** Adding to a diff with removed parts  */
   diff_0 = [
@@ -323,7 +323,7 @@ function testMergedDiffsAdd() {
   ]
   // Expectation is undetermined based on spec
   console.log('expect:h=same,something=added,e=same,llo the=removed,re=same')
-  console.log(mergeDiffs([diff_0, diff_1, diff_2]));
+  console.log(flattenDiffs([diff_0, diff_1, diff_2]));
 
   /** Preserve order of operations if you 
     remove something and then add to the same place */
@@ -341,24 +341,11 @@ function testMergedDiffsAdd() {
     {'value': 'hing'}
   ]
   console.log('expect:so=same,met=removed,woo=added,hing=same');
-  console.log(mergeDiffs([diff_0, diff_1, diff_2]));
+  console.log(flattenDiffs([diff_0, diff_1, diff_2]));
 }
 
-testMergedDiffsAdd();
-testMergedDiffsRemove();
-testMergedDiffsRegression();
+testFlattenDiffsAdd();
+testFlattenDiffsRemove();
+testFlattenDiffsRegression();
 
-/*
-After all these functions run, get this:
-events.js:160
-      throw er; // Unhandled 'error' event
-      ^
-
-Error: ENOENT: no such file or directory, open 'C:\Users\caitl\Documents\MIT\con
-stellation-fork\server\test\log\constellation-mergeDiffs.log'
-    at Error (native)
-
-I'm running the file by doing 'node mergeDiffs.js' in terminal.
-*/
-
-
+// TO RUN: `node flattenDiffs.js` while ssh'ed into vagrant
