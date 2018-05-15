@@ -29,18 +29,26 @@ function chunkOpsIntoDiffs(ops, threshold, baseline) {
 
   let lastTs = firstOp.m.ts;
 
-  // Create a diff for the first part, so that
-  // we can track original code
+  // Create a diff for the first part, so that we can track original code
   let baseDiff = diff.diffLines(baseline.trim(), currentBaseline.data.text.trim());
-  baseDiff.forEach(function(part) {
-    // Note: should only be one part
-    part.original = true;
-    part.snapshotNumber = 0;
-  });
 
+  // If there's non-baseline code in the first version of the document,
+  //   then this diff will have multiple blocks.
+  // Any blocks that are 'added' are student-added code, but all other
+  //   blocks are original (they may have 'removed' some original code)
+  baseDiff.forEach(function(part) {
+    if (!part.added) {
+      part.original = true;
+      part.snapshotNumber = 0;
+    } else {
+      part.snapshotNumber = 1;
+    }
+  });
   chunkedDiffs.push(baseDiff);
 
-  let snapshotNumber = 1;
+  // Snapshot number depends on whether the first version of the document
+  //   had non-baseline code
+  let snapshotNumber = (baseDiff.length == 1) ? 1 : 2;
 
   /* Apply each op, and calculate a diff if two 
      consecutive ops are far enough apart */
