@@ -185,6 +185,7 @@ function processPart(processedParts, unprocessedParts, part) {
       var nextPartProcessed = {
         'value': nextPart.value,
         'snapshotNumber': nextPart.snapshotNumber,
+        'original': nextPart.original,
         'removed': part.removed,
         // If this part is being removed, then 'added' should become
         //   false but otherwise it should keep its original value
@@ -200,12 +201,14 @@ function processPart(processedParts, unprocessedParts, part) {
       var nextPartProcessed = {
         'value': nextPart.value.substring(0, numCharsOverlap),
         'snapshotNumber': nextPart.snapshotNumber,
+        'original': nextPart.original,
         'removed': part.removed,
         'added': (part.removed) ? false : nextPart.added
       }
       var nextPartUnprocessed = {
         'value': nextPart.value.substring(numCharsOverlap),
         'snapshotNumber': nextPart.snapshotNumber,
+        'original': nextPart.original,
         'removed': nextPart.removed,
         'added': nextPart.added
       }
