@@ -117,6 +117,10 @@ function showFiles(files, extraArgs) {
 
 function updateFunction(node, baseline, text, extraArgs) {
   if (baseline === undefined || text === undefined) { return; }
+  node.innerHTML = '';
+  // TODO: This causes page to seem as if it's refreshing every
+  //   time you change the regex, and causes you to lose whatever
+  //   spot in the files you were at
 
   var threshold = parameters['threshold'];
   var regexes = parameters['regexes'];
@@ -487,9 +491,6 @@ function addTotalDiffDeletesOnSideDom(diff, node) {
  * Draws a normal diff inside the node element.
  */ 
 function drawNormalDiff(baseline, text, node) {
-  if (baseline === undefined || text === undefined) { return; }
-  node.innerHTML = '';
-
   window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {
     var elt = document.createElement('div');
     elt.classList.add('diff-part');
