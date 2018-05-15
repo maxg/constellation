@@ -62,7 +62,6 @@ function convertOpsIntoDiffs(ops, threshold, baseline) {
       previousSnapshotText = currentDoc.data.text;
     }
 
-    // Apply the op
     let err = sharedb.ot.apply(currentDoc, op);
     if (err) {
       // TODO: Better error handling
