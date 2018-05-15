@@ -171,8 +171,7 @@ function updateFunction(node, baseline, text, extraArgs) {
       // TODO: Add syntax highlighting?   
 
     }).fail(function(req, status, err) {
-      // TODO: 'list is not defined' error if we get here
-      list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
+      node.textContent = 'Error fetching flattened diff: ' + errorToString(req.responseJSON, status, err);
     });
   }
 }

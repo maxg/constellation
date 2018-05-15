@@ -10,7 +10,7 @@ const diff = require('diff');
  *   ops is > threshold.
  * Required: ops.length >= 1.
  */
-function convertOpsIntoDiffs(ops, threshold, baseline) {
+function convertOpsIntoDiffs(ops, threshold, baseline, callback) {
   if (!threshold) {
     threshold = 10000;
   }
@@ -22,7 +22,8 @@ function convertOpsIntoDiffs(ops, threshold, baseline) {
   // First op is a 'create' op, so apply it separately
   let previousSnapshotText = baseline;
   let currentDoc = {v:0};
-  let err = sharedb.ot.apply(currentDoc, ops[0]); // TODO: Handle error
+  let err = sharedb.ot.apply(currentDoc, ops[0]);
+  if (err) { return callback(err); }
 
   let baseDiff = diff.diffLines(previousSnapshotText, currentDoc.data.text);
 
@@ -63,11 +64,7 @@ function convertOpsIntoDiffs(ops, threshold, baseline) {
     }
 
     let err = sharedb.ot.apply(currentDoc, op);
-    if (err) {
-      // TODO: Better error handling
-      console.log("err when applying op:" + JSON.stringify(err));
-      return;
-    }
+    if (err) { return callback(err); }
        
     lastTs = op.m.ts;
   });
@@ -80,7 +77,7 @@ function convertOpsIntoDiffs(ops, threshold, baseline) {
   });
   snapshotDiffs.push(snapshotDiff);
 
-  return snapshotDiffs; 
+  return callback(null, snapshotDiffs);
 }
 
 /**
