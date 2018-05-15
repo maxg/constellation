@@ -88,7 +88,7 @@ function convertOpsIntoDiffs(ops, threshold, baseline, callback) {
  */
 function flattenDiffs(diffs) {
   if (diffs.length == 0) {
-    return diffs;
+    return [];
   }
 
   // This algorithm uses a two-list strategy.
