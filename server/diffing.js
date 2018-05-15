@@ -71,6 +71,7 @@ function convertOpsIntoDiffs(ops, threshold, baseline, callback) {
 
 
   // Add the last diff
+  // TODO: Duplicate code from within forEach
   let snapshotDiff = diff.diffLines(previousSnapshotText, currentDoc.data.text);
   snapshotDiff.forEach(function(part) {
     part.snapshotNumber = snapshotNumber;
