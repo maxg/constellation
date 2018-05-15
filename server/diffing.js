@@ -4,20 +4,20 @@ const diff = require('diff');
 // TODO: Remove parts with '' at the end
 
 /**
- * Takes the ops and chunks them into a series of snapshots of the code.
+ * Takes the ops, separates them into a series of snapshots of the code,
+ *   and creates diffs between every two consecutive snapshots.
  *   A new snapshot starts when the time between two consecutive
  *   ops is > threshold.
  * Required: ops.length >= 1.
  */
-function chunkOpsIntoDiffs(ops, threshold, baseline) {
+function convertOpsIntoDiffs(ops, threshold, baseline) {
   if (!threshold) {
     threshold = 10000;
   }
   // TODO: Very large threshold => no results
 
-  // Store diffs between snapshots
-  // TODO: Rename to 'snapshotDiffs'
-  let chunkedDiffs = [];
+  // Store all the diffs between snapshots
+  let snapshotDiffs = [];
 
   // First op is a 'create' op, so apply it separately
   let previousSnapshotText = baseline;
@@ -38,7 +38,7 @@ function chunkOpsIntoDiffs(ops, threshold, baseline) {
       part.snapshotNumber = 1;
     }
   });
-  chunkedDiffs.push(baseDiff);
+  snapshotDiffs.push(baseDiff);
 
   previousSnapshotText = currentDoc.data.text;
 
@@ -52,11 +52,11 @@ function chunkOpsIntoDiffs(ops, threshold, baseline) {
     // Start the next snapshot if sufficient time has passed
     //   between consecutive ops
     if (op.m.ts - lastTs > threshold) {
-      let chunkedDiff = diff.diffLines(previousSnapshotText, currentDoc.data.text);
-      chunkedDiff.forEach(function(part) {
+      let snapshotDiff = diff.diffLines(previousSnapshotText, currentDoc.data.text);
+      snapshotDiff.forEach(function(part) {
         part.snapshotNumber = snapshotNumber;
       });
-      chunkedDiffs.push(chunkedDiff);
+      snapshotDiffs.push(snapshotDiff);
       snapshotNumber += 1;
 
       previousSnapshotText = currentDoc.data.text;
@@ -75,13 +75,13 @@ function chunkOpsIntoDiffs(ops, threshold, baseline) {
 
 
   // Add the last diff
-  let chunkedDiff = diff.diffLines(previousSnapshotText, currentDoc.data.text);
-  chunkedDiff.forEach(function(part) {
+  let snapshotDiff = diff.diffLines(previousSnapshotText, currentDoc.data.text);
+  snapshotDiff.forEach(function(part) {
     part.snapshotNumber = snapshotNumber;
   });
-  chunkedDiffs.push(chunkedDiff);
+  snapshotDiffs.push(snapshotDiff);
 
-  return chunkedDiffs; 
+  return snapshotDiffs; 
 }
 
 /**
@@ -241,6 +241,5 @@ function getOpText(op) {
 }
 
 
-exports.chunkOpsIntoDiffs = chunkOpsIntoDiffs;
-exports.chunkOpsIntoDiffs_old = chunkOpsIntoDiffs_old;
+exports.convertOpsIntoDiffs = convertOpsIntoDiffs;
 exports.flattenDiffs = flattenDiffs;
