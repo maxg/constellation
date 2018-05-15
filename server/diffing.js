@@ -15,23 +15,23 @@ function chunkOpsIntoDiffs(ops, threshold, baseline) {
   }
   // TODO: Very large threshold => no results
 
-  var chunkedDiffs = [];
+  let chunkedDiffs = [];
 
   /* Setup the baseline of the document */ 
-  var firstOp = ops[0];
+  let firstOp = ops[0];
 
   // The baseline for the next diff
-  var currentBaseline = {v:0};
+  let currentBaseline = {v:0};
   sharedb.ot.apply(currentBaseline, firstOp);
   // The doc to apply ops to
-  var currentDoc = {v:0};
+  let currentDoc = {v:0};
   sharedb.ot.apply(currentDoc, firstOp);
 
-  var lastTs = firstOp.m.ts;
+  let lastTs = firstOp.m.ts;
 
   // Create a diff for the first part, so that
   // we can track original code
-  var baseDiff = diff.diffLines(baseline.trim(), currentBaseline.data.text.trim());
+  let baseDiff = diff.diffLines(baseline.trim(), currentBaseline.data.text.trim());
   baseDiff.forEach(function(part) {
     // Note: should only be one part
     part.original = true;
@@ -40,16 +40,16 @@ function chunkOpsIntoDiffs(ops, threshold, baseline) {
 
   chunkedDiffs.push(baseDiff);
 
-  var snapshotNumber = 1;
+  let snapshotNumber = 1;
 
   /* Apply each op, and calculate a diff if two 
      consecutive ops are far enough apart */
-  for (var i = 1; i < ops.length; i++) {
-    var op = ops[i];
+  for (let i = 1; i < ops.length; i++) {
+    let op = ops[i];
 
     // Start a new chunk if necessary
     if (op.m.ts - lastTs > threshold) {
-      var chunkedDiff = diff.diffLines(
+      let chunkedDiff = diff.diffLines(
         currentBaseline.data.text.trim(), currentDoc.data.text.trim());
       
       // Only push diffs with changes
@@ -80,7 +80,7 @@ function chunkOpsIntoDiffs(ops, threshold, baseline) {
   }
 
   // Add the last diff
-  var chunkedDiff = diff.diffLines(
+  let chunkedDiff = diff.diffLines(
     currentBaseline.data.text.trim(), currentDoc.data.text.trim());
 
   // Only push diffs with changes
@@ -112,8 +112,8 @@ function flattenDiffs(diffs) {
   //   onto processedParts and pull from {unprocessedParts}
   //   as we merge in the current diff.
 
-  var processedParts = [];
-  var unprocessedParts = [];
+  let processedParts = [];
+  let unprocessedParts = [];
 
   // TODO: Other way to handle base case?
   diffs[0].forEach(function(part) {
@@ -133,9 +133,9 @@ function flattenDiffs(diffs) {
       // Push any removed parts onto {processedParts},
       //   since future diffs will never have to deal
       //   with parts that were removed in the past
-      var currentPart = unprocessedParts[0];
+      let currentPart = unprocessedParts[0];
       while (currentPart && currentPart.removed) {
-        var partToShift = unprocessedParts.shift();
+        let partToShift = unprocessedParts.shift();
         processedParts.push(partToShift);
         currentPart = unprocessedParts[0];
       }
@@ -165,12 +165,12 @@ function processPart(processedParts, unprocessedParts, part) {
   // The only difference is what the value of 'removed' and 'added'
   //   should be when you process the parts.
 
-  var totalCharsSeen = 0;
-  var maxChars = part.value.length;
+  let totalCharsSeen = 0;
+  let maxChars = part.value.length;
 
   while (totalCharsSeen < maxChars) {
 
-    var nextPart = unprocessedParts.shift();
+    let nextPart = unprocessedParts.shift();
 
     // Parts that are already removed don't count toward
     //   our characters seen, so just process them
@@ -182,7 +182,7 @@ function processPart(processedParts, unprocessedParts, part) {
 
     if (totalCharsSeen + nextPart.value.length <= maxChars) {
       // This entire part can be processed
-      var nextPartProcessed = {
+      let nextPartProcessed = {
         'value': nextPart.value,
         'snapshotNumber': nextPart.snapshotNumber,
         'original': nextPart.original,
@@ -197,15 +197,15 @@ function processPart(processedParts, unprocessedParts, part) {
 
     } else {
       // This part only goes partly through {nextPart}
-      var numCharsOverlap = maxChars - totalCharsSeen;
-      var nextPartProcessed = {
+      let numCharsOverlap = maxChars - totalCharsSeen;
+      let nextPartProcessed = {
         'value': nextPart.value.substring(0, numCharsOverlap),
         'snapshotNumber': nextPart.snapshotNumber,
         'original': nextPart.original,
         'removed': part.removed,
         'added': (part.removed) ? false : nextPart.added
       }
-      var nextPartUnprocessed = {
+      let nextPartUnprocessed = {
         'value': nextPart.value.substring(numCharsOverlap),
         'snapshotNumber': nextPart.snapshotNumber,
         'original': nextPart.original,
@@ -227,11 +227,11 @@ function processPart(processedParts, unprocessedParts, part) {
  * Otherwise, return null.
  */
 function getOpText(op) {
-  var textOrCursors = op.op[0].p[0];
+  let textOrCursors = op.op[0].p[0];
   if (textOrCursors == 'text') {
     // Get type
-    var type;
-    var text;
+    let type;
+    let text;
     if (op.op[0].sd) {
       type = 'delete';
       text = op.op[0].sd;
