@@ -168,9 +168,10 @@ function updateFunction(node, baseline, text, extraArgs) {
         hideDeletedCode();
       }
 
-      // TODO: Add syntax highlighting?
+      // TODO: Add syntax highlighting?   
 
     }).fail(function(req, status, err) {
+      // TODO: 'list is not defined' error if we get here
       list.textContent = 'Error fetching total diff: ' + errorToString(req.responseJSON, status, err);
     });
   }
@@ -224,15 +225,11 @@ function getThresholdFromUrl(url) {
  * If a common prefix is found, that text is removed from the second line.
  */
 function hideCommonPrefixes(div) {
-  console.log("HIDING COMMON PREFIXES");
   var children = div.childNodes;
 
   // Split into individual lines
   var lines = [];
   children.forEach(function(child) {
-    console.log("part data:");
-    console.log($(child).data('part'));
-
     var childLines = child.innerText.split('\n');
     childLines.pop(); // Last one is always empty
     childLines.forEach(function(childLine) {
