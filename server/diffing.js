@@ -4,7 +4,7 @@ const diff = require('diff');
 // TODO: Remove parts with '' at the end
 
 /**
- * Takes the ops and creates a series of snapshots of the code.
+ * Takes the ops and chunks them into a series of snapshots of the code.
  *   A new snapshot starts when the time between two consecutive
  *   ops is > threshold.
  * Required: ops.length >= 1.
@@ -15,22 +15,16 @@ function chunkOpsIntoDiffs(ops, threshold, baseline) {
   }
   // TODO: Very large threshold => no results
 
+  // Store diffs between snapshots
+  // TODO: Rename to 'snapshotDiffs'
   let chunkedDiffs = [];
 
-  /* Setup the baseline of the document */ 
-  let firstOp = ops[0];
-
-  // The baseline for the next diff
-  let currentBaseline = {v:0};
-  sharedb.ot.apply(currentBaseline, firstOp);
-  // The doc to apply ops to
+  // First op is a 'create' op, so apply it separately
+  let previousSnapshotText = baseline;
   let currentDoc = {v:0};
-  sharedb.ot.apply(currentDoc, firstOp);
+  let err = sharedb.ot.apply(currentDoc, ops[0]); // TODO: Handle error
 
-  let lastTs = firstOp.m.ts;
-
-  // Create a diff for the first part, so that we can track original code
-  let baseDiff = diff.diffLines(baseline.trim(), currentBaseline.data.text.trim());
+  let baseDiff = diff.diffLines(previousSnapshotText, currentDoc.data.text);
 
   // If there's non-baseline code in the first version of the document,
   //   then this diff will have multiple blocks.
@@ -46,34 +40,26 @@ function chunkOpsIntoDiffs(ops, threshold, baseline) {
   });
   chunkedDiffs.push(baseDiff);
 
+  previousSnapshotText = currentDoc.data.text;
+
   // Snapshot number depends on whether the first version of the document
   //   had non-baseline code
   let snapshotNumber = (baseDiff.length == 1) ? 1 : 2;
 
-  /* Apply each op, and calculate a diff if two 
-     consecutive ops are far enough apart */
-  for (let i = 1; i < ops.length; i++) {
-    let op = ops[i];
+  let lastTs = ops[0].m.ts;
 
-    // Start a new chunk if necessary
+  ops.slice(1).forEach(function(op) {
+    // Start the next snapshot if sufficient time has passed
+    //   between consecutive ops
     if (op.m.ts - lastTs > threshold) {
-      let chunkedDiff = diff.diffLines(
-        currentBaseline.data.text.trim(), currentDoc.data.text.trim());
-      
-      // Only push diffs with changes
-      if (!(chunkedDiff.length == 1 && 
-          !chunkedDiff[0].added &&
-          !chunkedDiff[0].removed)) {
-        chunkedDiff.forEach(function(part) {
-          part.snapshotNumber = snapshotNumber;
-        });
-        snapshotNumber += 1;
-        chunkedDiffs.push(chunkedDiff);
-      }
+      let chunkedDiff = diff.diffLines(previousSnapshotText, currentDoc.data.text);
+      chunkedDiff.forEach(function(part) {
+        part.snapshotNumber = snapshotNumber;
+      });
+      chunkedDiffs.push(chunkedDiff);
+      snapshotNumber += 1;
 
-      // Make a deep copy
-      currentBaseline = JSON.parse(JSON.stringify(currentDoc));
-      
+      previousSnapshotText = currentDoc.data.text;
     }
 
     // Apply the op
@@ -85,21 +71,15 @@ function chunkOpsIntoDiffs(ops, threshold, baseline) {
     }
        
     lastTs = op.m.ts;
-  }
+  });
+
 
   // Add the last diff
-  let chunkedDiff = diff.diffLines(
-    currentBaseline.data.text.trim(), currentDoc.data.text.trim());
-
-  // Only push diffs with changes
-  if (!(chunkedDiff.length == 1 &&
-      !chunkedDiff[0].added &&
-      !chunkedDiff[0].removed)) {
-    chunkedDiff.forEach(function(part) {
-      part.snapshotNumber = snapshotNumber;
-    });
-    chunkedDiffs.push(chunkedDiff);
-  }
+  let chunkedDiff = diff.diffLines(previousSnapshotText, currentDoc.data.text);
+  chunkedDiff.forEach(function(part) {
+    part.snapshotNumber = snapshotNumber;
+  });
+  chunkedDiffs.push(chunkedDiff);
 
   return chunkedDiffs; 
 }
@@ -262,4 +242,5 @@ function getOpText(op) {
 
 
 exports.chunkOpsIntoDiffs = chunkOpsIntoDiffs;
+exports.chunkOpsIntoDiffs_old = chunkOpsIntoDiffs_old;
 exports.flattenDiffs = flattenDiffs;
