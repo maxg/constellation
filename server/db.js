@@ -236,7 +236,10 @@ exports.createBackend = function createBackend(config) {
           ], function(err, results) {
             if (err) { return callback(err); }
             let doc = { v: 0 };
-            if ( ! results[0]) { return callback(null, doc); }
+            if ( ! results[0]) { 
+              // There are no ops, so just return the empty list
+              return callback(null, []); 
+            }
             let version = results[0].v;
             mongo.collection('o_'+FILES).aggregate([
               { $match: { d: file._id, v: { $lte: version } } },

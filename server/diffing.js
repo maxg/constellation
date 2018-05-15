@@ -3,17 +3,17 @@ const diff = require('diff');
 
 // TODO: Remove parts with '' at the end
 
+/**
+ * Takes the ops and creates a series of snapshots of the code.
+ *   A new snapshot starts when the time between two consecutive
+ *   ops is > threshold.
+ * Required: ops.length >= 1.
+ */
 function chunkOpsIntoDiffs(ops, threshold, baseline) {
   if (!threshold) {
     threshold = 10000;
   }
   // TODO: Very large threshold => no results
-
-  // If there have been no changes to the document,
-  // ops = {v:0}
-  if (!Array.isArray(ops)) {
-    return [];
-  }
 
   var chunkedDiffs = [];
 

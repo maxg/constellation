@@ -307,6 +307,11 @@ exports.createFrontend = function createFrontend(config, db) {
     db.getOps(req.params.collabid, req.params.filepath, req.query.cutoff, function(err, ops) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
 
+      if (ops.length == 0) {
+        res.setHeader('Cache-Control', 'max-age=3600');
+        res.send([]);
+      }
+
       db.getBaseline(req.params.project, req.params.filepath, function(err, baseline) {
         if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
         var chunkedDiffs = diffing.chunkOpsIntoDiffs(ops, req.query.threshold, baseline);
