@@ -10,12 +10,12 @@ collab.fetch(function(err) {
   document.querySelector('#partners').textContent = collab.data.users.slice().sort().join(' & ')
 });
 
-// Parameters required to use updateFunction
 // TODO: Reconcile parameters and extraArgs
-var parameters = {};
-
-// Whether deleted code is currently shown or not
-var showDeletedCode = false;
+// Global state
+var globalViewState = {
+  // Whether deleted code is currently shown or not
+  'showDeletedCode': false
+};
 
 
 //////////////////////////////////////
@@ -38,14 +38,14 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       visual[0] == '3' ||
       visual[0] == '4' ||
       visual[0] == '5') {
-    parameters["threshold"] = getThresholdFromUrl(visual);
+    globalViewState["threshold"] = getThresholdFromUrl(visual);
   }  
 
   if (visual[0] == '2' ||
       visual[0] == '3' ||
       visual[0] == '5') {
     var regexes = getRegexesFromUrl(visual);
-    parameters['regexes'] = regexes;
+    globalViewState['regexes'] = regexes;
     regexes.forEach(function(regex) {
       addRegexToControls(regex);
     });
@@ -53,10 +53,10 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
 
   if (visual[0] == '4' ||
       visual[0] == '5') {
-    parameters['hideCommonPrefixes'] = true;
+    globalViewState['hideCommonPrefixes'] = true;
   }
 
-  showFiles(files, parameters);
+  showFiles(files, globalViewState);
 });
 
 /**
@@ -125,9 +125,9 @@ function updateFunction(node, baseline, text, extraArgs) {
   //   time you change the regex, and causes you to lose whatever
   //   spot in the files you were at
 
-  var threshold = parameters['threshold'];
-  var regexes = parameters['regexes'];
-  var hideCommon = parameters['hideCommonPrefixes'];
+  var threshold = globalViewState['threshold'];
+  var regexes = globalViewState['regexes'];
+  var hideCommon = globalViewState['hideCommonPrefixes'];
 
   if (!threshold) {
     // No treshold means no total diff
@@ -164,7 +164,7 @@ function updateFunction(node, baseline, text, extraArgs) {
       // TODO: Bug, after un-checking a regex, it appends the same text
       //   over and over so there's 6 filetexts in a row
 
-      if (!showDeletedCode) {
+      if (!globalViewState['showDeletedCode']) {
         hideDeletedCode();
       }
 
@@ -562,7 +562,7 @@ function updateFileDisplayWithCurrentRegexes() {
     regexes.push(regex);
   });
 
-  parameters['regexes'] = regexes;
+  globalViewState['regexes'] = regexes;
 
   // Re-render each file with new regexes
   $(".file").each(function(index) {
@@ -580,11 +580,11 @@ function updateFileDisplayWithCurrentRegexes() {
 
 /* Toggle whether deleted code is displayed or not */
 $("#cb-deleted-code").click(function() {
-  showDeletedCode = !showDeletedCode;
+  globalViewState['showDeletedCode'] = !globalViewState['showDeletedCode'];
   $('.span-removed').toggle();
   $('.div-deleted').toggle();
 
-  if (showDeletedCode) {
+  if (globalViewState['showDeletedCode']) {
     $('.div-normal').removeClass('col-xs-12');
     $('.div-normal').addClass('col-xs-6');
   } else {
