@@ -25,13 +25,13 @@ block content
         label.col-xs-3.col-sm-2.control-label Checkoff
         .col-xs-9.col-sm-10
           #score.pull-left.btn-group(data-toggle='buttons')
-            label.btn.btn-link
+            label.btn.btn-link(title='Shortcut: 1')
               input(type='radio' name='score')
               | &nbsp;#[span.glyphicon.glyphicon-minus]&nbsp;
-            label.btn.btn-link
+            label.btn.btn-link(title='Shortcut: 2')
               input(type='radio' name='score')
               | &nbsp;#[span.glyphicon.glyphicon-ok]&nbsp;
-            label.btn.btn-link
+            label.btn.btn-link(title='Shortcut: 3')
               input(type='radio' name='score')
               | &nbsp;#[span.glyphicon.glyphicon-ok]+
           .col-xs-1: p#grader.form-control-static: i no grader

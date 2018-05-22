@@ -27,6 +27,28 @@ function setupCheckoff(err) {
   scorechoice.change(function() {
     setScore($('#score .btn').index($('#score .btn.active')));
   });
+
+  // set up keyboard shortcut for scores;
+  // focus on comment box after selecting score
+  $(window).keypress(function(e) {
+    var keyscoremap = {
+      49: 0, // '1'
+      50: 1, // '2'
+      51: 2  // '3'
+    };
+
+    var keycode = e.keyCode || e.which;
+    if (keycode in keyscoremap
+          && !$('#comment').is(':focus')) {
+      setScore(keyscoremap[keycode]);
+      updateScore();
+
+      $('#comment').focus().select();
+
+      e.stopPropagation();
+      return false;
+    }
+  });
   
   updateScore();
   updateGrader();
