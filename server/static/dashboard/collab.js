@@ -149,63 +149,51 @@ function displayFileVisual(node, baseline, text, extraArgs) {
  *   every two consecutive lines.
  * If a common prefix is found, that text is removed from the second line.
  */
-function hideCommonPrefixes(div) {
-  var children = div.childNodes;
+ function hideCommonPrefixes(div) {
+   var children = div.childNodes;
 
-  // Split into individual lines
-  var lines = [];
-  children.forEach(function(child) {
-    var childLines = child.innerText.split('\n');
-    childLines.pop(); // Last one is always empty
-    childLines.forEach(function(childLine) {
-      var singleLine = {
-        'child': child, // We need the child to know what CSS classes to apply
-        'text': childLine
-      }
-      lines.push(singleLine);
-    });
-  });
+   // Convert DOM to have individual lines of code
+   var singleLineChildren = [];
+   children.forEach(function(child) {
+     var childLinesText = child.innerText.split('\n');
+     childLinesText.pop(); // Last one is always empty
+     childLinesText.forEach(function(singleLineText) {
+       var childDom = createSpanElement(singleLineText + '\n', child);
+       childDom.dataset.snapshotNumber = child.dataset.snapshotNumber;
+       singleLineChildren.push(childDom);
+     });
+   });
+   replaceChildren(div, singleLineChildren);
 
-  // Since we need to add children for the common prefixes,
-  // Store all the children we should have at the end in a new list
-  var newChildNodes = [];
-  var firstLine = createSpanElement(lines[0].text + '\n', lines[0].child);
-  newChildNodes.push(firstLine);
+   // Hide common prefixes between lines
+   var newChildren = [];
+   Array.from(div.childNodes).slice(1).forEach(function(child) {
+     var prevChild = child.previousSibling;
 
-  for (var i = 1; i < lines.length; i++) {
-    // Only consider hiding prefixes if the two lines are both deleted code
-    // And are from different snapshots
-    if ((!lines[i]  .child.classList.contains('span-removed')) ||
-        (!lines[i-1].child.classList.contains('span-removed')) ||
-        ($(lines[i].  child).data('part').snapshotNumber ==
-         $(lines[i-1].child).data('part').snapshotNumber )) {
-      newChildNodes.push(createSpanElement(lines[i].text + '\n', lines[i].child));
-      continue;
-    }
+     // Only consider hiding prefixes if the two lines are both deleted cod
+     // And are from different snapshots
+     if (     child.classList.contains('span-removed') &&
+          prevChild.classList.contains('span-removed') &&
+          child.dataset.snapshotNumber != prevChild.dataset.snapshotNumber ) {
 
-    var commonPrefixLength = getCommonPrefixLength(lines[i].text, lines[i-1].text);
-    if (commonPrefixLength > 10) {
-      // Need to change the second child to hide the text in common
-      //   by putting spaces there instead (monospace font => correct behavior)
+       var commonPrefixLength = getCommonPrefixLength(prevChild.innerText, child.innerText);
+       if (commonPrefixLength > 10) {
+         var commonElt = createSpanElement(child.innerText.substring(0, commonPrefixLength), child);
+         var afterElt = createSpanElement(child.innerText.substring(commonPrefixLength), child);
 
-      var commonElt = createSpanElement(Array(commonPrefixLength+1).join(" "), lines[i].child);
-      var afterElt = createSpanElement(lines[i].text.substring(commonPrefixLength) + '\n', lines[i].child);
+         $(commonElt).addClass('span-removed-common-prefix');
 
-      $(commonElt).addClass('span-removed-common-prefix');
+         newChildren.push(commonElt);
+         newChildren.push(afterElt);
+       }
 
-      newChildNodes.push(commonElt);
-      newChildNodes.push(afterElt);
+     } else {
+       newChildren.push(child);
+     }
+   });
+   replaceChildren(div, newChildren);
+ }
 
-      // TODO: Won't work with regexes
-
-    } else {
-      // There is no common prefix, so add this child like normal
-      newChildNodes.push(createSpanElement(lines[i].text + '\n', lines[i].child));
-    }
-  }
-
-  replaceChildren(div, newChildNodes);
-}
 
 /**
  * Creates a span element with {text} as its text and with
@@ -370,7 +358,7 @@ function drawChunkedDiff(diff, node) {
     
       var elt = document.createElement('span');
       // Save part data for hide common prefix
-      $(elt).data('part', part);
+      elt.dataset.snapshotNumber = part.snapshotNumber;
 
       if (part.added) {
         elt.classList.add('span-added');
@@ -385,12 +373,9 @@ function drawChunkedDiff(diff, node) {
 
       elt.appendChild(document.createTextNode(part.value));
       divNormal.appendChild(elt);
-
       elt2 = elt.cloneNode(true);
-      $(elt2).data('part', part);
       divDeleted.appendChild(elt2);
     }
-
   });
 
   node.innerHTML = '';

@@ -134,6 +134,7 @@ textarea {
 
 
 /** CSS for total diff visualization */
+
 .span-added {
   background: rgba(63, 196, 70, 0.4);
   line-height: 1.1;
@@ -157,10 +158,19 @@ textarea {
   line-height: 0.9;
 }
 
-
 /* Highlight regex matches in yellow */
 .diff .diff-regex {
   background: rgba(249, 224, 34, 1);
+}
+
+.span-removed.span-removed-common-prefix {
+  color: transparent;
+}
+
+/** If there's a regex within a common prefix,
+  * make it red instead of yellow. */
+.span-removed-common-prefix.diff-regex {
+  background: rgba(220, 145, 141, 0.2);
 }
 
 /* Only show code that is part of final code in the normal div.
