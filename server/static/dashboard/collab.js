@@ -10,12 +10,26 @@ collab.fetch(function(err) {
   document.querySelector('#partners').textContent = collab.data.users.slice().sort().join(' & ')
 });
 
-// TODO: Reconcile parameters and extraArgs
-// Global state
-var globalViewState = {
-  // Whether deleted code is currently shown or not
-  'showDeletedCode': false
-};
+
+/**
+ * Parameters for visuals:
+ *
+ * ?deletedCode=true
+ *   Note: ignores threshold, so threshold=10000 always
+ * ?regexes=xyz;;abc
+ * ?hideCommonPrefix=true
+ */
+
+// Whether deleted code is currently shown or not
+var showDeletedCode = false;
+
+if (regexes) {
+  // Change global variable so it's a list
+  regexes = regexes.split(';;');
+  regexes.forEach(function(regex) {
+    addRegexToControls(regex);
+  });
+}
 
 
 //////////////////////////////////////
@@ -27,31 +41,7 @@ var globalViewState = {
  */
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
-
-  // ?deletedCode=true
-  //   Note: This ignores a threshold, so the threshold
-  //   will always be 10000
-
-  // ?regexes=xyz;;abc
-
-  // ?hideCommonPrefix=true
-
-  if (deletedCode) {
-    globalViewState["threshold"] = 10000;
-    globalViewState["hideCommonPrefix"] = hideCommonPrefix;
-  } 
-
-  // TODO: I believe we can eliminate globalViewState 
-
-  if (regexes) {
-    var regexesList = regexes.split(';;');
-    globalViewState['regexes'] = regexesList;
-    regexesList.forEach(function(regex) {
-      addRegexToControls(regex);
-    });
-  }
-
-  showFiles(files, globalViewState);
+  showFiles(files, {}); // TODO: Fix
 });
 
 /**
@@ -120,12 +110,7 @@ function updateFunction(node, baseline, text, extraArgs) {
   //   time you change the regex, and causes you to lose whatever
   //   spot in the files you were at
 
-  var threshold = globalViewState['threshold'];
-  var regexes = globalViewState['regexes'];
-  var hideCommon = globalViewState['hideCommonPrefix'];
-
-  if (!threshold) {
-    // No treshold means no total diff
+  if (!deletedCode) {
     drawNormalDiff(baseline, text, node);
 
     if (regexes) {
@@ -139,12 +124,13 @@ function updateFunction(node, baseline, text, extraArgs) {
   } else {
     // Get the flattened diff to display in total diff style
     var filepath = extraArgs["filepath"];
-    var url = getAjaxUrlForTotalDiff(filepath, threshold);
+    // TODO: Hardcode this somewhere else?
+    var url = getAjaxUrlForTotalDiff(filepath, threshold=10000);
 
     $.ajax(url).done(function(diff) {
       var divs = addTotalDiffDeletesOnSideDom(diff, node);
 
-      if (hideCommon) {
+      if (hideCommonPrefix) {
         divs.forEach(function(div) {
           hideCommonPrefixes(div);
         });
@@ -159,7 +145,7 @@ function updateFunction(node, baseline, text, extraArgs) {
       // TODO: Bug, after un-checking a regex, it appends the same text
       //   over and over so there's 6 filetexts in a row
 
-      if (!globalViewState['showDeletedCode']) {
+      if (!showDeletedCode) {
         hideDeletedCode();
       }
 
@@ -514,13 +500,13 @@ function addRegexToControls(regex) {
  */
 function updateFileDisplayWithCurrentRegexes() {
   // Get currently active regexes
-  var regexes = []
+  var newRegexes = [];
   $('.cb-regex:checkbox:checked').each(function(index) {
     var regex = $(this)[0].id;
-    regexes.push(regex);
+    newRegexes.push(regex);
   });
 
-  globalViewState['regexes'] = regexes;
+  regexes = newRegexes;
 
   // Re-render each file with new regexes
   $(".file").each(function(index) {
@@ -538,11 +524,11 @@ function updateFileDisplayWithCurrentRegexes() {
 
 /* Toggle whether deleted code is displayed or not */
 $("#cb-deleted-code").click(function() {
-  globalViewState['showDeletedCode'] = !globalViewState['showDeletedCode'];
+  showDeletedCode = !showDeletedCode;
   $('.span-removed').toggle();
   $('.div-deleted').toggle();
 
-  if (globalViewState['showDeletedCode']) {
+  if (showDeletedCode) {
     $('.div-normal').removeClass('col-xs-12');
     $('.div-normal').addClass('col-xs-6');
   } else {
