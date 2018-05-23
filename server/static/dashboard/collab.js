@@ -283,6 +283,8 @@ function updateDiff_visual4_deletesOnSide(node, baseline, text, extraArgs) {
   var url = getAjaxUrlForTotalDiff(filepath, threshold);
 
   $.ajax(url).done(function(diff) {
+    console.log("diff:");
+    console.log(diff);
     var divs = addTotalDiffDeletesOnSideDom(diff, node);
     divs.forEach(function(div) {
       hideCommonPrefixes(div);
