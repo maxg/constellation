@@ -355,11 +355,13 @@ function replaceChildren(node, newChildNodes) {
  *   using {threshold}.
  */
 function getAjaxUrlForChunkedDiff(filepath, threshold) {
-  var url = '/ops/' + project + '/' + collabid + '/' + filepath
-    + (cutoff ? '?cutoff=' + cutoff : '')
-    + (threshold ? (cutoff ? '&threshold=' + threshold
-                           : '?threshold=' + threshold)
-                 : '');
+  var params = $.extend({}, {
+    cutoff: cutoff ? cutoff : undefined,
+    threshold: threshold ? threshold : undefined,
+  });
+
+  var url = '/ops/' + project + '/' + collabid + '/' + filepath + "?" + $.param(params);
+
   return url;
 }
 
