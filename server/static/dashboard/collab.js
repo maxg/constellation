@@ -103,13 +103,13 @@ function displayFileVisual(node, baseline, text, extraArgs) {
     }
 
   } else {
-    // Get the flattened diff to display in total diff style
+    // Get the chunked diff to display some deleted code
     var filepath = extraArgs["filepath"];
     // TODO: Hardcode this somewhere else?
-    var url = getAjaxUrlForTotalDiff(filepath, threshold=10000);
+    var url = getAjaxUrlForChunkedDiff(filepath, threshold=10000);
 
     $.ajax(url).done(function(diff) {
-      var divs = addTotalDiffDeletesOnSideDom(diff, node);
+      var divs = drawChunkedDiff(diff, node);
 
       if (hideCommonPrefix) {
         divs.forEach(function(div) {
@@ -133,7 +133,7 @@ function displayFileVisual(node, baseline, text, extraArgs) {
       // TODO: Add syntax highlighting?   
 
     }).fail(function(req, status, err) {
-      node.textContent = 'Error fetching flattened diff: ' + errorToString(req.responseJSON, status, err);
+      node.textContent = 'Error fetching chunked diff: ' + errorToString(req.responseJSON, status, err);
     });
   }
 }
@@ -351,10 +351,10 @@ function replaceChildren(node, newChildNodes) {
 }
 
 /**
- * Get the Ajax URL that returns the total diff for {filepath}
+ * Get the Ajax URL that returns the chunked diff for {filepath}
  *   using {threshold}.
  */
-function getAjaxUrlForTotalDiff(filepath, threshold) {
+function getAjaxUrlForChunkedDiff(filepath, threshold) {
   var url = '/ops/' + project + '/' + collabid + '/' + filepath
     + (cutoff ? '?cutoff=' + cutoff : '')
     + (threshold ? (cutoff ? '&threshold=' + threshold
@@ -364,12 +364,12 @@ function getAjaxUrlForTotalDiff(filepath, threshold) {
 }
 
 /**
- * Creates and returns the DOM for a total diff visualization
+ * Creates and returns the DOM for a chunked diff visualization
  *   where the deleted code is shown on the right.
  *   (for visual1_deletesOnSide).
  * Adds that DOM inside {node}.
  */
-function addTotalDiffDeletesOnSideDom(diff, node) {
+function drawChunkedDiff(diff, node) {
   var divNormal = document.createElement('div');
   divNormal.classList.add('div-normal');
   divNormal.classList.add('col-xs-6');
