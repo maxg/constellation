@@ -64,6 +64,9 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
 
+          // Save text data for regex matching
+          $(diff).data('text', historical.data.text);
+
           displayFileVisual(diff, baseline, historical.data ? historical.data.text : undefined, extraArgs);
 
         }).fail(function(req, status, err) {
@@ -481,11 +484,6 @@ function addRegexToControls(regex) {
  * Update the file display based on what regexes are currently selected.
  */
 function updateFileDisplayWithCurrentRegexes() {
-  // TODO: Bug
-  // https://10.18.6.121:4443/dashboard/ic12-interfaces-enums/5a9d6ba58a3fde4259ad6095/m/extracttoset/2018-03-05T11:30:30?regexes=public;;contains
-  // When you add a regex, it no longer uses the correct
-  //   cutoff anymore and shows their most recent file code
-
   // Get currently active regexes
   var newRegexes = [];
   $('.cb-regex:checkbox:checked').each(function(index) {
