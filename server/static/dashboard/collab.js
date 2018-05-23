@@ -16,6 +16,7 @@ collab.fetch(function(err) {
  *
  * ?deletedCode=true
  *   Note: ignores threshold, so threshold=10000 always
+ *   and is set within diffing.js
  * ?regexes=xyz;;abc
  * ?hideCommonPrefix=true
  */
@@ -105,8 +106,8 @@ function displayFileVisual(node, baseline, text, extraArgs) {
   } else {
     // Get the chunked diff to display some deleted code
     var filepath = extraArgs["filepath"];
-    // TODO: Hardcode this somewhere else?
-    var url = getAjaxUrlForChunkedDiff(filepath, threshold=10000);
+    var url = '/ops/' + project + '/' + collabid + '/' + filepath
+    + (cutoff ? '?cutoff=' + cutoff : '');
 
     $.ajax(url).done(function(diff) {
       var divs = drawChunkedDiff(diff, node);
@@ -348,21 +349,6 @@ function replaceChildren(node, newChildNodes) {
   newChildNodes.forEach(function(child) {
     node.appendChild(child);
   });
-}
-
-/**
- * Get the Ajax URL that returns the chunked diff for {filepath}
- *   using {threshold}.
- */
-function getAjaxUrlForChunkedDiff(filepath, threshold) {
-  var params = $.extend({}, {
-    cutoff: cutoff ? cutoff : undefined,
-    threshold: threshold ? threshold : undefined,
-  });
-
-  var url = '/ops/' + project + '/' + collabid + '/' + filepath + "?" + $.param(params);
-
-  return url;
 }
 
 /**

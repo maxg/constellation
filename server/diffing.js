@@ -6,14 +6,13 @@ const diff = require('diff');
 /**
  * Takes the ops, separates them into a series of snapshots of the code,
  *   and creates diffs between every two consecutive snapshots.
- *   A new snapshot starts when the time between two consecutive
- *   ops is > threshold.
  * Required: ops.length >= 1.
  */
-function convertOpsIntoDiffs(ops, threshold, baseline, callback) {
-  if (!threshold) {
-    threshold = 10000;
-  }
+function convertOpsIntoDiffs(ops, baseline, callback) {
+  // A new snapshot starts when the time between two consecutive
+  //   ops is > threshold
+  const threshold = 10000;
+
   // TODO: Very large threshold => no results
 
   // Store all the diffs between snapshots

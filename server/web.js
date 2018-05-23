@@ -322,7 +322,7 @@ exports.createFrontend = function createFrontend(config, db) {
 
       db.getBaseline(req.params.project, req.params.filepath, function(err, baseline) {
         if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
-        diffing.convertOpsIntoDiffs(ops, req.query.threshold, baseline, function(err, diffs) {
+        diffing.convertOpsIntoDiffs(ops, baseline, function(err, diffs) {
           if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
           var flatDiff = diffing.flattenDiffs(diffs);
           res.setHeader('Cache-Control', 'max-age=3600');
