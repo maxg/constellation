@@ -41,14 +41,7 @@ if (regexes) {
  */
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
-  showFiles(files, {}); // TODO: Fix
-});
 
-/**
- * Display the files using the provided updateFunction and passing
- *   extraArgs to that updateFunction.
- */
-function showFiles(files, extraArgs) {
   var list = document.querySelector('#files');
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });
   files.forEach(function(file) {
@@ -66,39 +59,33 @@ function showFiles(files, extraArgs) {
       $(diff).data('text', file.data.text); // TODO: update this data on update
       $(diff).data('filepath', file.data.filepath);
 
-      var extraArgsForFile = Object.assign({'filepath': file.data.filepath}, extraArgs);
+      var extraArgs = {'filepath': file.data.filepath};
 
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
 
-          updateFunction(diff, baseline, historical.data ? historical.data.text : undefined, extraArgsForFile);
+          displayFileVisual(diff, baseline, historical.data ? historical.data.text : undefined, extraArgs);
 
         }).fail(function(req, status, err) {
           diff.textContent = 'Error fetching code: ' + errorToString(req.responseJSON, status, err);
         });
       } else {
         file.subscribe(function() {
-          updateFunction(diff, baseline, file.data.text, extraArgsForFile);
+          displayFileVisual(diff, baseline, file.data.text, extraArgs);
           file.on('op', function(op) {
             extraArgs["op"] = op;
-            updateFunction(diff, baseline, file.data.text, extraArgsForFile);
+            displayFileVisual(diff, baseline, file.data.text, extraArgs);
           });
         });
       }
     }).fail(function(req, status, err) {
       diff.textContent = 'Error fetching baseline: ' + errorToString(req.responseJSON, status, err);
     });
-
   });
-}
+});
 
 
-
-/////////////////////////////////////////////
-///////////// UPDATE FUNCTIONS //////////////
-// Displays DOM differently for different visualizations.
-
-function updateFunction(node, baseline, text, extraArgs) {
+function displayFileVisual(node, baseline, text, extraArgs) {
   if (baseline === undefined || text === undefined) { return; }
   node.innerHTML = '';
   // TODO: This causes page to seem as if it's refreshing every
@@ -494,6 +481,11 @@ function addRegexToControls(regex) {
  * Update the file display based on what regexes are currently selected.
  */
 function updateFileDisplayWithCurrentRegexes() {
+  // TODO: Bug
+  // https://10.18.6.121:4443/dashboard/ic12-interfaces-enums/5a9d6ba58a3fde4259ad6095/m/extracttoset/2018-03-05T11:30:30?regexes=public;;contains
+  // When you add a regex, it no longer uses the correct
+  //   cutoff anymore and shows their most recent file code
+
   // Get currently active regexes
   var newRegexes = [];
   $('.cb-regex:checkbox:checked').each(function(index) {
@@ -508,7 +500,7 @@ function updateFileDisplayWithCurrentRegexes() {
     var baseline = $(this).data('baseline');
     var text = $(this).data('text');
     var filepath = $(this).data('filepath');
-    updateFunction(this, baseline, text, {'filepath': filepath});
+    displayFileVisual(this, baseline, text, {'filepath': filepath});
   });
 }
 
