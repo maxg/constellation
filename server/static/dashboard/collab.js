@@ -71,11 +71,6 @@ function showFiles(files, extraArgs) {
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
 
-          // Used for regex updating
-          if (historical.data) {
-            $(diff).data('text', historical.data.text); // TODO: update this data on update
-          }
-
           updateFunction(diff, baseline, historical.data ? historical.data.text : undefined, extraArgsForFile);
 
         }).fail(function(req, status, err) {
