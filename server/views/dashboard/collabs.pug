@@ -44,7 +44,9 @@ block content
     var project = !{JSON.stringify(project)};
     var milestone = !{JSON.stringify(milestone || false)};
     var cutoff = !{JSON.stringify(cutoff || false)};
-    var visual = !{JSON.stringify(visual || false)};
+    var deletedCode = !{JSON.stringify(deletedCode || false)};
+    var regexes = !{JSON.stringify(regexes || false)};
+    var hideCommonPrefix = !{JSON.stringify(hideCommonPrefix || false)};
   script(src='/public/sharedb.js')
   script(src='/public/moment.js')
   script(src='/static/dashboard/collabs.js')

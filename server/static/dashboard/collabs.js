@@ -22,8 +22,11 @@ function insertCollabs(collabs, atIndex) {
     var href = '/dashboard/' + project + '/' + collab.id
       + (milestone ? '/m/' + milestone : '')
       + (cutoff ? '/' + cutoff : '')
-      + (visual ? '?visual=' + visual : '');
-    // TODO: Persist '?visual=' when going from specific
+      + (deletedCode ? '?deletedCode=' + deletedCode : '')
+      + (regexes ? '?regexes=' + regexes : '')
+      + (hideCommonPrefix ? '?hideCommonPrefix=' + hideCommonPrefix : '');
+      // TODO: This might not be right
+    // TODO: Persist visual parameters when going from specific
     //   checkoff back to dashboard
     link.setAttribute('href', href);
     link.textContent = users.join('\n');

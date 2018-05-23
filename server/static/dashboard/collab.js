@@ -28,32 +28,27 @@ var globalViewState = {
 connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
   if (err) { throw err; }
 
-  // Visual 1: total diff
-  // Visual 2: Regex matching
-  // Visual 3: total diff + regex matching
-  // Visual 4: total diff + hide common prefix
-  // Visual 5: total diff + regex matching + hide common prefix
+  // ?deletedCode=true
+  //   Note: This ignores a threshold, so the threshold
+  //   will always be 10000
 
-  if (visual[0] == '1' ||
-      visual[0] == '3' ||
-      visual[0] == '4' ||
-      visual[0] == '5') {
-    globalViewState["threshold"] = getThresholdFromUrl(visual);
-  }  
+  // ?regexes=xyz;;abc
 
-  if (visual[0] == '2' ||
-      visual[0] == '3' ||
-      visual[0] == '5') {
-    var regexes = getRegexesFromUrl(visual);
-    globalViewState['regexes'] = regexes;
-    regexes.forEach(function(regex) {
+  // ?hideCommonPrefix=true
+
+  if (deletedCode) {
+    globalViewState["threshold"] = 10000;
+    globalViewState["hideCommonPrefix"] = hideCommonPrefix;
+  } 
+
+  // TODO: I believe we can eliminate globalViewState 
+
+  if (regexes) {
+    var regexesList = regexes.split(';;');
+    globalViewState['regexes'] = regexesList;
+    regexesList.forEach(function(regex) {
       addRegexToControls(regex);
     });
-  }
-
-  if (visual[0] == '4' ||
-      visual[0] == '5') {
-    globalViewState['hideCommonPrefixes'] = true;
   }
 
   showFiles(files, globalViewState);
@@ -127,7 +122,7 @@ function updateFunction(node, baseline, text, extraArgs) {
 
   var threshold = globalViewState['threshold'];
   var regexes = globalViewState['regexes'];
-  var hideCommon = globalViewState['hideCommonPrefixes'];
+  var hideCommon = globalViewState['hideCommonPrefix'];
 
   if (!threshold) {
     // No treshold means no total diff
@@ -180,43 +175,6 @@ function updateFunction(node, baseline, text, extraArgs) {
 /////////////////////////////////////////////
 ///////////// HELPER FUNCTIONS //////////////
 
-/**
- * Get the regexes value from the given URL string.
- * Returns the regexes as a list.
- */
-function getRegexesFromUrl(url) {
-  var regexes = '';
-  var beginningOfRegexes = url.indexOf("regexes=");
-  if (beginningOfRegexes != -1) {
-    regexes = url.substring(beginningOfRegexes + "regexes=".length);
-  }
-
-  // The URL can have both threshold= and regexes=, so need to filter that out
-  if (regexes.indexOf("threshold=") != -1) {
-    regexes = regexes.substring(0, regexes.indexOf("threshold="));
-  }
-
-  regexes = regexes.split(';;');
-  return regexes;
-}
-
-/**
- * Get the threshold value from the given URL string
- */
-function getThresholdFromUrl(url) {
-  var threshold = null;
-  var beginningOfThreshold = url.indexOf("threshold=");
-  if (beginningOfThreshold != -1) {
-    threshold = url.substring(beginningOfThreshold + "threshold=".length);
-  }
-
-  // The URL can have both threshold= and regexes=, so need to filter that out
-  if (threshold && threshold.indexOf("regexes=") != -1) {
-    threshold = threshold.substring(0, threshold.indexOf("regexes="));
-  }
-
-  return (threshold) ? threshold : 10000;
-}
 
 /**
  * Given a div with lines of text, hide common prefixes between
