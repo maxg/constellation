@@ -92,7 +92,7 @@ function displayFileVisual(node, baseline, text, extraArgs) {
   if (baseline === undefined || text === undefined) { return; }
 
   if (!deletedCode) {
-    drawNormalDiff(baseline, text, node);
+    drawStandardDiff(baseline, text, node);
 
     if (regexes) {
       addRegexHighlighting(node, regexes);
@@ -415,7 +415,7 @@ function addTotalDiffDeletesOnSideDom(diff, node) {
 /**
  * Draws a normal diff inside the node element.
  */ 
-function drawNormalDiff(baseline, text, node) {
+function drawStandardDiff(baseline, text, node) {
   node.innerHTML = '';
   window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {
     var elt = document.createElement('div');
