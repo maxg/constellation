@@ -12,11 +12,17 @@ block content
 
   .row: .col-xs-12: .form-horizontal
     .form-group
-      label.col-xs-2.control-label Search
-      .col-xs-8
+      label.col-xs-2.col-sm-1.control-label Search
+      .col-xs-8.col-sm-6
         input#search.form-control(type='text')
-      .col-xs-2
+      .col-xs-2.col-sm-1
         small#matches
+      .col-xs-6.col-sm-2: label.radio.control-label
+        input#condensed(type='checkbox')
+        | Condensed view
+      .col-xs-6.col-sm-2: label.radio.control-label
+        input#autoscroll(type='checkbox')
+        | Scroll to edits
   
   #collabs.row
   
@@ -29,20 +35,50 @@ block content
   #mismatch.row
   
   template#collab
-    .collab.disconnected.col-xs-6.col-sm-3.col-md-2: .tile.panel.panel-default: .panel-body
+    .collab.disconnected.col-xs-12.col-sm-6.col-md-4: .tile.panel.panel-default: .panel-body
       h4: a
       span.typing-icon.glyphicon.glyphicon-option-horizontal
       | &nbsp;
       span.error-icon.glyphicon.glyphicon-exclamation-sign
+      .code
+      .images
+
+  template#file
+    .file
+      h5.filepath
+      pre.diff: code.java
   
   script.
     var shareURL = !{JSON.stringify(shareURL)};
     var project = !{JSON.stringify(project)};
+    var cutoff = undefined;
+    var milestone = undefined;
   script(src='/public/sharedb.js')
   script(src='/public/moment.js')
-  script(src='//web.mit.edu/lu16j/www/6.031-staff/live.js')
+  script(src='/public/diff.js')
+  script(src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js')
+  script(src='/static/dashboard/collabs.js')
+  script(src='/static/dashboard/live.js')
 
   style.
+    .condensed .panel {
+      background: #444;
+    }
+    .condensed .code {
+      background: #444;
+    }
+    .condensed .code h5 {
+      font-size; 8px;
+      margin: 0;
+      color: gray;
+    }
+    .condensed .diff-part:not(.diff-added) {
+      font-size: 0.5px;
+      background: #222;
+    }
+    .condensed .diff-added {
+      background: #fffbeb;
+    }
     .disconnected .panel {
       background: lightgray;
     }
@@ -51,6 +87,9 @@ block content
     }
     .match .panel {
       background: lightgreen;
+    }
+    .disconnected .code {
+      background: lightgray;
     }
     .error-icon {
       opacity: 0;
@@ -69,4 +108,30 @@ block content
     }
     .typing .typing-icon {
       opacity: 1;
+    }
+    .code {
+      max-height: 150px;
+      overflow: hidden;
+      background: white;
+    }
+    .code:hover {
+      overflow: auto;
+    }
+    .code .diff {
+      overflow: hidden;
+    }
+    .code .diff code {
+      font-size: 8px;
+    }
+    .panel-body {
+      position: relative;
+    }
+    .images {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+    .images img {
+      height: 50px;
+      width: 50px;
     }

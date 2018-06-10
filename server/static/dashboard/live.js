@@ -1,141 +1,258 @@
-var connection = new window.sharedb.Connection(new WebSocket(shareURL));
+var queryMap = {};
+// '?k1=v1&k2=v2' => [ 'k1=v1', 'k2=v2' ]
+location.search.substring(1).split('&').forEach(function(queryPair) {
+  // 'key=value' => [ 'key', 'value' ]
+  var keyValue = queryPair.split('=');
+  queryMap[keyValue[0]] = keyValue[1];
+});
 
-var collabs = connection.createSubscribeQuery('collabs', {
-  project: project,
-  $sort: { '_m.ctime': -1 }
-}, {});
+// augmented diffLines which outputs each line as a separate part
+function diffLines(baseline, current) {
+  // ensure both text blocks end in newline
+  if (baseline[baseline.length - 1] != '\n') baseline += '\n';
+  if (current[current.length - 1] != '\n') current += '\n';
 
-collabs.on('ready', function() { insertCollabs(collabs.results, 0); });
-collabs.on('insert', insertCollabs);
+  var parts = [];
+  window.diff.diffLines(baseline, current).forEach(function(part) {
+    var lines = part.value.split('\n');
+    // remove final empty element, since each part ends in newline
+    lines = lines.slice(0, lines.length - 1);
+    lines.forEach(function(line) {
+      parts.push({ added: part.added, removed: part.removed, value: line });
+    });
+  });
+  return parts;
+}
+
+var listenertimeoutids = {};
+// delay all listener callbacks until timeout has passed since last event
+function addListenerWithTimeout(id, elt, action, timeout, callback) {
+  elt.addEventListener(action, function(e) {
+    clearTimeout(listenertimeoutids[id]);
+    listenertimeoutids[id] = setTimeout(function() {
+      callback(e);
+    }, timeout);
+  });
+}
+
+////////////////////////////
+
+var condensedtoggle = document.querySelector('#condensed');
+var autoscrolltoggle = document.querySelector('#autoscroll');
+
+condensedtoggle.addEventListener('change', function() {
+  document.querySelector('#collabs').classList.toggle('condensed', condensedtoggle.checked);
+  document.querySelector('#dupes').classList.toggle('condensed', condensedtoggle.checked);
+});
 
 var searchbox = document.querySelector('#search');
 var countdisplay = document.querySelector('#matches');
 
+var collabstofiles = {};
+
 var searchregex = undefined;
 searchbox.addEventListener('input', function() {
+  if (searchbox.value.length > 0) {
+    autoscrolltoggle.checked = false;
+  }
+});
+addListenerWithTimeout('searchbox', searchbox, 'input', 500, function() {
   searchregex = undefined;
   if (searchbox.value.length > 0) {
     try {
       searchregex = new RegExp(searchbox.value, 'i');
     } catch (e) {}
   }
+  for (var collabid in collabstofiles) {
+    updateMatchDisplay(collabid);
+  }
 });
 
-function insertCollabs(collabs, atIndex) {
-  var list = document.querySelector('#collabs');
+collabs.on('ready', function() { subscribeToCollabs(collabs.results, 0); });
+collabs.on('insert', subscribeToCollabs);
+
+function subscribeToCollabs(collabs, atIndex) {
   collabs.forEach(function(collab, idx) {
-    var item = document.importNode(document.querySelector('#collab').content, true);
-    var root = item.querySelector('.collab');
-    root.setAttribute('id', 'collab-' + collab.id);
-    let users = collab.data.users.slice().sort();
-    root.dataset.users = users.join(',');
-    var link = item.querySelector('a');
-    var href = '/dashboard/' + project + '/' + collab.id;
-    link.setAttribute('href', href);
-    link.textContent = users.join('\n');
-    list.insertBefore(item, list.children[atIndex + idx]);
+    collabstofiles[collab.id] = [];
+    var files = connection.createSubscribeQuery('files', { collabid: collab.id }, {});
+    files.on('ready', function() { subscribeToFiles(collab.id, files.results); });
+    files.on('insert', function(newfiles) { subscribeToFiles(collab.id, newfiles); });
 
-    // TODO: move into view file
-    var codeline = document.createElement('span');
-    codeline.style.fontSize = '8px';
-    codeline.style.background = 'rgba(252, 248, 227)';
-    root.querySelector('.panel-body').appendChild(document.createElement('br'));
-    root.querySelector('.panel-body').appendChild(codeline);
+    var root = document.querySelector('#collab-' + collab.id);
+    var images = root.querySelector('.images');
+    collab.data.users.forEach(function(user) {
+      var image = document.createElement('img');
+      image.addEventListener('error', image.remove);
+      image.src = '//web.mit.edu/lu16j/www/6.031-staff/fa17/' + user + '.png';
+      images.appendChild(image);
+    });
+  });
+}
 
-    connection.createFetchQuery('files', { collabid: collab.id }, {}, function(err, files) {
-      if (err) { throw err; }
+function subscribeToFiles(collabid, files) {
+  var root = document.querySelector('#collab-' + collabid);
+  files.forEach(function(file) {
+    var filepath = file.data.filepath;
+    // ignore files not selected by url query
+    if (queryMap.files && queryMap.files.indexOf(filepath) < 0) { return; }
+    collabstofiles[collabid].push(file);
 
-      var typingtimeoutid = undefined;
-      function updateTypingDisplay() {
-        root.classList.add('typing');
-        clearTimeout(typingtimeoutid);
-        typingtimeoutid = setTimeout(function() {
-          root.classList.remove('typing');
-        }, 1000);
+    var item = document.importNode(document.querySelector('#file').content, true);
+    item.querySelector('.file').setAttribute('id', 'file-' + collabid + '-' + filepath);
+    var heading = item.querySelector('.filepath');
+    heading.textContent = filepath;
+    var diff = item.querySelector('.diff code');
+    root.querySelector('.code').appendChild(item);
+
+    getBaseline(file.data.filepath, function(err, baseline) {
+      if (err) {
+        diff.textContent = err;
+        return;
       }
-
-      function updateErrorDisplay() {
-        var maxlevel = 0;
-        files.forEach(function(file) {
-          for (var k in file.data.markers) {
-            file.data.markers[k].forEach(function(marker) {
-              maxlevel = Math.max(maxlevel, marker.severity);
-            });
-          }
-        });
-        root.classList.remove('error');
-        root.classList.remove('warning');
-        if (maxlevel == 2) root.classList.add('error');
-        else if (maxlevel == 1) root.classList.add('warning');
-      }
-
-      function updateMatchDisplay() {
-        if (searchregex) {
-          var match = false;
-          codeline.innerText = '';
-          files.forEach(function(file) {
-            var matchdata = file.data.text.match(searchregex);
-            if (matchdata) {
-              match = true;
-              codeline.innerText = findLineForIndex(matchdata.input, matchdata.index);
-            }
-          });
-          if (match) root.classList.add('match');
-          else root.classList.remove('match');
-          countdisplay.innerHTML = document.getElementsByClassName('match').length
-                           + '/' + document.getElementsByClassName('connected').length;
-        } else {
-          root.classList.remove('match');
-          codeline.innerText = '';
-        }
-      }
-
-      searchbox.addEventListener('input', updateMatchDisplay);
-
-      files.forEach(function(file) {
-        file.subscribe(function() {
-          root.classList.remove('disconnected');
-          root.classList.add('connected');
-          updateMatchDisplay();
-          updateErrorDisplay();
-          file.on('op', function(op) {
-            var optype = op[0].p[0];
-            if (optype == 'text') {
-              updateTypingDisplay();
-              updateMatchDisplay();
-	    } else if (optype == 'markers') {
-              updateErrorDisplay();
-            }
-          });
+      file.subscribe(function() {
+        root.classList.remove('disconnected');
+        updateDiff(diff, baseline, file.data.text);
+        updateMatchDisplay(collabid);
+        updateErrorDisplay(collabid);
+        file.on('op', function(ops) {
+          updateDiff(diff, baseline, file.data.text);
+          updateTypingDisplay(collabid);
+          updateMatchDisplay(collabid);
+          updateErrorDisplay(collabid);
+          scrollToLatestOp(file, ops);
         });
       });
     });
   });
-  
-  deduplicate();
 }
 
-function findLineForIndex(text, index) {
-  var lines = text.split('\n');
-  var length = 0;
-  var lineindex = 0;
-  while (length <= index) {
-    length += lines[lineindex].length + 1;
-    lineindex++;
+
+var baselines = {}; // filepath => { ajax, err, baseline }
+// ensure that baseline is only fetched once per file, for all collabs
+function getBaseline(filepath, callback) {
+  baselines[filepath] = baselines[filepath] || {};
+  var data = baselines[filepath];
+  if (data.err || data.baseline) {
+    callback(data.err, data.baseline);
+  } else if (data.ajax) {
+    data.ajax.always(function() {
+      callback(data.err, data.baseline);
+    });
+  } else {
+    data.ajax = $.ajax('/baseline/' + project + '/' + filepath).done(function(baseline) {
+      data.baseline = baseline;
+    }).fail(function(req, status, err) {
+      data.err = 'Error fetching baseline: ' + errorToString(req.responseJSON, status, err);
+    }).always(function() {
+      data.ajax = null;
+      callback(data.err, data.baseline);
+    });
   }
-  return lines[lineindex - 1];
 }
 
-function deduplicate() {
-  var seen = {};
-  Array.prototype.slice.call(document.querySelector('#collabs').children).forEach(function(item) {
-    var users = item.dataset.users.split(',');
-    var unseen = users.filter(function(user) { return ! seen[user]; });
-    if ( ! unseen.length) {
-      document.querySelector('#dupes-header').classList.remove('hidden');
-      document.querySelector('#dupes').appendChild(item);
-      return;
+
+function updateDiff(node, baseline, text, op) {
+  if (baseline === undefined || text === undefined) { return; }
+  node.innerHTML = '';
+  var lineNumber = 1;
+  diffLines(baseline, text).forEach(function(part) {
+    if (part.removed) { return; }
+    var elt = document.createElement('div');
+    elt.classList.add('diff-part');
+    elt.classList.add('line-' + lineNumber);
+    elt.appendChild(document.createTextNode(part.value));
+    if (part.added) {
+      elt.classList.add('diff-added');
     }
-    users.forEach(function(user) { seen[user] = true; });
+    node.appendChild(elt);
+    lineNumber++;
   });
+  hljs.highlightBlock(node);
+}
+
+
+function updateMatchDisplay(collabid) {
+  var root = document.querySelector('#collab-' + collabid);
+  if (!root) { return; }
+
+  if (searchregex) {
+    var match = false;
+    collabstofiles[collabid].forEach(function (file) {
+      if (match) { return; }
+      var matchdata = file.data.text.match(searchregex);
+      if (matchdata) {
+        match = true;
+        var linenumber = findLineNumberForIndex(matchdata.input, matchdata.index);
+        scrollToLine(collabid, file.data.filepath, linenumber);
+      }
+    });
+    root.classList.toggle('match', match);
+    countdisplay.innerHTML = document.querySelectorAll('.match').length
+         + '/' + document.querySelectorAll('.collab:not(.disconnected)').length;
+  } else {
+    root.classList.remove('match');
+  }
+}
+
+
+var typingtimeoutids = {};
+
+function updateTypingDisplay(collabid) {
+  var root = document.querySelector('#collab-' + collabid);
+  root.classList.add('typing');
+  clearTimeout(typingtimeoutids[collabid]);
+  typingtimeoutids[collabid] = setTimeout(function () {
+    root.classList.remove('typing');
+  }, 1000);
+}
+
+
+var markerclasses = ['info', 'warning', 'error'];
+
+function updateErrorDisplay(collabid) {
+  var root = document.querySelector('#collab-' + collabid);
+  var maxlevel = 0;
+  collabstofiles[collabid].forEach(function (file) {
+    for (var user in file.data.markers) {
+      file.data.markers[user].forEach(function (marker) {
+        maxlevel = Math.max(maxlevel, marker.severity);
+      });
+    }
+  });
+  markerclasses.forEach(function(cls) { root.classList.remove(cls); });
+  root.classList.add(markerclasses[maxlevel]);
+}
+
+
+function scrollToLatestOp(file, ops) {
+  if (!autoscrolltoggle.checked) { return; }
+  if (ops.length == 0) { return; }
+  // don't autoscroll when mousing over
+  if (document.querySelector('#collab-' + file.data.collabid + ' .code:hover')) { return; }
+
+  var op = ops[ops.length - 1];
+  switch (op.p[0]) {
+    case 'text':
+      var linenumber = findLineNumberForIndex(file.data.text, op.p[1]);
+      return scrollToLine(file.data.collabid, file.data.filepath, linenumber);
+    case 'cursors':
+      var linenumber = findLineNumberForIndex(file.data.text, op.oi[0]);
+      return scrollToLine(file.data.collabid, file.data.filepath, linenumber);
+  }
+  // recurse until we find an op with known offset
+  scrollToLatestOp(file, ops.slice(0, ops.length - 1));
+}
+
+function scrollToLine(collabid, filepath, linenumber) {
+  var code = document.querySelector('#collab-' + collabid).querySelector('.code');
+  var file = document.getElementById('file-' + collabid + '-' + filepath);
+  code.scrollTop = file.querySelector('.line-' + linenumber).offsetTop - code.offsetTop;
+}
+
+function findLineNumberForIndex(text, index) {
+  return text.substring(0, text.lastIndexOf('\n', index)).split('\n').length + 1;
+}
+
+function errorToString(json, status, err) {
+  return (json && json.code || status) + ' ' + (json && json.message || err);
 }

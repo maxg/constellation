@@ -1,60 +1,48 @@
 var connection = new window.sharedb.Connection(new WebSocket(shareURL));
 
-$('#startReplay').click(e => {
-  var targetProject = $('#targetProject')[0].value;
-  var startTimestamp = Date.parse($('#startTimestamp')[0].value);
-  startReplay(startTimestamp, targetProject);
-});
-
-$('#stopReplay').click(e => stopReplay());
-
-var ops = []; // raw ops
-var newcollabids = {}; // old collab id => new collab id
-var collabs = {}; // old collabid => { doc: collabdoc, users: [], files: { path => doc } }
 var replayID;
 
-$.ajax('/ops/' + project).done(function(_ops) {
-  ops = _ops.ops;
-  newcollabids = _ops.newcollabids;
+$.ajax('/ops/' + project).done(function(result) {
+  var collabs = result.collabs;
+  var newcollabids = result.newcollabids;
   console.log('fetched');
-  ops.sort((a, b) => (b.m.ts - a.m.ts) == 0 ? (b.v - a.v) : (b.m.ts - a.m.ts));
-  console.log('sorted');
-  ops.forEach(op => {
-    var tokens = op.d.split('-');
-    var collabid = tokens[0];
-    var filepath = tokens[1];
-    if (!collabs[collabid]) collabs[collabid] = { users: {}, files: {} };
-    collabs[collabid].files[filepath] = false;
-    var username = getUsernameFromCursorOp(op);
-    if (username) collabs[collabid].users[username] = true;
-  });
+  console.log(collabs);
   for (var collabid in collabs) {
-    var users = collabs[collabid].users;
-    collabs[collabid].users = [];
-    for (var username in users) collabs[collabid].users.push(username);
+    var collab = collabs[collabid];
+    collab.users = [];
+    for (var filepath in collab.files) {
+      var ops = collab.files[filepath].ops;
+      ops.forEach(function(op) {
+        var username = getUsernameFromCursorOp(op);
+        if (username && collab.users.indexOf(username) < 0) collab.users.push(username);
+      });
+    }
   }
   console.log('parsed');
+
+  document.querySelector('#startReplay').addEventListener('click', function() {
+    var targetProject = document.querySelector('#targetProject').value;
+    var startTimestamp = Date.parse(document.querySelector('#startTimestamp').value);
+    replay(collabs, newcollabids, Date.now(), startTimestamp, targetProject);
+  });
+
+  document.querySelector('#stopReplay').addEventListener('click', stopReplay);
 });
 
-function startReplay(minTimestamp, targetProject) {
-  var startTime = Date.now();
-  replay(startTime, minTimestamp, targetProject);
-}
-
-function replay(startTime, minTimestamp, targetProject) {
+function replay(collabs, newcollabids, startTime, minTimestamp, targetProject) {
   if (ops.length == 0) return;
   var delta = Date.now() - startTime;
   while (ops[ops.length - 1].m.ts - minTimestamp <= delta) {
-    handleOp(ops.pop(), targetProject);
+    handleOp(ops.pop(), newcollabids, targetProject);
   }
   if (ops.length == 0) return;
   replayID = setTimeout(
-    () => replay(startTime, minTimestamp, targetProject),
+    function() { replay(ops, newcollabids, startTime, minTimestamp, targetProject); },
     ops[ops.length - 1].m.ts - minTimestamp - delta
   );
 }
 
-function handleOp(op, targetProject) {
+function handleOp(op, newcollabids, targetProject) {
   var collabid = op.d.split('-')[0];
   var newcollabid = newcollabids[collabid];
   var filepath = op.d.split('-')[1];
@@ -71,21 +59,14 @@ function handleOp(op, targetProject) {
     // create file doc
     var fileid = newcollabid + '-' + filepath;
     var doc = connection.get('files', fileid);
-    doc.create({
-      collabid: newcollabid,
-      project: targetProject,
-      filepath: filepath,
-      text: op.create.data.text,
-      cursors: op.create.data.cursors,
-      markers: op.create.data.markers || {}
-    });
+    doc.create(Object.assign({}, op.create.data, { collabid: newcollabid, project: targetProject }));
     collabs[collabid].files[filepath] = doc;
     console.log('created file');
   } else if (op.op) {
     // submit op
     var doc = collabs[collabid].files[filepath];
-    op.op.forEach(_op => {
-      doc.submitOp(_op);
+    op.op.forEach(function(op) {
+      doc.submitOp(op);
     });
     console.log('submitted op');
   } 

@@ -22,15 +22,15 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
     $.ajax('/baseline/' + project + '/' + file.data.filepath).done(function(baseline) {
       if (cutoff) {
         $.ajax('/historical/' + project + '/' + collabid + '/' + file.data.filepath + '/' + cutoff).done(function(historical) {
-          updateDiff(diff, baseline, historical.data ? historical.data.text : undefined, {});
+          updateDiff(diff, baseline, historical.data ? historical.data.text : undefined);
         }).fail(function(req, status, err) {
           diff.textContent = 'Error fetching code: ' + errorToString(req.responseJSON, status, err);
         });
       } else {
         file.subscribe(function() {
-          updateDiff(diff, baseline, file.data.text, {});
-          file.on('op', function(op) {
-            updateDiff(diff, baseline, file.data.text, { op: op });
+          updateDiff(diff, baseline, file.data.text);
+          file.on('op', function() {
+            updateDiff(diff, baseline, file.data.text);
           });
         });
       }
@@ -40,7 +40,7 @@ connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, f
   });
 });
 
-function updateDiff(node, baseline, text, args) {
+function updateDiff(node, baseline, text) {
   if (baseline === undefined || text === undefined) { return; }
   node.innerHTML = '';
   window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {

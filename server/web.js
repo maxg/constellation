@@ -273,12 +273,16 @@ exports.createFrontend = function createFrontend(config, db) {
   });
 
   app.get('/ops/:project', authenticate, staffonly, function(req, res, next) {
-    db.getOps(req.params.project, function(err, ops) {
+    db.getAllOpsForProjectByCollab(req.params.project, function(err, collabs) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
-      res.json(ops);
+      db.getNewCollabIds(req.params.project, function(err, newcollabids) {
+        if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
+        res.attachment(`${req.params.project}-ops.json`);
+        res.json({ collabs, newcollabids });
+      });
     });
   });
-  
+
   app.get('/hello/:version', function(req, res, next) {
     getPluginVersion(function(err, version) {
       res.send({
