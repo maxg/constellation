@@ -100,12 +100,8 @@ exports.createBackend = function createBackend(config) {
     getSetups(since, callback) {
       db.getCollection(SETUP, function(err, setup) {
         if (err) { return callback(err); }
-        let query = since
-                    ? { time : { $gte: +new Date(since) } }
-                    : {}
-        setup.find(query).toArray(function(err, result) {
-          callback(err, result);
-        });
+        let query = since ? { time : { $gte: +new Date(since) } } : {};
+        setup.find(query).toArray(callback);
       });
     },
     
