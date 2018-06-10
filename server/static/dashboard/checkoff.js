@@ -30,14 +30,14 @@ function setupCheckoff(err) {
 
   // set up keyboard shortcut for scores;
   // focus on comment box after selecting score
-  $(window).keypress(function(e) {
+  $(window).keypress(function(event) {
     var keyscoremap = {
       49: 0, // '1'
       50: 1, // '2'
       51: 2  // '3'
     };
 
-    var keycode = e.keyCode || e.which;
+    var keycode = event.keyCode || event.which;
     if (keycode in keyscoremap
           && !$('#comment').is(':focus')) {
       setScore(keyscoremap[keycode]);
@@ -45,7 +45,7 @@ function setupCheckoff(err) {
 
       $('#comment').focus().select();
 
-      e.stopPropagation();
+      event.stopPropagation();
       return false;
     }
   });
