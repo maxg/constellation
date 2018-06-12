@@ -241,21 +241,23 @@ exports.createBackend = function createBackend(config) {
         mongo.collection(COLLABS).find({ project }, { _id: 1 }).toArray((err, collabs) => {
           let newcollabids = {};
           collabs.forEach(collab => {
-            newcollabids[collab.id] = mongodb.ObjectID().toString();
+            newcollabids[collab._id] = mongodb.ObjectID().toString();
           });
           callback(err, newcollabids);
         });
       });
     },
 
-    getAllOpsForProjectByCollab(project, callback) {
+    getProjectFileOps(project, callback) {
       db.getDbs((err, mongo) => {
         if (err) { return callback(err); }
         mongo.collection(FILES).find({ project }, { collabid: 1, filepath: 1 }).toArray((err, files) => {
+          if (err) { return callback(err); }
           let nocutoff = undefined;
           async.series(
             files.map(file => (done => backend.getOps(file.collabid, file.filepath, nocutoff, done))),
             (err, allops) => {
+              if (err) { return callback(err); }
               let collabs = {};
               allops.forEach((ops, i) => {
                 let collabid = files[i].collabid;
@@ -263,9 +265,33 @@ exports.createBackend = function createBackend(config) {
                 collabs[collabid] = collabs[collabid] || { files: {} };
                 collabs[collabid].files[filepath] = { ops };
               });
-              callback(err, collabs);
+              callback(null, collabs);
             }
           );
+        });
+      });
+    },
+
+    getProjectCollabOps(project, callback) {
+      db.getDbs((err, mongo) => {
+        if (err) { return callback(err); }
+        mongo.collection(COLLABS).find({ project }, { _id: 1 }).toArray((err, collabs) => {
+          if (err) { return callback(err); }
+          let ids = collabs.map(collab => collab._id);
+          mongo.collection('o_'+COLLABS).aggregate([
+            { $match: { d: { $in: ids } } },
+            { $sort: { v: 1 } },
+            { $project: { _id: 0, d: 1, create: 1, op: 1, 'm.ts': 1} }
+          ], (err, ops) => {
+            if (err) { return callback(err); }
+            let collabs = {};
+            ops.forEach(op => {
+              collabs[op.d] = collabs[op.d] || [];
+              collabs[op.d].push(op);
+              delete op.d;
+            });
+            callback(null, collabs);
+          });
         });
       });
     },

@@ -1,86 +1,100 @@
 var connection = new window.sharedb.Connection(new WebSocket(shareURL));
 
-var replayID;
+$.ajax('/newcollabids/' + project).done(function(newcollabids) {
+  var opsfileinput = document.querySelector('#opsFile');
+  var filereader = new FileReader();
+  var startbutton = document.querySelector('#startReplay');
+  var stopbutton = document.querySelector('#stopReplay');
 
-$.ajax('/ops/' + project).done(function(result) {
-  var collabs = result.collabs;
-  var newcollabids = result.newcollabids;
-  console.log('fetched');
-  console.log(collabs);
-  for (var collabid in collabs) {
-    var collab = collabs[collabid];
-    collab.users = [];
-    for (var filepath in collab.files) {
-      var ops = collab.files[filepath].ops;
-      ops.forEach(function(op) {
-        var username = getUsernameFromCursorOp(op);
-        if (username && collab.users.indexOf(username) < 0) collab.users.push(username);
-      });
-    }
-  }
-  console.log('parsed');
+  startbutton.disabled = false;
+  stopbutton.disabled = false;
 
-  document.querySelector('#startReplay').addEventListener('click', function() {
-    var targetProject = document.querySelector('#targetProject').value;
-    var startTimestamp = Date.parse(document.querySelector('#startTimestamp').value);
-    replay(collabs, newcollabids, Date.now(), startTimestamp, targetProject);
+  opsfileinput.addEventListener('change', function() {
+    filereader.readAsText(opsfileinput.files[0]);
   });
 
-  document.querySelector('#stopReplay').addEventListener('click', stopReplay);
+  filereader.addEventListener('load', function() {
+    var collabs = JSON.parse(filereader.result);
+    // reverse ops to pop from the end
+    for (var collabid in collabs) {
+      var collab = collabs[collabid];
+      collab.ops.reverse();
+      for (var filepath in collab.files) {
+        collab.files[filepath].ops.reverse();
+      }
+    }
+
+    startbutton.onclick = function() {
+      var project = document.querySelector('#targetProject').value;
+      var mintime = Date.parse(document.querySelector('#startTimestamp').value);
+      replay(collabs, newcollabids, Date.now(), mintime, project);
+    };
+  });
+
+  stopbutton.onclick = stopReplay;
 });
 
-function replay(collabs, newcollabids, startTime, minTimestamp, targetProject) {
-  if (ops.length == 0) return;
-  var delta = Date.now() - startTime;
-  while (ops[ops.length - 1].m.ts - minTimestamp <= delta) {
-    handleOp(ops.pop(), newcollabids, targetProject);
+var replayID;
+
+function replay(collabs, newcollabids, starttime, mintime, project) {
+  var delta = Date.now() - starttime;
+  var handledop = false;
+  var minoptime = Date.now();
+  for (var collabid in collabs) {
+    var collab = collabs[collabid];
+    while (collab.ops.length > 0 && collab.ops[collab.ops.length - 1].m.ts - mintime <= delta) {
+      handleCollabOp(project, newcollabids[collabid], collab, collab.ops.pop());
+      handledop = true;
+    }
+    if (collab.ops.length > 0) {
+      minoptime = Math.min(minoptime, collab.ops[collab.ops.length - 1].m.ts);
+    }
+    for (var filepath in collab.files) {
+      var file = collab.files[filepath];
+      while (file.ops.length > 0 && file.ops[file.ops.length - 1].m.ts - mintime <= delta) {
+        handleFileOp(project, newcollabids[collabid], filepath, file, file.ops.pop());
+        handledop = true;
+      }
+      if (file.ops.length > 0) {
+        minoptime = Math.min(minoptime, file.ops[file.ops.length - 1].m.ts);
+      }
+    }
   }
-  if (ops.length == 0) return;
-  replayID = setTimeout(
-    function() { replay(ops, newcollabids, startTime, minTimestamp, targetProject); },
-    ops[ops.length - 1].m.ts - minTimestamp - delta
-  );
+  if (handledop) {
+    replayID = setTimeout(function() {
+      replay(collabs, newcollabids, starttime, mintime, project);
+    }, minoptime - mintime - delta);
+  }
 }
 
-function handleOp(op, newcollabids, targetProject) {
-  var collabid = op.d.split('-')[0];
-  var newcollabid = newcollabids[collabid];
-  var filepath = op.d.split('-')[1];
-  if (!collabs[collabid].doc) {
-    // create collab doc
-    collabs[collabid].doc = connection.get('collabs', newcollabid);
-    collabs[collabid].doc.create({
-      ['users']: collabs[collabid].users,
-      project: targetProject
-    });
-    console.log('created collab');
-  }
+function handleCollabOp(project, collabid, collab, op) {
   if (op.create) {
-    // create file doc
-    var fileid = newcollabid + '-' + filepath;
-    var doc = connection.get('files', fileid);
-    doc.create(Object.assign({}, op.create.data, { collabid: newcollabid, project: targetProject }));
-    collabs[collabid].files[filepath] = doc;
+    collab.doc = connection.get('collabs', collabid);
+    collab.doc.create(Object.assign({}, op.create.data, { project: project }));
+    console.log('created collab');
+  } else if (op.op) {
+    op.op.forEach(function(op) {
+      collab.doc.submitOp(op);
+      console.log('submitted collab op');
+    });
+  }
+}
+
+function handleFileOp(project, collabid, filepath, file, op) {
+  if (op.create) {
+    var fileid = collabid + '-' + filepath;
+    file.doc = connection.get('files', fileid);
+    file.doc.create(Object.assign({}, op.create.data, { collabid: collabid, project: project }));
     console.log('created file');
   } else if (op.op) {
-    // submit op
-    var doc = collabs[collabid].files[filepath];
     op.op.forEach(function(op) {
-      doc.submitOp(op);
+      file.doc.submitOp(op);
+      console.log('submitted file op');
     });
-    console.log('submitted op');
   } 
 }
 
 function stopReplay() {
   clearTimeout(replayID);
-}
-
-function getUsernameFromCursorOp(op) {
-  op = op.op || [];
-  op = op[0] || {};
-  var p = op.p || [];
-  if (p[0] == 'cursors') return p[1];
-  return null;
 }
 

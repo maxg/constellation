@@ -272,13 +272,23 @@ exports.createFrontend = function createFrontend(config, db) {
     res.render('replay', { project: req.params.project });
   });
 
-  app.get('/ops/:project', authenticate, staffonly, function(req, res, next) {
-    db.getAllOpsForProjectByCollab(req.params.project, function(err, collabs) {
+  app.get('/newcollabids/:project', authenticate, staffonly, function(req, res, next) {
+    db.getNewCollabIds(req.params.project, function(err, newcollabids) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
-      db.getNewCollabIds(req.params.project, function(err, newcollabids) {
+      res.json(newcollabids);
+    });
+  });
+
+  app.get('/ops/:project', authenticate, staffonly, function(req, res, next) {
+    db.getProjectCollabOps(req.params.project, function(err, collabops) {
+      if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
+      db.getProjectFileOps(req.params.project, function(err, collabs) {
         if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
+        for (var collabid in collabs) {
+          collabs[collabid].ops = collabops[collabid];
+        }
         res.attachment(`${req.params.project}-ops.json`);
-        res.json({ collabs, newcollabids });
+        res.json(collabs);
       });
     });
   });
