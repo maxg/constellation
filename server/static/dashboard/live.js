@@ -60,11 +60,11 @@ addListenerWithTimeout('searchbox', searchbox, 'input', 500, function() {
   }
 });
 
-collabs.on('ready', function() { subscribeToCollabs(collabs.results, 0); });
+collabs.on('ready', function() { subscribeToCollabs(collabs.results); });
 collabs.on('insert', subscribeToCollabs);
 
-function subscribeToCollabs(collabs, atIndex) {
-  collabs.forEach(function(collab, idx) {
+function subscribeToCollabs(collabs) {
+  collabs.forEach(function(collab) {
     collabstofiles[collab.id] = [];
     var files = connection.createSubscribeQuery('files', { collabid: collab.id }, {});
     files.on('ready', function() { subscribeToFiles(collab.id, files.results); });
@@ -124,22 +124,16 @@ var baselines = {}; // filepath => { ajax, err, baseline }
 function getBaseline(filepath, callback) {
   baselines[filepath] = baselines[filepath] || {};
   var data = baselines[filepath];
-  if (data.err || data.baseline) {
-    callback(data.err, data.baseline);
-  } else if (data.ajax) {
-    data.ajax.always(function() {
-      callback(data.err, data.baseline);
-    });
-  } else {
+  if (!data.ajax) {
     data.ajax = $.ajax('/baseline/' + project + '/' + filepath).done(function(baseline) {
       data.baseline = baseline;
     }).fail(function(req, status, err) {
       data.err = 'Error fetching baseline: ' + errorToString(req.responseJSON, status, err);
-    }).always(function() {
-      data.ajax = null;
-      callback(data.err, data.baseline);
     });
   }
+  data.ajax.always(function() {
+    callback(data.err, data.baseline);
+  });
 }
 
 

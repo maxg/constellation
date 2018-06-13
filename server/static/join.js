@@ -1,5 +1,8 @@
 function rendezvous(me, form, partner, status, map) {
 
+  var canvas = map.find('canvas')[0];
+  var ctx = canvas.getContext('2d');
+
   var selectionXY; // [x, y]
   var selectionsection; // A-G
 
@@ -32,15 +35,15 @@ function rendezvous(me, form, partner, status, map) {
   });
 
   map.mousemove(function onMapHover(event) {
-    render(this.querySelector('canvas'), event);
+    render(event);
   });
 
   map.mouseleave(function onMapLeave() {
-    render(this.querySelector('canvas'));
+    render();
   });
 
   map.click(function onMapClick(event) {
-    var section = getSection(this.querySelector('canvas'), event);
+    var section = getSection(event);
     if (!section) { return; }
 
     partner.prop('disabled', false);
@@ -48,7 +51,7 @@ function rendezvous(me, form, partner, status, map) {
 
     selectionXY = [event.offsetX, event.offsetY];
     selectionsection = section;
-    render(this.querySelector('canvas'), event);
+    render(event);
   });
 
   var cursorcolor = '#f006';
@@ -66,7 +69,7 @@ function rendezvous(me, form, partner, status, map) {
     G: [0.74, 0.475, 1, 0.945]
   };
 
-  function getSection(canvas, event) {
+  function getSection(event) {
     var x = event.offsetX, y = event.offsetY,
         width = canvas.width, height = canvas.height;
     for (var section in bounds) {
@@ -78,15 +81,14 @@ function rendezvous(me, form, partner, status, map) {
     }
   }
 
-  function render(canvas, event) {
+  function render(event) {
     canvas.width = $(canvas).width();
     canvas.height = $(canvas).height();
     var radius = cursorheight * canvas.height / 2;
 
-    var ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    var section = (event ? getSection(canvas, event) : undefined) || selectionsection;
+    var section = (event ? getSection(event) : undefined) || selectionsection;
     if (section) { // highlight section
       ctx.fillStyle = shadecolor;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
