@@ -1,11 +1,3 @@
-var queryMap = {};
-// '?k1=v1&k2=v2' => [ 'k1=v1', 'k2=v2' ]
-location.search.substring(1).split('&').forEach(function(queryPair) {
-  // 'key=value' => [ 'key', 'value' ]
-  var keyValue = queryPair.split('=');
-  queryMap[keyValue[0]] = keyValue[1];
-});
-
 // augmented diffLines which outputs each line as a separate part
 function diffLines(baseline, current) {
   // ensure both text blocks end in newline
@@ -94,7 +86,7 @@ function subscribeToFiles(collabid, files) {
   files.forEach(function(file) {
     var filepath = file.data.filepath;
     // ignore files not selected by url query
-    if (queryMap.files && queryMap.files.indexOf(filepath) < 0) { return; }
+    if (queryparams.files && queryparams.files.indexOf(filepath) < 0) { return; }
     collabstofiles[collabid].push(file);
 
     var item = document.importNode(document.querySelector('#file').content, true);
