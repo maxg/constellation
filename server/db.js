@@ -129,7 +129,7 @@ exports.createBackend = function createBackend(config) {
     },
     
     // add user to collaboration, and set their active collaboration
-    addUserToCollaboration(username, project, collabid, callback) {
+    addUserToCollaboration(username, project, collabid, location, callback) {
       async.autoInject({
         collab(done) {
           let collab = connection.get(COLLABS, collabid);
@@ -137,7 +137,7 @@ exports.createBackend = function createBackend(config) {
         },
         collab_created(collab, done) {
           if ( ! collab.type) {
-            collab.create({ [USERS]: [], project }, done);
+            collab.create({ [USERS]: [], project, location }, done);
           } else { done(); }
         },
         user(done) {

@@ -37,7 +37,7 @@ exports.create = function create(config) {
       return displayWordsFromKey(key);
     },
     
-    rendezvous(me, partner, callback) {
+    rendezvous(me, partner, location, callback) {
       if (me.constructor !== Array) { return callback(new Error('Invalid self joincode')); }
       if (partner.constructor !== Array) { return callback(new Error('Invalid partner joincode')); }
       
@@ -50,6 +50,8 @@ exports.create = function create(config) {
       
       if ( ! active[me]) { return callback(new Error('Inactive self joincode')); }
       if ( ! active[partner]) { return callback(new Error('Inactive partner joincode')); }
+
+      active[me].location = location;
       
       function join(id) {
         callback(null, { id, me: active[me], partner: active[partner] });

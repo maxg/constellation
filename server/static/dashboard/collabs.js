@@ -2,6 +2,7 @@ var connection = new window.sharedb.Connection(new WebSocket(shareURL));
 
 var collabs = connection.createSubscribeQuery('collabs', {
   project: project,
+  'location.section': queryparams.section,
   '_m.ctime': cutoff ? { $lte: +moment(cutoff) } : { $exists: true },
   $sort: { '_m.ctime': -1 }
 }, {});

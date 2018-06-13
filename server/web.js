@@ -17,6 +17,7 @@ exports.createFrontend = function createFrontend(config, db) {
   const join = require('./join').create(config);
   const paired = new events.EventEmitter();
   const setupproject = 'constellation-setup';
+  const mapfile = '/static/34-101.jpg';
   
   const app = express();
   
@@ -105,6 +106,7 @@ exports.createFrontend = function createFrontend(config, db) {
     res.render('join', {
       project: req.params.project,
       joincode: join.code({ username: res.locals.authusername, project: req.params.project }),
+      mapfile: mapfile
     });
   });
   
@@ -120,7 +122,7 @@ exports.createFrontend = function createFrontend(config, db) {
       return res.send({ redirect: '/setup-done' });
     }
 
-    join.rendezvous(req.body.me, req.body.partner, function(err, agreed) {
+    join.rendezvous(req.body.me, req.body.partner, req.body.location, function(err, agreed) {
       if (err) { return res.status(400).send({ error: err.message }); }
       
       if (res.locals.authusername == agreed.partner.username) {
@@ -129,11 +131,19 @@ exports.createFrontend = function createFrontend(config, db) {
       if (agreed.me.project !== agreed.partner.project) {
         return res.status(400).send({ error: 'Different projects selected' });
       }
+      if (agreed.me.location.section !== agreed.partner.location.section) {
+        return res.status(400).send({ error: 'Must be sitting with partner' });
+      }
       
       let partner = agreed.partner.username;
       let project = agreed.me.project;
       let collabid = agreed.id;
-      db.addUserToCollaboration(me, project, collabid, function(err) {
+      let location = {
+        section: agreed.me.location.section,
+        seatX: (agreed.me.location.seatX + agreed.partner.location.seatX) / 2,
+        seatY: (agreed.me.location.seatY + agreed.partner.location.seatY) / 2
+      };
+      db.addUserToCollaboration(me, project, collabid, location, function(err) {
         paired.emit(req.params.userid, { me, token, partner, project, collabid });
         res.send({ redirect: '/edit' });
       });
