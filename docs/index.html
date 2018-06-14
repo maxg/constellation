@@ -32,6 +32,33 @@ b, strong { font-weight: 500; }
   border-radius: .7% / 1.7881619938%; /* = 820/321*.7 */
   max-width: 100%;
 }
+.small-image {
+  width: 440px;
+  max-width: 100%;
+  margin-bottom: 10px;
+}
+img.small-image {
+  border: 1px solid #333;
+  vertical-align: top;
+}
+.iframe-container {
+  position: relative; height: 0; overflow: hidden; padding-bottom: 56.25%;
+  border-radius: 1.3% / 2.3111111111%; /* = 1/.5625*1.3 */
+  z-index: 1;
+}
+.iframe-container iframe {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0;
+}
+.project {
+  margin-bottom: 10px; clear: both;
+}
+.person {
+  float: right; clear: right; margin: 0 0 10px 32px; text-align: center; max-width: 20%;
+}
+.person object {
+  width: 192px; height: auto; max-width: 100%;
+}
 </style>
 <title>Constellation</title>
 </head>
@@ -53,6 +80,57 @@ http://www.eclipse.org/artwork/
   <source src="constellation-screencapture.mp4" type="video/mp4" onerror="parentNode.parentNode.replaceChild(parentNode.querySelector('img'), parentNode)">
   <img class="big-image" src="constellation-screencapture.gif">
 </video>
+<h2>Projects</h2>
+<div class="project">
+<div class="person">
+<object type="image/svg+xml" data="people/ccassidy.svg"></object>
+<p>Caitlin Cassidy</p>
+</div>
+<p>
+<strong>Glanceable code history</strong>
+&emsp;
+Constellation allows instructors to view real-time or snapshotted progress of every student pair.
+A standard source code diff will show changes from initial to final version, but instructors are often interested in students&rsquo; process.
+In a large class, scrubbing a timeline or scanning multiple diffs for each pair is infeasible, so we developed a glanceable code history visualization that reveals both the changes that appear in students&rsquo; final version as well as changes that were discarded or rewritten along the way.
+</p>
+<p><a href="TODO">Glanceable Code History: Visualizing Student Code for Better Instructor Feedback</a></p>
+<a href="glanceable-code-history.jpg"><img class="small-image" src="glanceable-code-history.jpg" style="border-radius: 1.3% / 2.128729963%; /* = 1328/811*1.3 */"></a>
+</div>
+<div class="project">
+<div class="person">
+<object type="image/svg+xml" data="people/lu16j.svg"></object>
+<p>Richard Lu</p>
+</div>
+<p>
+<strong>Student localization and live view</strong>
+&emsp;
+By asking students to indicate where they are sitting in the classroom, Constellation can provide live real-time views for teaching staff that are connected to the physical layout.
+For example, the staff can divide up responsibility for different parts of the classroom.
+An instructor using their laptop or phone to show only the progress of the handful of groups in their section can reach out and offer help in person as soon as they see a pair is stuck.
+</p>
+<a href="localization-join.png"><img class="small-image" src="localization-join.png" style="border-radius: 1.3% / 4.1445270988%; /* = 3000/941*1.3 */"></a>
+<a href="live-view-search.png"><img class="small-image" src="live-view-search.png" style="border-radius: 1.3% / 1.95%; /* = 3000/2000*1.3 */"></a>
+</div>
+<div class="project">
+<div class="person">
+<object type="image/svg+xml" data="people/maxg.svg"></object>
+<p><a href="http://web.mit.edu/maxg/">Max Goldman</a></p>
+</div>
+<div class="person">
+<object type="image/svg+xml" data="people/rcm.svg"></object>
+<p><a href="http://people.csail.mit.edu/rcm/">Rob Miller</a></p>
+</div>
+<p>
+<strong><a href="http://web.mit.edu/6.031/">6.031 Software Construction</a></strong>
+&emsp;
+Students use Constellation nearly every class meeting as they learn, practice, and receive feedback on software engineering fundamentals.
+While the instructor leads a discussion after each exercise, teaching assistants check off student participation and write a brief comment to each pair.
+</p>
+<div class="small-image">
+<div class="iframe-container">
+<iframe src="https://www.youtube-nocookie.com/embed/1Kipw2PW1yI?modestbranding=1&amp;rel=0&amp;controls=1&amp;start=71&amp;end=126" frameborder="0" allow="encrypted-media" allowfullscreen></iframe>
+</div>
+</div>
 </div>
 </div>
 </div>
