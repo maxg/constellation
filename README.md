@@ -6,6 +6,8 @@ Constellation
 Enables collaborative programming in the Eclipse IDE -- think *Google Docs for Eclipse*.
 Designed for active learning in the classroom, with students working in pairs on small exercises.
 
+http://maxg.github.io/constellation
+
 
 Server Development
 ------------------

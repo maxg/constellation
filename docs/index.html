@@ -4,10 +4,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 <style>
-@import url(https://fonts.googleapis.com/css?family=Rubik:400,700);
+@import url(https://fonts.googleapis.com/css?family=Rubik:400,500);
 body {
   font-family: 'Rubik', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
+b, strong { font-weight: 500; }
 #big-logo {
   position: absolute;
   bottom: 0;
@@ -24,12 +25,12 @@ body {
   padding: 1em;
   border-radius: 1em;
 }
-#big-text :first-child { margin-top: 0; }
-#big-text :last-child { margin-bottom: 0; }
-#big-text img, #big-text video { max-width: 100%; }
+#big-text > :first-child { margin-top: 0; }
+#big-text > :last-child { margin-bottom: 0; }
 .big-image {
   width: 820px;
   border-radius: .7% / 1.7881619938%; /* = 820/321*.7 */
+  max-width: 100%;
 }
 </style>
 <title>Constellation</title>
@@ -43,10 +44,11 @@ http://www.eclipse.org/artwork/
 <svg id="big-logo" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 100 100" preserveAspectRatio="xMinYMin slice"></svg>
 <div id="big-text">
 <h1>Constellation</h2>
-<p>Classroom collaborative coding in <a href="https://www.eclipse.org/">Eclipse</a></p>
+<p><strong>Classroom collaborative coding in <a href="https://www.eclipse.org/">Eclipse</a></strong></p>
+<p>Designed for active learning in the classroom, with students working in pairs on small programming exercises.</p>
 <p>Built with <a href="https://github.com/share/sharedb/">ShareDB</a></p>
 <p><a href="https://github.com/maxg/constellation/blob/master/README.md">README</a></p>
-<p>MIT EECS&emsp;&amp;&emsp;MIT CSAIL <a href="http://up.csail.mit.edu/">Usable Programming Group</a></p>
+<p>MIT EECS and the <a href="http://up.csail.mit.edu/">MIT CSAIL Usable Programming Group</a></p>
 <video class="big-image" autoplay loop playsinline webkit-playsinline>
   <source src="constellation-screencapture.mp4" type="video/mp4" onerror="parentNode.parentNode.replaceChild(parentNode.querySelector('img'), parentNode)">
   <img class="big-image" src="constellation-screencapture.gif">
