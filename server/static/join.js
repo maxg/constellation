@@ -1,10 +1,10 @@
-function rendezvous(me, form, partner, status, map) {
+function rendezvous(me, form, partner, status, map, mapbounds) {
 
   var canvas = map.find('canvas')[0];
   var ctx = canvas.getContext('2d');
 
   var selectionXY; // [x, y]
-  var selectionsection; // A-G
+  var selectionsection;
 
   form.on('submit', function() {
     try {
@@ -59,23 +59,13 @@ function rendezvous(me, form, partner, status, map) {
   var shadecolor = '#0007';
   var cursorheight = 0.15; // % of image height
 
-  var bounds = { // [minX, minY, maxX, maxY] as percentages
-    A: [0.06, 0.07, 0.3, 0.475],
-    B: [0.3, 0.07, 0.5, 0.475],
-    C: [0.5, 0.07, 0.7, 0.475],
-    D: [0.7, 0.07, 0.93, 0.475],
-    E: [0, 0.475, 0.26, 0.945],
-    F: [0.26, 0.475, 0.74, 0.945],
-    G: [0.74, 0.475, 1, 0.945]
-  };
-
   function getSection(event) {
     var x = event.offsetX, y = event.offsetY,
         width = canvas.width, height = canvas.height;
-    for (var section in bounds) {
-      var bound = bounds[section];
-      if (x >= width * bound[0] && x <= width * bound[2]
-          && y >= height * bound[1] && y <= height * bound[3]) {
+    for (var section in mapbounds) {
+      var bound = mapbounds[section];
+      if (x >= width * bound.minX && x <= width * bound.maxX
+          && y >= height * bound.minY && y <= height * bound.maxY) {
         return section;
       }
     }
@@ -92,9 +82,9 @@ function rendezvous(me, form, partner, status, map) {
     if (section) { // highlight section
       ctx.fillStyle = shadecolor;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      var bound = bounds[section];
-      var x = bound[0] * canvas.width, y = bound[1] * canvas.height,
-          w = bound[2] * canvas.width - x, h = bound[3] * canvas.height - y;
+      var bound = mapbounds[section];
+      var x = bound.minX * canvas.width, y = bound.minY * canvas.height,
+          w = bound.maxX * canvas.width - x, h = bound.maxY * canvas.height - y;
       ctx.clearRect(x, y, w, h);
     }
 
@@ -104,9 +94,9 @@ function rendezvous(me, form, partner, status, map) {
       ctx.arc(selectionXY[0], selectionXY[1], radius, 0, 2 * Math.PI);
       ctx.fill();
       ctx.strokeStyle = selectedcolor;
-      var bound = bounds[selectionsection];
-      var x = bound[0] * canvas.width, y = bound[1] * canvas.height,
-          w = bound[2] * canvas.width - x, h = bound[3] * canvas.height - y;
+      var bound = mapbounds[selectionsection];
+      var x = bound.minX * canvas.width, y = bound.minY * canvas.height,
+          w = bound.maxX * canvas.width - x, h = bound.maxY * canvas.height - y;
       ctx.rect(x, y, w, h);
       ctx.stroke();
     }

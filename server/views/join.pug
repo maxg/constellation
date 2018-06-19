@@ -28,4 +28,11 @@ block content
     h3#status.text-primary
   
   script.
-    rendezvous(!{JSON.stringify(joincode.join(' '))}, $('#join'), $('#partner'), $('#status'), $('#map'));
+    rendezvous(
+      !{JSON.stringify(joincode.join(' '))},
+      $('#join'),
+      $('#partner'),
+      $('#status'),
+      $('#map'),
+      !{JSON.stringify(mapbounds)}
+    );

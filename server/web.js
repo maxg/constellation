@@ -18,6 +18,15 @@ exports.createFrontend = function createFrontend(config, db) {
   const paired = new events.EventEmitter();
   const setupproject = 'constellation-setup';
   const mapfile = '/static/34-101.jpg';
+  const mapbounds = {
+    A: { minX: 0.06, minY:  0.07, maxX:  0.3, maxY: 0.475 },
+    B: { minX:  0.3, minY:  0.07, maxX:  0.5, maxY: 0.475 },
+    C: { minX:  0.5, minY:  0.07, maxX:  0.7, maxY: 0.475 },
+    D: { minX:  0.7, minY:  0.07, maxX: 0.93, maxY: 0.475 },
+    E: { minX:    0, minY: 0.475, maxX: 0.26, maxY: 0.945 },
+    F: { minX: 0.26, minY: 0.475, maxX: 0.74, maxY: 0.945 },
+    G: { minX: 0.74, minY: 0.475, maxX:    1, maxY: 0.945 }
+  };
   
   const app = express();
   
@@ -106,7 +115,8 @@ exports.createFrontend = function createFrontend(config, db) {
     res.render('join', {
       project: req.params.project,
       joincode: join.code({ username: res.locals.authusername, project: req.params.project }),
-      mapfile: mapfile
+      mapfile: mapfile,
+      mapbounds: mapbounds
     });
   });
   
@@ -226,6 +236,14 @@ exports.createFrontend = function createFrontend(config, db) {
   app.get('/dashboard/:project/live', authenticate, staffonly, function(req, res, next) {
     res.render('dashboard/live', {
       project: req.params.project
+    });
+  });
+
+  app.get('/dashboard/:project/map', authenticate, staffonly, function(req, res, next) {
+    res.render('dashboard/map', {
+      project: req.params.project,
+      mapfile: mapfile,
+      mapbounds: mapbounds
     });
   });
   

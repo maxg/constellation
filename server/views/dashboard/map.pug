@@ -1,0 +1,37 @@
+extends ../layout
+
+append head
+  title #{project} Collaborations - Constellation
+
+block content
+  .row: .col-xs-12
+    a#back(href=`/dashboard/`) all projects
+    h2 #{project} collaborations
+      br
+      |  #[small #[span.label.label-success current] collabs]
+
+  .row: .col-xs-12
+    div#map.map-container
+      img(src=mapfile)
+      each bound, section in mapbounds
+        a.section(
+          id='section-' + section,
+          href='/dashboard/' + project + '/live?section=' + section,
+          style=
+            'left:' + (100 * bound.minX) + '%;' +
+            'top:' + (100 * bound.minY) + '%;' +
+            'width:' + (100 * (bound.maxX - bound.minX)) + '%;' +
+            'height:' + (100 * (bound.maxY - bound.minY)) + '%;'
+        )
+
+  template#section
+    a.section
+
+  template#collab
+    .collab
+
+  script.
+    var shareURL = !{JSON.stringify(shareURL)};
+    var project = !{JSON.stringify(project)};
+  script(src='/public/sharedb.js')
+  script(src='/static/dashboard/map.js')
