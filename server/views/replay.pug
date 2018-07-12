@@ -6,6 +6,9 @@ append head
 block content
 
   .row: .col-xs-12
+    button#getOps.btn.btn-secondary.col-xs-4(disabled='true') Get Ops File
+    span#status.col-xs-4 Loading new collab IDs...
+  .row: .col-xs-12
     label.col-xs-3 Ops File
     input#opsFile.col-xs-5(type='file')
   .row: .col-xs-12

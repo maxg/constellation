@@ -307,16 +307,13 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
 
-  app.get('/ops/:project', authenticate, staffonly, function(req, res, next) {
-    db.getProjectCollabOps(req.params.project, function(err, collabops) {
+  app.get('/ops/collab/:collabid', authenticate, staffonly, function(req, res, next) {
+    db.getCollabOps(req.params.collabid, function(err, ops) {
       if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
-      db.getProjectFileOps(req.params.project, function(err, collabs) {
+      db.getFileOpsForCollab(req.params.collabid, function(err, files) {
         if (err) { return res.status(500).send({ code: err.code, message: err.message }); }
-        for (var collabid in collabs) {
-          collabs[collabid].ops = collabops[collabid];
-        }
         res.attachment(`${req.params.project}-ops.json`);
-        res.json(collabs);
+        res.json({ id: req.params.collabid, ops, files });
       });
     });
   });
