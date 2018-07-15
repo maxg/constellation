@@ -240,10 +240,9 @@ exports.createBackend = function createBackend(config) {
         if (err) { return callback(err); }
         mongo.collection(COLLABS).find({ project }, { _id: 1 }).toArray((err, collabs) => {
           if (err) { return callback(err); }
-          callback(null, collabs.map(collab => collab._id).reduce(
-            (result, id) => Object.assign({}, result, { [id]: mongodb.ObjectID().toString() }),
-            {}
-          ));
+          let newids = {};
+          collabs.forEach(collab => newids[collab._id] = mongodb.ObjectID().toString());
+          callback(null, newids);
         });
       });
     },
@@ -253,16 +252,14 @@ exports.createBackend = function createBackend(config) {
         if (err) { return callback(err); }
         mongo.collection(FILES).find({ collabid }, { filepath: 1 }).toArray((err, files) => {
           if (err) { return callback(err); }
-          let filepaths = files.map(file => file.filepath);
           let nocutoff = undefined;
           async.series(
-            filepaths.map(filepath => (done => backend.getOps(collabid, filepath, nocutoff, done))),
+            files.map(file => (done => backend.getOps(collabid, file.filepath, nocutoff, done))),
             (err, fileops) => {
               if (err) { return callback(err); }
-              callback(null, filepaths.reduce(
-                (collab, filepath, i) => Object.assign({}, collab, { [filepath]: { ops: fileops[i] } }),
-                {}
-              ));
+              let collab = {};
+              files.forEach((file, i) => collab[file.filepath] = { ops: fileops[i] });
+              callback(null, collab);
             }
           );
         });
