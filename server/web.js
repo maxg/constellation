@@ -296,8 +296,8 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
 
-  app.get('/replay/:project', authenticate, staffonly, function(req, res, next) {
-    res.render('replay', { project: req.params.project });
+  app.get('/dashboard/:project/replay', authenticate, staffonly, function(req, res, next) {
+    res.render('dashboard/replay', { project: req.params.project });
   });
 
   app.get('/newcollabids/:project', authenticate, staffonly, function(req, res, next) {
