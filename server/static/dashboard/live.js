@@ -29,6 +29,8 @@ function addListenerWithTimeout(id, elt, action, timeout, callback) {
 
 ////////////////////////////
 
+var queryparams = new URLSearchParams(location.search);
+
 var condensedtoggle = document.querySelector('#condensed');
 var autoscrolltoggle = document.querySelector('#autoscroll');
 
@@ -66,7 +68,12 @@ collabs.on('insert', subscribeToCollabs);
 function subscribeToCollabs(collabs) {
   collabs.forEach(function(collab) {
     collabstofiles[collab.id] = [];
-    var files = connection.createSubscribeQuery('files', { collabid: collab.id }, {});
+    var files = connection.createSubscribeQuery('files', {
+      collabid: collab.id,
+      filepath: queryparams.has('files')
+        ? { $in: queryparams.get('files').split(',') }
+        : { $exists: true }
+    }, {});
     files.on('ready', function() { subscribeToFiles(collab.id, files.results); });
     files.on('insert', function(newfiles) { subscribeToFiles(collab.id, newfiles); });
 
@@ -84,15 +91,12 @@ function subscribeToCollabs(collabs) {
 function subscribeToFiles(collabid, files) {
   var root = document.querySelector('#collab-' + collabid);
   files.forEach(function(file) {
-    var filepath = file.data.filepath;
-    // ignore files not selected by url query
-    if (queryparams.files && queryparams.files.indexOf(filepath) < 0) { return; }
     collabstofiles[collabid].push(file);
 
     var item = document.importNode(document.querySelector('#file').content, true);
-    item.querySelector('.file').setAttribute('id', 'file-' + collabid + '-' + filepath);
+    item.querySelector('.file').setAttribute('id', 'file-' + collabid + '-' + file.data.filepath);
     var heading = item.querySelector('.filepath');
-    heading.textContent = filepath;
+    heading.textContent = file.data.filepath;
     var diff = item.querySelector('.diff code');
     root.querySelector('.code').appendChild(item);
 

@@ -1,8 +1,10 @@
 var connection = new window.sharedb.Connection(new WebSocket(shareURL));
+var queryparams = new URLSearchParams(location.search);
 
 var collabs = connection.createSubscribeQuery('collabs', {
   project: project,
-  'location.section': queryparams.section,
+  // must default to undefined instead of null to avoid querying for null value
+  'location.section': queryparams.get('section') || undefined,
   '_m.ctime': cutoff ? { $lte: +moment(cutoff) } : { $exists: true },
   $sort: { '_m.ctime': -1 }
 }, {});
