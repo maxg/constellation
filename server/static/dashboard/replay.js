@@ -6,11 +6,11 @@ $.ajax('/newcollabids/' + project).done(function(newcollabids) {
   var getopsbutton = document.querySelector('#getOps');
   var startbutton = document.querySelector('#startReplay');
   var stopbutton = document.querySelector('#stopReplay');
+  var timebox = document.querySelector('#startTimestamp');
   var status = document.querySelector('#status');
 
   getopsbutton.disabled = false;
   startbutton.disabled = false;
-  stopbutton.disabled = false;
 
   status.innerText = 'New collab IDs loaded';
 
@@ -55,13 +55,27 @@ $.ajax('/newcollabids/' + project).done(function(newcollabids) {
     status.innerText = 'Ops file loaded';
 
     startbutton.onclick = function() {
+      startbutton.disabled = true;
+      stopbutton.disabled = false;
+
       var project = document.querySelector('#targetProject').value;
-      var mintime = Date.parse(document.querySelector('#startTimestamp').value);
-      replay(collabs, newcollabids, Date.now(), mintime, project);
+      var starttime = Date.now();
+      var mintime = Date.parse(timebox.value);
+      replay(collabs, newcollabids, starttime, mintime, project);
+
+      stopbutton.onclick = function() {
+        stopReplay();
+
+        startbutton.disabled = false;
+        stopbutton.disabled = true;
+
+        var delta = Date.now() - starttime;
+        var timeoffset = new Date().getTimezoneOffset() * 60000;
+        var timestring = new Date(mintime + delta - timeoffset).toISOString();
+        timebox.value = timestring.slice(0, timestring.indexOf('.')); // remove ms
+      };
     };
   });
-
-  stopbutton.onclick = stopReplay;
 
   var replayID;
 
