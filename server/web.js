@@ -225,7 +225,8 @@ exports.createFrontend = function createFrontend(config, db) {
 
   app.get('/dashboard/:project/live', authenticate, staffonly, function(req, res, next) {
     res.render('dashboard/live', {
-      project: req.params.project
+      project: req.params.project,
+      imageURLformat: config.student.imageURL
     });
   });
 

@@ -20,5 +20,8 @@ module.exports = {
       G: { minX: 0.74, minY: 0.475, maxX:    1, maxY: 0.945 }
     }
   },
+  student: {
+    imageURL: '//web.mit.edu/lu16j/www/6.031-staff/sp18/USERNAME.jpg'
+  },
   mongodb: 'mongodb://localhost:27017/constellation-development',
 };

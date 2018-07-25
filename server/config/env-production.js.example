@@ -13,5 +13,8 @@ module.exports = {
       ...
     }
   },
+  student: {
+    imageURL: '//url/to/student/images/folder/USERNAME.jpg'
+  },
   mongodb: 'mongodb://localhost:27017/constellation',
 };

@@ -82,7 +82,7 @@ function subscribeToCollabs(collabs) {
     collab.data.users.forEach(function(user) {
       var image = document.createElement('img');
       image.addEventListener('error', image.remove);
-      image.src = '//web.mit.edu/lu16j/www/6.031-staff/sp18/' + user + '.jpg';
+      image.src = imageURLformat.replace('USERNAME', user);
       images.appendChild(image);
     });
   });
