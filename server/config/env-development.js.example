@@ -8,5 +8,17 @@ module.exports = {
     userFakery: true,
     secret: ...,
   },
+  map: {
+    file: '/static/classroom-mit-34-101.jpg',
+    bounds: {
+      A: { minX: 0.06, minY:  0.07, maxX:  0.3, maxY: 0.475 },
+      B: { minX:  0.3, minY:  0.07, maxX:  0.5, maxY: 0.475 },
+      C: { minX:  0.5, minY:  0.07, maxX:  0.7, maxY: 0.475 },
+      D: { minX:  0.7, minY:  0.07, maxX: 0.93, maxY: 0.475 },
+      E: { minX:    0, minY: 0.475, maxX: 0.26, maxY: 0.945 },
+      F: { minX: 0.26, minY: 0.475, maxX: 0.74, maxY: 0.945 },
+      G: { minX: 0.74, minY: 0.475, maxX:    1, maxY: 0.945 }
+    }
+  },
   mongodb: 'mongodb://localhost:27017/constellation-development',
 };

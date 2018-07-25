@@ -6,5 +6,12 @@ module.exports = {
     certDomain: 'MIT.EDU',
     secret: ...,
   },
+  map: {
+    file: '/path/to/image/file',
+    bounds: {
+      sectionName: { minX: ..., minY: ..., maxX: ..., maxY: ... },
+      ...
+    }
+  },
   mongodb: 'mongodb://localhost:27017/constellation',
 };
