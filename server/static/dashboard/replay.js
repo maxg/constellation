@@ -52,6 +52,7 @@ $.ajax('/newcollabids/' + project).done(function(newcollabids) {
       }
     }
 
+    timebox.value = computeSuggestedStartTimeString(collabs);
     status.innerText = 'Ops file loaded';
 
     startbutton.onclick = function() {
@@ -70,9 +71,7 @@ $.ajax('/newcollabids/' + project).done(function(newcollabids) {
         stopbutton.disabled = true;
 
         var delta = Date.now() - starttime;
-        var timeoffset = new Date().getTimezoneOffset() * 60000;
-        var timestring = new Date(mintime + delta - timeoffset).toISOString();
-        timebox.value = timestring.slice(0, timestring.indexOf('.')); // remove ms
+        timebox.value = millisecondsToString(mintime + delta);
       };
     };
   });
@@ -143,5 +142,32 @@ $.ajax('/newcollabids/' + project).done(function(newcollabids) {
 
   function stopReplay() {
     clearTimeout(replayID);
+  }
+
+  // compute suggested start time as most common minute of collab creation
+  function computeSuggestedStartTimeString(collabs) {
+    var frequency = {};
+    var max = 0;
+    for (var collabid in collabs) {
+      var collab = collabs[collabid];
+      if (collab.ops.length > 0) {
+        var createtime = collab.ops[collab.ops.length - 1].m.ts;
+        var createminute = Math.round(createtime / (1000 * 60)) * (1000 * 60);
+        var timestring = millisecondsToString(createminute);
+        frequency[timestring] = (frequency[timestring] || 0) + 1;
+        max = Math.max(max, frequency[timestring]);
+      }
+    }
+    for (var starttime in frequency) {
+      if (frequency[starttime] == max) {
+        return starttime;
+      }
+    }
+  }
+
+  function millisecondsToString(ms) {
+    var timeoffset = new Date().getTimezoneOffset() * 60000;
+    var timestring = new Date(ms - timeoffset).toISOString();
+    return timestring.substring(0, timestring.indexOf('.')); // remove ms
   }
 });
