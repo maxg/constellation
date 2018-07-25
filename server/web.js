@@ -288,7 +288,21 @@ exports.createFrontend = function createFrontend(config, db) {
   });
 
   app.get('/dashboard/:project/replay', authenticate, staffonly, function(req, res, next) {
-    res.render('dashboard/replay', { project: req.params.project });
+    db.getProjects(function(err, projects) {
+      let suggestedproject;
+      if (projects) {
+        let projectnames = projects.map(project => project._id);
+        let index = 1;
+        do {
+          suggestedproject = req.params.project + '-replay-' + index;
+          index++;
+        } while (projectnames.indexOf(suggestedproject) >= 0)
+      }
+      res.render('dashboard/replay', {
+        project: req.params.project,
+        suggestedproject
+      });
+    });
   });
 
   app.get('/newcollabids/:project', authenticate, staffonly, function(req, res, next) {
