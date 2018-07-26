@@ -122,7 +122,9 @@ exports.createFrontend = function createFrontend(config, db) {
       return res.send({ redirect: '/setup-done' });
     }
 
-    join.rendezvous(req.body.me, req.body.partner, req.body.location, function(err, agreed) {
+    let data = { location: req.body.location };
+
+    join.rendezvous(req.body.me, req.body.partner, data, function(err, agreed) {
       if (err) { return res.status(400).send({ error: err.message }); }
       
       if (res.locals.authusername == agreed.partner.username) {
