@@ -120,8 +120,12 @@ public class Activator extends AbstractUIPlugin {
         Iterator<Integer> versions = splitVersion(version);
         Iterator<Integer> required = splitVersion(RUNTIME_REQUIRED);
         while (required.hasNext()) {
-            if (versions.next() < required.next()) {
+            int diff = versions.next() - required.next();
+            if (diff < 0) {
                 throw new RuntimeException("Running Java " + version + ", Java " + RUNTIME_REQUIRED + " or later required");
+            }
+            if (diff > 0) {
+                return;
             }
         }
     }
