@@ -149,7 +149,9 @@ exports.createBackend = function createBackend(config) {
           } else { done(); }
         },
         add(collab, collab_created, done) {
-          collab.submitOp([ { p: [ USERS, 0 ], li: username } ], done);
+          if ( ! collab.data[USERS].includes(username)) {
+            collab.submitOp([ { p: [ USERS, 0 ], li: username } ], done);
+          } else { done(); }
         },
         active(user, user_created, done) {
           user.submitOp([ { p: [ COLLABS, 0 ], li: collabid } ], done);
