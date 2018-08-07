@@ -64,15 +64,14 @@ public class ShareDoc {
         ResourcesPlugin.getWorkspace().addResourceChangeListener(this.resourceChangeListener = new IResourceChangeListener() {
             @Override
             public void resourceChanged(IResourceChangeEvent event) {
-                // runs on worker thread
                 try {
                     final Marker[] markers = localToRemoteMarkers(resource.findMarkers(IMarker.PROBLEM, true, IResource.DEPTH_INFINITE));
-                    if (!Arrays.deepEquals(currentMarkers, markers)) {
+                    if ( ! Arrays.deepEquals(currentMarkers, markers)) {
                         currentMarkers = markers;
                         PlatformUI.getWorkbench().getDisplay().asyncExec(() -> onLocalMarkersUpdate());
                     }
-                } catch (CoreException e) {
-                    e.printStackTrace();
+                } catch (CoreException ce) {
+                    Log.error("Error finding markers", ce);
                 }
             }
         }, IResourceChangeEvent.POST_BUILD);
@@ -207,7 +206,6 @@ public class ShareDoc {
     }
     
     private void onLocalMarkersUpdate() {
-        // jse.exec runs on UI thread
         collab.jse.exec(js -> js.invocable.invokeFunction("submitMarkersUpdate", sharedbDoc, currentMarkers));
     }
 
