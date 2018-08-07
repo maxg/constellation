@@ -73,6 +73,14 @@ exports.createBackend = function createBackend(config) {
     (authorize.query[req.collection] || deny)(req, cb);
   });
   
+  // index file ops by project for getBaseline
+  db.getOpCollection(FILES, function(err, o_files) {
+    o_files.createIndex({ 'create.data.project': 1 }, {
+      background: true,
+      partialFilterExpression: { 'create.data.project': { $exists: true } },
+    });
+  });
+  
   let backend = {
     share,
     
