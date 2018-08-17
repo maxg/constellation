@@ -12,8 +12,8 @@ if [[ ! -d "$ECLIPSE" ]]; then
 fi
 
 # Find the headless PDE buildfile
-launcher=org.eclipse.equinox.launcher_1.4
-pde_build=org.eclipse.pde.build_3.9
+launcher=org.eclipse.equinox.launcher_1.5
+pde_build=org.eclipse.pde.build_3.10
 scripts=({~/.p2/pool/plugins/$pde_build.*,"$ECLIPSE"/plugins/$pde_build.*}/scripts/build.xml)
 found=(${scripts[@]##*\**}) # filter paths with unexpanded wildcard
 buildfile="${found[@]: -1}" # take the last one
