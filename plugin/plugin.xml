@@ -64,4 +64,27 @@
             class="constellation.prefs.Preferences">
       </initializer>
    </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            class="constellation.FeedbackView"
+            icon="icons/collab-started.png"
+            id="constellation.view.feedback"
+            name="Constellation Feedback"
+            restorable="false">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="org.eclipse.jdt.ui.JavaPerspective">
+         <view
+               id="constellation.view.feedback"
+               minimized="false"
+               relationship="stack"
+               relative="org.eclipse.ui.views.ProblemView"
+               visible="false">
+         </view>
+      </perspectiveExtension>
+   </extension>
 </plugin>

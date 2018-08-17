@@ -8,6 +8,7 @@ import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IPageListener;
 import org.eclipse.ui.IPartListener;
+import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWindowListener;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
@@ -83,6 +84,9 @@ public class EditorManager {
             for (IEditorReference editor : page.getEditorReferences()) {
                 partListener.partOpened(editor.getPart(false));
             }
+            for (IViewReference view : page.getViewReferences()) {
+                partListener.partOpened(view.getPart(false));
+            }
         }
     }
     
@@ -98,6 +102,12 @@ public class EditorManager {
             });
         }
         public void partOpened(@Nullable IWorkbenchPart part) {
+            // connect new feedback views
+            if (part instanceof FeedbackView) {
+                ((FeedbackView)part).addAll(collaboration);
+                return;
+            }
+            
             // only collaborate on text files
             if ( ! (part instanceof ITextEditor)) { return; }
             ITextEditor editor = (ITextEditor)part;

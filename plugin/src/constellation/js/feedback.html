@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="%http%/static/style.css">
+</head>
+<body style="margin-top:15px;">
+
+<template id="feedback">
+<div class="container-fluid">
+<div class="row">
+<div class="col-xs-12">
+<div class="tile panel panel-default">
+<div class="panel-body">
+<p>
+<span class="project"></span>
+<span class="milestone label label-primary"><i>unknown milestone</i></span> comments
+<span class="when"></span>
+from&nbsp;<span class="grader"><i>unknown grader</i></span>
+&nbsp;
+<a href="" class="whenlink">(see&nbsp;the&nbsp;snapshot)</a>
+</p>
+<p class="comment comment-text"><i>no comment</i></p>
+</div>
+</div>
+</div>
+</div>
+</template>
+
+<template id="cutoff">on work as of <span class="whentime label label-warning"></span></template>
+<template id="live">on work at <span class="whentime label label-success"><i>unknown time</i></span></template>
+
+<script>
+var jsons = getFeedback();
+jsons.forEach(function(json) {
+  var feedback = JSON.parse(json);
+  var item = document.importNode(document.querySelector('#feedback').content, true);
+  [ 'project', 'milestone', 'comment', 'grader' ].forEach(function(attr) {
+    item.querySelector('.'+attr).textContent = feedback[attr];
+  });
+  var when = document.importNode(document.querySelector(item.cutoff ? '#cutoff' : '#live').content, true);
+  var time = feedback.cutoff || feedback.modified;
+  when.querySelector('.whentime').textContent = time;
+  item.querySelector('.when').appendChild(when);
+  item.querySelector('.whenlink').href = 'browse:/show/'+feedback.project+'/'+feedback.collabid+'/'+time;
+  document.body.appendChild(item);
+});
+</script>
+</body>
+</html>

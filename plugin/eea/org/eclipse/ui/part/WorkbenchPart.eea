@@ -1,0 +1,4 @@
+class org/eclipse/ui/part/WorkbenchPart
+createPartControl
+ (Lorg/eclipse/swt/widgets/Composite;)V
+ (L1org/eclipse/swt/widgets/Composite;)V

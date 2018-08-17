@@ -1,0 +1,4 @@
+class org/eclipse/swt/browser/BrowserFunction
+function
+ ([Ljava/lang/Object;)Ljava/lang/Object;
+ ([1L0java/lang/Object;)Ljava/lang/Object;

@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jetty.util.UrlEncoded;
 import org.eclipse.jetty.util.ajax.JSON;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
@@ -36,6 +37,7 @@ import constellation.prefs.Preferences;
 public class Collaboration {
     
     private static final String SETUP_PROJECT = "constellation-setup";
+    private static final String FEEDBACK = "constellation.view.feedback";
     
     public static void test(SubMonitor progress)
             throws InterruptedException, ExecutionException, IOException, PartInitException {
@@ -88,7 +90,7 @@ public class Collaboration {
                 "Error parsing JSON");
     }
     
-    private static void browse(String path) throws MalformedURLException, PartInitException {
+    public static void browse(String path) throws MalformedURLException, PartInitException {
         URL url = new URL(Preferences.http() + path);
         PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(url);
     }
@@ -193,5 +195,32 @@ public class Collaboration {
         });
         
         return doc;
+    }
+    
+    public void onFeedbackAvailable() {
+        Debug.trace();
+        PlatformUI.getWorkbench().getDisplay().asyncExec(() -> {
+            try {
+                showFeedbackView(false);
+            } catch (PartInitException pie) {
+                Activator.showErrorDialog(null, "Error showing feedback view", pie);
+            }
+        });
+    }
+    
+    public void onFeedbackPublished(String id, String json) {
+        Debug.trace();
+        PlatformUI.getWorkbench().getDisplay().asyncExec(() -> {
+            try {
+                showFeedbackView(true).add(id, json);
+            } catch (PartInitException pie) {
+                Activator.showErrorDialog(null, "Error showing new feedback", pie);
+            }
+        });
+    }
+    
+    private FeedbackView showFeedbackView(boolean visible) throws PartInitException {
+        IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+        return (FeedbackView)page.showView(FEEDBACK, null, visible ? IWorkbenchPage.VIEW_VISIBLE : IWorkbenchPage.VIEW_CREATE);
     }
 }

@@ -73,8 +73,12 @@ h3 small .label {
   content: 'Error: ';
 }
 
-textarea {
+textarea.text-editor {
   font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.comment-text {
+  white-space: pre-line;
 }
 
 .btn-group[data-toggle='buttons'] .btn-link {
@@ -95,6 +99,9 @@ textarea {
 .tile h4 {
   margin: 0;
   white-space: pre-line;
+}
+.tile .panel-body > p:last-child {
+  margin-bottom: 0;
 }
 
 .ping.faded {

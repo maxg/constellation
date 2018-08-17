@@ -1,3 +1,5 @@
+var LocalDate = Java.type('java.time.LocalDate');
+
 var Activator = Java.type('constellation.Activator');
 var Debug = Java.type('constellation.Debug');
 var Log = Java.type('constellation.Log');
@@ -15,6 +17,39 @@ connection.on('error', function(err) { throw err; });
 //connection.on('connection error', function(err) {
 //  Log.warn('ShareDB connection transient socket error');
 //});
+
+var user = connection.get('users', CollaborationInstance.me);
+
+user.on('error', function(err) {
+  console.error('error', user, err);
+});
+
+user.fetch(function(err) {
+  if (err) { return console.error(err); }
+  
+  user.attachedCheckoffsQuery = connection.createSubscribeQuery('checkoffs', {
+    published: true,
+    modified: { $gt: LocalDate.now().toString() },
+    collabid: { $in: user.data.collabs.slice(0, 10) },
+  });
+  user.attachedCheckoffsQuery.on('ready', function() {
+    if (user.attachedCheckoffsQuery.results.length) {
+      CollaborationInstance.onFeedbackAvailable();
+    }
+  });
+  user.attachedCheckoffsQuery.on('insert', function(checkoffs) {
+    checkoffs.forEach(function(checkoff) {
+      CollaborationInstance.onFeedbackPublished(checkoff.id, JSON.stringify(checkoff.data));
+    });
+  });
+});
+
+function feedback(map) {
+  if ( ! user.attachedCheckoffsQuery) { return; }
+  user.attachedCheckoffsQuery.results.forEach(function(checkoff) {
+    map.put(checkoff.id, JSON.stringify(checkoff.data));
+  });
+}
 
 var collab = connection.get('collabs', CollaborationInstance.collabid);
 
@@ -116,6 +151,17 @@ function disconnect(callback) {
   
   collab.destroy();
   collab = undefined;
+  
+  if (user.attachedCheckoffsQuery) {
+    user.attachedCheckoffsQuery.removeAllListeners('ready');
+    user.attachedCheckoffsQuery.removeAllListeners('insert');
+    user.attachedCheckoffsQuery.destroy();
+  }
+  user.attachedCheckoffsQuery = undefined;
+  
+  user.destroy();
+  user = undefined;
+  
   if (connection.state == 'disconnected') {
     setTimeout(disconnected, 0);
   } else {
