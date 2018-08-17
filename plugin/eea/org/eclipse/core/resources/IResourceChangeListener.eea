@@ -1,0 +1,4 @@
+class org/eclipse/core/resources/IResourceChangeListener
+resourceChanged
+ (Lorg/eclipse/core/resources/IResourceChangeEvent;)V
+ (L1org/eclipse/core/resources/IResourceChangeEvent;)V

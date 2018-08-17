@@ -87,7 +87,7 @@ public class JSEngine {
         if (Display.getCurrent() == null) {
             PlatformUI.getWorkbench().getDisplay().asyncExec(run);
         } else {
-          run.run();
+            run.run();
         }
     }
     
