@@ -5,7 +5,7 @@
 #
 
 get_version() {
-  grep --only-matching "$1" "$2" | grep --only-matching '\d\+\.\d\+\.\d\+\.qualifier'
+  grep --only-matching "$1" "$2" | grep --only-matching '\d\+\.\d\+\.\d\+'
 }
 
 uniq -f 1 <<EOD
@@ -13,4 +13,5 @@ plug-in $(get_version 'Bundle-Version: .*.qualifier' plugin/META-INF/MANIFEST.MF
 feature $(get_version 'version=".*.qualifier"' feature/feature.xml)
 site_jar $(get_version '<feature .*url="features/constellation.feature_.*.qualifier.jar"' feature/category.xml)
 site_feature $(get_version 'id="constellation.feature" .*version=".*.qualifier"' feature/category.xml)
+server $(get_version '"version": ".*"' server/package.json)
 EOD
