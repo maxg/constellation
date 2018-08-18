@@ -15,15 +15,20 @@ block content
       thead: tr
         td
         each milestone in milestones
-          td #[strong= milestone._id] #[br] #{milestone.at}
+          td(colspan=2) #[strong= milestone._id] #[br] #{milestone.at} #[br]
+            if milestone.published
+              strong published
+            else
+              form(action=`/dashboard/${project}/publish/${milestone._id}` method='post')
+                button.btn.btn-default publish comments
       tbody
         each user in users
           tr.text-center
             td.text-left= user._id
             each milestone in milestones
               - let checkoff = user.checkoffs.find(c => c.milestone === milestone._id)
-              td
-                if checkoff
+              if checkoff
+                td
                   a(href=`/show/${project}/${checkoff.collabid}/m/${checkoff.milestone}`)
                     if checkoff.score === 0
                       | &nbsp;#[span.glyphicon.glyphicon-minus]&nbsp;
@@ -32,6 +37,11 @@ block content
                     else if checkoff.score === 2
                       | &nbsp;&nbsp;#[span.glyphicon.glyphicon-ok]+
                     else
-                      | no score
+                      strong no score
+                if checkoff.comment
+                  td.comment-preview(class=checkoff.published ? '' : 'text-muted')= checkoff.comment
                 else
-                  | none
+                  td(class=checkoff.published ? 'text-danger' : ''): strong no comment
+              else
+                td(colspan=2): strong no checkoff
+    br

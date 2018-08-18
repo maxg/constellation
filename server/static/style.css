@@ -80,6 +80,13 @@ textarea.text-editor {
 .comment-text {
   white-space: pre-line;
 }
+.comment-preview {
+  text-align: left;
+  max-width: 12em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .btn-group[data-toggle='buttons'] .btn-link {
   border-radius: 4px;

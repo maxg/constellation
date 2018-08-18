@@ -214,6 +214,12 @@ exports.createFrontend = function createFrontend(config, db) {
     });
   });
   
+  app.post('/dashboard/:project/publish/:milestone', authenticate, staffonly, function(req, res, next) {
+    db.publishCheckoffs(req.params.project, req.params.milestone, function(err) {
+      res.redirect(`/dashboard/${req.params.project}/checkoffs`);
+    });
+  });
+  
   app.get('/dashboard/:project/live/m/:milestone', authenticate, staffonly, function(req, res, next) {
     res.render('dashboard/pings', {
       project: req.params.project,

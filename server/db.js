@@ -181,7 +181,8 @@ exports.createBackend = function createBackend(config) {
         async.parallel([
           done => checkoffs.aggregate([
             { $match: { project } },
-            { $group: { _id: '$milestone', at: { $min: '$cutoff' } } },
+            { $group: { _id: '$milestone', at: { $min: '$cutoff' },
+                        published: { $min: { $cond: ['$published', 1, 0] } } } },
             { $sort: { at: 1, _id: 1 } },
           ], done),
           done => checkoffs.aggregate([
@@ -191,7 +192,7 @@ exports.createBackend = function createBackend(config) {
             { $unwind: '$collab' },
             { $project: { collabid: 1, project: 1, milestone: 1,
                           cutoff: 1, modified: 1, grader: 1, comment: 1, score: 1,
-                          users: '$collab.users' } },
+                          published: 1, users: '$collab.users' } },
             { $unwind: '$users' },
             { $sort: { score: -1 } },
             { $group: { _id: { user: '$users', milestone: '$milestone' },
@@ -200,6 +201,15 @@ exports.createBackend = function createBackend(config) {
             { $sort: { _id: 1 } },
           ], done),
         ], (err, [ milestones, users ]) => callback(err, milestones, users));
+      });
+    },
+    
+    publishCheckoffs(project, milestone, callback) {
+      connection.createFetchQuery(CHECKOFFS, { project, milestone }, {}, function(err, checkoffs) {
+        if (err) { return callback(err); }
+        async.each(checkoffs, function(checkoff, cb) {
+          checkoff.submitOp([ { p: [ 'published' ], od: checkoff.data.published, oi: true } ], cb);
+        }, callback);
       });
     },
     
