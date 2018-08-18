@@ -29,6 +29,7 @@ user.fetch(function(err) {
   
   user.attachedCheckoffsQuery = connection.createSubscribeQuery('checkoffs', {
     published: true,
+    comment: { $ne: '' },
     modified: { $gt: LocalDate.now().toString() },
     collabid: { $in: user.data.collabs.slice(0, 10) },
   });
