@@ -2,7 +2,13 @@
 <html>
 <head>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
-<link rel="stylesheet" href="%http%/static/style.css">
+<style>
+@import url(https://fonts.googleapis.com/css?family=Rubik:400,700);
+body { font-family: 'Rubik', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.comment-text { white-space: pre-line; }
+.tile.panel .panel-body { padding: 10px; }
+.tile .panel-body > p:last-child { margin-bottom: 0; }
+</style>
 </head>
 <body style="margin-top:15px;">
 
@@ -25,26 +31,41 @@ from&nbsp;<span class="grader"><i>unknown grader</i></span>
 </div>
 </div>
 </div>
+</div>
 </template>
 
 <template id="cutoff">on work as of <span class="whentime label label-warning"></span></template>
 <template id="live">on work at <span class="whentime label label-success"><i>unknown time</i></span></template>
 
 <script>
-var jsons = getFeedback();
-jsons.forEach(function(json) {
-  var feedback = JSON.parse(json);
-  var item = document.importNode(document.querySelector('#feedback').content, true);
-  [ 'project', 'milestone', 'comment', 'grader' ].forEach(function(attr) {
-    item.querySelector('.'+attr).textContent = feedback[attr];
+try {
+  if ( ! ('content' in document.createElement('template'))) {
+    Array.prototype.slice.call(document.getElementsByTagName('template')).forEach(function(template) {
+      var fragment = document.createDocumentFragment();
+      Array.prototype.slice.call(template.children).forEach(function(child) {
+        fragment.appendChild(child);
+      });
+      template.content = fragment;
+    });
+  }
+  
+  var jsons = getFeedback();
+  jsons.forEach(function(json) {
+    var feedback = JSON.parse(json);
+    var item = document.importNode(document.querySelector('#feedback').content, true);
+    [ 'project', 'milestone', 'comment', 'grader' ].forEach(function(attr) {
+      item.querySelector('.'+attr).textContent = feedback[attr];
+    });
+    var when = document.importNode(document.querySelector(feedback.cutoff ? '#cutoff' : '#live').content, true);
+    var time = feedback.cutoff || feedback.modified;
+    when.querySelector('.whentime').textContent = time;
+    item.querySelector('.when').appendChild(when);
+    item.querySelector('.whenlink').href = 'browse:/show/'+feedback.project+'/'+feedback.collabid+'/'+time;
+    document.body.appendChild(item);
   });
-  var when = document.importNode(document.querySelector(item.cutoff ? '#cutoff' : '#live').content, true);
-  var time = feedback.cutoff || feedback.modified;
-  when.querySelector('.whentime').textContent = time;
-  item.querySelector('.when').appendChild(when);
-  item.querySelector('.whenlink').href = 'browse:/show/'+feedback.project+'/'+feedback.collabid+'/'+time;
-  document.body.appendChild(item);
-});
+} catch (e) {
+  logError("exception", e.toString());
+}
 </script>
 </body>
 </html>

@@ -67,6 +67,7 @@
    <extension
          point="org.eclipse.ui.views">
       <view
+            category="org.eclipse.team.ui"
             class="constellation.FeedbackView"
             icon="icons/collab-started.png"
             id="constellation.view.feedback"

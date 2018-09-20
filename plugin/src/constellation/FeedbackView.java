@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,8 +23,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.ViewPart;
 
-import constellation.prefs.Preferences;
-
 public class FeedbackView extends ViewPart {
     
     private static final String BROWSE = "browse:";
@@ -37,8 +36,7 @@ public class FeedbackView extends ViewPart {
         final InputStream stream = getClass().getResourceAsStream("js/feedback.html");
         page = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))
                 .lines()
-                .collect(Collectors.joining("\n"))
-                .replaceAll("%http%", Preferences.http());
+                .collect(Collectors.joining("\n"));
     }
     
     public void add(String id, String json) {
@@ -72,6 +70,15 @@ public class FeedbackView extends ViewPart {
             event.doit = false;
         }));
         browser.addMenuDetectListener(event -> event.doit = false);
+        
+        new BrowserFunction(browser, "logError") {
+            @Override public @Nullable Object function(@Nullable Object[] arguments) {
+                Log.error("Feedback view JS error: " + Arrays.stream(arguments)
+                        .map(arg -> arg == null ? "<null>" : arg.toString())
+                        .collect(Collectors.joining(" ")));
+                return null;
+            }
+        };
         
         new BrowserFunction(browser, "getFeedback") {
             @Override public @Nullable Object[] function(@Nullable Object[] arguments) {
