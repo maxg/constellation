@@ -116,7 +116,8 @@ public class Activator extends AbstractUIPlugin {
     }
     
     private void checkRuntimeVersion() {
-        String version = System.getProperty("java.runtime.version");
+        String version = assertNotNull(System.getProperty("java.runtime.version"),
+                "Unknown Java version");
         Iterator<Integer> versions = splitVersion(version);
         Iterator<Integer> required = splitVersion(RUNTIME_REQUIRED);
         while (required.hasNext()) {
@@ -131,6 +132,6 @@ public class Activator extends AbstractUIPlugin {
     }
     
     private Iterator<Integer> splitVersion(String version) {
-        return Arrays.stream(version.split("\\D")).map(Integer::parseInt).iterator();
+        return Arrays.stream(version.split("\\D")).map(Integer::valueOf).iterator();
     }
 }
