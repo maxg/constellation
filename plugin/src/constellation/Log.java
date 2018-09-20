@@ -1,12 +1,13 @@
 package constellation;
 
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.annotation.Nullable;
 
 public class Log {
     
     public static void ok(String msg) {
-        log(Status.OK, msg, null);
+        log(IStatus.OK, msg, null);
     }
     
     public static void info(String msg) {
@@ -14,7 +15,7 @@ public class Log {
     }
     
     public static void info(String msg, @Nullable Throwable ex) {
-        log(Status.INFO, msg, ex);
+        log(IStatus.INFO, msg, ex);
     }
     
     public static void warn(String msg) {
@@ -22,7 +23,7 @@ public class Log {
     }
     
     public static void warn(String msg, @Nullable Throwable ex) {
-        log(Status.WARNING, msg, ex);
+        log(IStatus.WARNING, msg, ex);
     }
     
     public static void error(String msg) {
@@ -30,10 +31,10 @@ public class Log {
     }
     
     public static void error(String msg, @Nullable Throwable ex) {
-        log(Status.ERROR, msg, ex);
+        log(IStatus.ERROR, msg, ex);
     }
     
     private static void log(int severity, String msg, @Nullable Throwable ex) {
-        Activator.getDefault().getLog().log(new Status(severity, Activator.PLUGIN_ID, Status.OK, msg, ex));
+        Activator.getDefault().getLog().log(new Status(severity, Activator.PLUGIN_ID, IStatus.OK, msg, ex));
     }
 }

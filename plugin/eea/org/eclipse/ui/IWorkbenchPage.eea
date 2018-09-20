@@ -1,0 +1,4 @@
+class org/eclipse/ui/IWorkbenchPage
+showView
+ (Ljava/lang/String;Ljava/lang/String;I)Lorg/eclipse/ui/IViewPart;
+ (Ljava/lang/String;Ljava/lang/String;I)L1org/eclipse/ui/IViewPart;

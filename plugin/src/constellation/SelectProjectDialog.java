@@ -98,7 +98,7 @@ public class SelectProjectDialog extends ElementTreeSelectionDialog {
      * @see #getResult()
      */
     public IProject getSelectedProject() throws InterruptedException {
-        Object[] projects = getResult();
+        @Nullable Object @Nullable[] projects = getResult();
         if (projects == null) {
             throw new InterruptedException("Project selection canceled");
         }

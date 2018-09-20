@@ -1,0 +1,4 @@
+class org/eclipse/swt/graphics/Font
+getFontData
+ ()[Lorg/eclipse/swt/graphics/FontData;
+ ()[1L1org/eclipse/swt/graphics/FontData;

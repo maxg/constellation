@@ -1,0 +1,4 @@
+class org/eclipse/core/filesystem/EFS
+getLocalFileSystem
+ ()Lorg/eclipse/core/filesystem/IFileSystem;
+ ()L1org/eclipse/core/filesystem/IFileSystem;

@@ -4,7 +4,7 @@ createButtonsForButtonBar
  (L1org/eclipse/swt/widgets/Composite;)V
 getResult
  ()[Ljava/lang/Object;
- ()[0Ljava/lang/Object;
+ ()[0L0java/lang/Object;
 setSelectionResult
  ([Ljava/lang/Object;)V
  ([0Ljava/lang/Object;)V

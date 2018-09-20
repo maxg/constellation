@@ -1,4 +1,7 @@
 class org/eclipse/core/resources/IResource
+findMarkers
+ (Ljava/lang/String;ZI)[Lorg/eclipse/core/resources/IMarker;
+ (Ljava/lang/String;ZI)[1L1org/eclipse/core/resources/IMarker;
 getName
  ()Ljava/lang/String;
  ()L1java/lang/String;
