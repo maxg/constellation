@@ -20,6 +20,7 @@ const servers = {
           .filter(f => /ssl-ca|ssl-intermediate/.test(f))
           .map(f => fs.readFileSync(`${config.dir}/${f}`)),
     requestCert: true,
+    rejectUnauthorized: false,
   }, web),
   websocket: https.createServer({
     key: fs.readFileSync(`${config.dir}/ssl-private-key.pem`),

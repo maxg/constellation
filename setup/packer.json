@@ -24,8 +24,17 @@
     "access_key": "{{user `aws_access_key`}}",
     "secret_key": "{{user `aws_secret_key`}}",
     "region": "us-east-1",
-    "ami_name": "{{user `app`}}-{{timestamp}}-{{user `rev`}}",
-    "source_ami": "{{user `aws_source_ami`}}",
+    "ami_name": "{{user `app`}}-{{isotime \"0601021504\"}}-{{user `rev`}}",
+    "tags": {
+      "Name": "{{user `app`}} {{isotime \"0601021504\"}} {{user `rev`}}",
+      "Packer": "{{user `app`}}"
+    },
+    "source_ami_filter": {
+      "filters": {
+        "name": "ubuntu/images/hvm-ssd/ubuntu-*-{{user `aws_ubuntu_release`}}-amd64-server-*"
+      },
+      "owners": [ "099720109477" ], "most_recent": true
+    },
     "instance_type": "{{user `aws_instance_type`}}",
     "ssh_username": "ubuntu"
   }, {
@@ -48,7 +57,7 @@
     "destination": "/tmp/{{user `app`}}.tar"
   }, {
     "type": "shell",
-    "script": "setup/provision.sh",
+    "script": "setup/production-pack.sh",
     "environment_vars": [ "APP={{user `app`}}" ],
     "execute_command": "{{.Vars}} ADMIN=`whoami` sudo -E sh -c {{.Path}}"
   } ]

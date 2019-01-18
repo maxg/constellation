@@ -1,15 +1,13 @@
 #!/bin/bash
 
-#
-# Use Packer to generate a virtual machine image.
-#
-
 set -e
+
+cd "$(dirname "${BASH_SOURCE[0]}")"/..
 
 revision=$1
 
 if [[ "$revision" == "--working" ]]; then
-  revision=`git rev-parse --short HEAD`-wip
+  revision=`git rev-parse --quiet --short HEAD || echo 0000000`-wip
   echo "Packing working copy $revision"
   # Only pack files that are tracked by Git
   # COPYFILE_DISABLE disables the use of `._` files to store OS X xattrs & ACLs
