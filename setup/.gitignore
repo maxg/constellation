@@ -1,1 +1,4 @@
+.terraform
 packer.conf.json
+*.tfvars
+production/*
