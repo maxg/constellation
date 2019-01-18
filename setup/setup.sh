@@ -24,8 +24,8 @@ apt-get install -y mongodb-org
   # Fetch CA certificate
   [ -f ssl-ca.pem ] || wget -q -O - http://ca.mit.edu/mitClient.crt | openssl x509 -inform der -out ssl-ca.pem
   # Generate self-signed certificate
-  [ -f ssl-private-key.pem ] || openssl genrsa -out ssl-private-key.pem 2048
-  [ -f ssl-certificate.pem ] || openssl req -new -key ssl-private-key.pem -config openssl.conf | openssl x509 -req -signkey ssl-private-key.pem -out ssl-certificate.pem
+  [ -f ssl-private-key.pem ] || openssl genrsa 2048 > ssl-private-key.pem
+  [ -f ssl-certificate.pem ] || openssl req -new -key ssl-private-key.pem -config ../../setup/openssl.conf | openssl x509 -req -signkey ssl-private-key.pem -out ssl-certificate.pem
 )
 
 # Time zone

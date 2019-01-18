@@ -21,8 +21,8 @@ cd server
 
 # Set permissions
 chown -R $ADMIN:$ADMIN /var/$APP
-chown $APP:$ADMIN config
-chmod 770 config
+chown $APP:$ADMIN config log
+chmod 770 config log
 
 # Allow app to bind to well-known ports
 apt-get install -y authbind
