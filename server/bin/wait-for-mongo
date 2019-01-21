@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+while ! mongo --eval db > /dev/null 2>&1
+do
+  echo 'Waiting for MongoDB'
+  sleep 2
+done
