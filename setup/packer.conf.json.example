@@ -2,7 +2,7 @@
   "aws_access_key": "...",
   "aws_secret_key": "...",
   "aws_ubuntu_release": "18.04",
-  "aws_instance_type": "t2.micro",
+  "aws_instance_type": "t3.micro",
   
   "openstack_auth_url": "https://HOSTNAME:5001/v2.0",
   "openstack_username": "...",

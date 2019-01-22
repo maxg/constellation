@@ -18,6 +18,10 @@ apt-get install -y nodejs build-essential g++ make software-properties-common
 # MongoDB
 apt-get install -y mongodb-org
 
+# AWS CLI
+apt-get install -y python-pip jq
+pip install awscli --upgrade
+
 # SSL
 (
   cd server/config

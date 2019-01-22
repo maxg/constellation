@@ -108,7 +108,7 @@ resource "aws_key_pair" "app" {
 }
 
 resource "aws_instance" "web" {
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"
   ami = "${data.aws_ami.web.id}"
   vpc_security_group_ids = ["${aws_security_group.web.id}"]
   subnet_id = "${aws_subnet.a.id}"
@@ -117,6 +117,7 @@ resource "aws_instance" "web" {
   root_block_device {
     delete_on_termination = false
   }
+  iam_instance_profile = "${aws_iam_instance_profile.web.name}"
   user_data = "${data.template_cloudinit_config.config_web.rendered}"
   tags { Name = "${local.name}" Terraform = "${local.name}" }
   volume_tags { Name = "${local.name}" Terraform = "${local.name}" }
@@ -129,9 +130,16 @@ resource "aws_instance" "web" {
     destination = "/var/${var.app}/server"
   }
   provisioner "remote-exec" {
-    inline = ["/var/${var.app}/setup/production-provision.sh"]
+    inline = ["/var/${var.app}/setup/production-provision.sh ${var.region} ${aws_ebs_volume.mongodb.id}"]
   }
-  lifecycle { create_before_destroy = true }
+  lifecycle { ignore_changes = ["volume_tags"] }
+}
+
+resource "aws_ebs_volume" "mongodb" {
+  availability_zone = "${var.region}a"
+  size = 4
+  tags { Name = "${local.name}-mongodb" Terraform = "${local.name}" }
+  lifecycle { prevent_destroy = true }
 }
 
 resource "aws_eip" "web" {
@@ -148,6 +156,42 @@ runcmd:
 - systemctl enable ${var.app}
 EOF
   }
+}
+
+data "aws_iam_policy_document" "assume_role_ec2" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "web" {
+  name = "${local.name}-web-role"
+  assume_role_policy = "${data.aws_iam_policy_document.assume_role_ec2.json}"
+}
+
+data "aws_caller_identity" "current" {}
+
+data "aws_iam_policy_document" "web_access" {
+  statement {
+    actions = ["ec2:AttachVolume"]
+    resources = ["arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:instance/*", "${aws_ebs_volume.mongodb.arn}"]
+  }
+}
+
+resource "aws_iam_role_policy" "web" {
+  name = "${local.name}-web-access"
+  role = "${aws_iam_role.web.id}"
+  policy = "${data.aws_iam_policy_document.web_access.json}"
+}
+
+resource "aws_iam_instance_profile" "web" {
+  name = "${local.name}-web-profile"
+  role = "${aws_iam_role.web.name}"
+  depends_on = ["aws_iam_role_policy.web"]
 }
 
 output "web-address" { value = "${aws_eip.web.public_ip}" }
