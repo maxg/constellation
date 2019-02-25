@@ -207,7 +207,7 @@ exports.createBackend = function createBackend(config) {
     publishCheckoffs(project, milestone, callback) {
       connection.createFetchQuery(CHECKOFFS, { project, milestone }, {}, function(err, checkoffs) {
         if (err) { return callback(err); }
-        async.each(checkoffs, function(checkoff, cb) {
+        async.eachSeries(checkoffs, function(checkoff, cb) {
           checkoff.submitOp([ { p: [ 'published' ], od: checkoff.data.published, oi: true } ], cb);
         }, callback);
       });
