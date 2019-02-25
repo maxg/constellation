@@ -115,6 +115,7 @@ resource "aws_instance" "web" {
   associate_public_ip_address = true
   key_name = "${aws_key_pair.app.id}"
   root_block_device {
+    volume_type = "gp2"
     delete_on_termination = false
   }
   iam_instance_profile = "${aws_iam_instance_profile.web.name}"
@@ -138,6 +139,7 @@ resource "aws_instance" "web" {
 resource "aws_ebs_volume" "mongodb" {
   availability_zone = "${var.region}a"
   size = 4
+  type = "gp2"
   tags { Name = "${local.name}-mongodb" Terraform = "${local.name}" }
   lifecycle { prevent_destroy = true }
 }
