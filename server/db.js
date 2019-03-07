@@ -40,7 +40,7 @@ exports.createBackend = function createBackend(config) {
     }
     let collab = connection.get(COLLABS, collabid);
     collab.fetch(function(err) {
-      req.agent.custom[collabid] = ( ! err) && collab.data.users.indexOf(req.agent.authusername) >= 0;
+      req.agent.custom[collabid] = ( ! err) && collab.data && (collab.data.users.indexOf(req.agent.authusername) >= 0);
       authorize.read[FILES](req, cb);
     });
   };
@@ -269,6 +269,7 @@ exports.createBackend = function createBackend(config) {
           collab.fetch(err => done(err, collab));
         },
         ping(collab, done) {
+          if ( ! collab.data) { return done(); }
           let ping = connection.get(PINGS, collab.data.project);
           ping.fetch(err => done(err, ping));
         },
