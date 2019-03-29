@@ -160,12 +160,28 @@ EOF
   }
 }
 
+resource "aws_dlm_lifecycle_policy" "backup" {
+  description = "${local.name} backup"
+  execution_role_arn = "${aws_iam_role.backup.arn}"
+  policy_details {
+    resource_types = ["VOLUME"]
+    target_tags = { Name = "${local.name}-mongodb" }
+    schedule {
+      name = "${local.name}-mongodb backup"
+      create_rule { interval = 24 times = ["04:00"] }
+      retain_rule { count = 2 }
+      tags_to_add { Name = "${local.name}-mongodb backup" }
+    }
+  }
+}
+
+data "aws_caller_identity" "current" {}
+
 data "aws_iam_policy_document" "assume_role_ec2" {
   statement {
     actions = ["sts:AssumeRole"]
     principals {
-      type = "Service"
-      identifiers = ["ec2.amazonaws.com"]
+      type = "Service" identifiers = ["ec2.amazonaws.com"]
     }
   }
 }
@@ -174,8 +190,6 @@ resource "aws_iam_role" "web" {
   name = "${local.name}-web-role"
   assume_role_policy = "${data.aws_iam_policy_document.assume_role_ec2.json}"
 }
-
-data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy_document" "web_access" {
   statement {
@@ -194,6 +208,37 @@ resource "aws_iam_instance_profile" "web" {
   name = "${local.name}-web-profile"
   role = "${aws_iam_role.web.name}"
   depends_on = ["aws_iam_role_policy.web"]
+}
+
+data "aws_iam_policy_document" "assume_role_dlm" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type = "Service" identifiers = ["dlm.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "backup" {
+  name = "${local.name}-backup-role"
+  assume_role_policy = "${data.aws_iam_policy_document.assume_role_dlm.json}"
+}
+
+data "aws_iam_policy_document" "backup_access" {
+  statement {
+    actions = ["ec2:CreateSnapshot", "ec2:DeleteSnapshot", "ec2:DescribeVolumes", "ec2:DescribeSnapshots"]
+    resources = ["*"]
+  }
+  statement {
+    actions = ["ec2:CreateTags"]
+    resources = ["arn:aws:ec2:${var.region}::snapshot/*"]
+  }
+}
+
+resource "aws_iam_role_policy" "backup" {
+  name = "${local.name}-backup-access"
+  role = "${aws_iam_role.backup.id}"
+  policy = "${data.aws_iam_policy_document.backup_access.json}"
 }
 
 output "web-address" { value = "${aws_eip.web.public_ip}" }
