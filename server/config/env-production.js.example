@@ -1,9 +1,17 @@
 module.exports = {
   staff: [ ... ],
+  oidc: {
+    server: 'https://oidc.example.com',
+    client: {
+      client_id: 'constellation',
+      client_secret: ...,
+      redirect_uris: [ 'https://constellation.example.com/auth' ],
+    },
+    emailDomain: 'example.com',
+  },
   web: {
     https: 443,
     wss: 444,
-    certDomain: 'MIT.EDU',
     secret: ...,
   },
   mongodb: 'mongodb://localhost:27017/constellation',

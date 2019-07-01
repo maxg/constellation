@@ -12,7 +12,7 @@ const CHECKOFFS = 'checkoffs';
 const PINGS = 'pings';
 const SETUP = 'setup';
 
-exports.createBackend = function createBackend(config) {
+exports.createBackend = async function createBackend(config) {
   
   const log = logger.log.child({ in: 'db' });
   

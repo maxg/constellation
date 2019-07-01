@@ -6,17 +6,32 @@ const express = require('express');
 const fs = require('fs');
 const moment = require('moment');
 const mongodb = require('mongodb');
+const openidclient = require('openid-client');
+const { Passport } = require('passport');
 const pug = require('pug');
+const session = require('cookie-session');
 
 const logger = require('./logger');
 
-exports.createFrontend = function createFrontend(config, db) {
+exports.createFrontend = async function createFrontend(config, db) {
   
   const log = logger.log.child({ in: 'app' });
 
   const join = require('./join').create(config);
   const paired = new events.EventEmitter();
   const setupproject = 'constellation-setup';
+  
+  const passport = new Passport();
+  const openidissuer = await openidclient.Issuer.discover(config.oidc.server);
+  passport.use('openid', new openidclient.Strategy({
+    client: new openidissuer.Client(config.oidc.client),
+    params: { scope: 'openid email profile' },
+  }, (tokenset, userinfo, done) => {
+    done(null, userinfo.email.replace(`@${config.oidc.emailDomain}`, ''));
+  }));
+  const returnUsername = (username, done) => done(null, username);
+  passport.serializeUser(returnUsername);
+  passport.deserializeUser(returnUsername);
   
   const app = express();
   
@@ -26,12 +41,24 @@ exports.createFrontend = function createFrontend(config, db) {
   
   app.use('/public', enchilada(`${__dirname}/public`));
   app.use('/static', express.static(`${__dirname}/static`));
+  app.use(session({
+    name: 'constellation', secret: config.web.secret,
+    secure: true, httpOnly: true, sameSite: 'lax', signed: true, overwrite: true,
+  }));
   app.use(bodyparser.json());
   
   app.use(logger.express(log));
   
   app.locals.config = config;
   app.locals.moment = moment;
+  
+  app.use(passport.initialize());
+  app.use(passport.session());
+  app.get('/auth', passport.authenticate('openid', {
+    successReturnToOrRedirect: '/',
+  }), (req, res, next) => {
+    res.status(401).render('401', { error: 'Authentication failed' });
+  });
   
   // validate parameter against anchored regex
   function validate(regex) {
@@ -48,15 +75,15 @@ exports.createFrontend = function createFrontend(config, db) {
   app.param('cutoff', validate(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d/));
   
   function authenticate(req, res, next) {
-    let cert = req.connection.getPeerCertificate();
-    if ( ! req.connection.authorized) {
-      return res.status(401).render('401', {
-        error: req.connection.authorizationError,
-        cert
-      });
+    if ( ! req.user) {
+      if (req.method === 'POST') {
+        return res.status(401).render('401', { error: 'Unauthenticated POST request' });
+      }
+      req.session.returnTo = req.originalUrl;
+      return res.redirect('/auth');
     }
     
-    res.locals.authusername = cert.subject.emailAddress.replace('@' + config.web.certDomain, '');
+    res.locals.authusername = req.user;
     if (config.web.userFakery) {
       res.locals.authusername += '+' +
         crypto.createHash('md5').update(req.headers['user-agent']).digest('hex').substr(0, 3);
