@@ -56,6 +56,7 @@ exports.createFrontend = async function createFrontend(config, db) {
   app.use(passport.session());
   app.get('/auth', passport.authenticate('openid', {
     successReturnToOrRedirect: '/',
+    failWithError: true,
   }), (req, res, next) => {
     res.status(401).render('401', { error: 'Authentication failed' });
   });
