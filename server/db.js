@@ -73,6 +73,9 @@ exports.createBackend = async function createBackend(config) {
     (authorize.read[req.collection] || deny)(req, cb);
   });
   share.use('commit', function(req, cb) {
+    if (req.agent.authusername && req.op && req.op.m) {
+      req.op.m.u = req.agent.authusername;
+    }
     if (req.agent.stream.isServer || req.agent.authstaff) { return cb(); }
     (authorize.write[req.collection] || deny)(req, cb);
   });
