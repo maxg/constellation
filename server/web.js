@@ -1,6 +1,5 @@
 const bodyparser = require('body-parser');
 const crypto = require('crypto');
-const enchilada = require('enchilada');
 const events = require('events');
 const express = require('express');
 const fs = require('fs');
@@ -39,7 +38,7 @@ exports.createFrontend = async function createFrontend(config, db) {
   app.set('views', `${__dirname}/views`);
   app.set('x-powered-by', false);
   
-  app.use('/public', enchilada(`${__dirname}/public`));
+  app.use('/public', require('./browserifier')(`${__dirname}/public`));
   app.use('/static', express.static(`${__dirname}/static`));
   app.use(session({
     name: 'constellation', secret: config.web.secret,
