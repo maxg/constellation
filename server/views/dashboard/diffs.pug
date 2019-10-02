@@ -1,0 +1,39 @@
+extends ../layout
+
+append head
+  title #{project} Diffs - Constellation
+
+block content
+  .row: .col-xs-12
+    a#back(href=`/dashboard/${project}`) all #{project} collaborations
+    h2 #{project} diffs
+  
+  #collabs.row.masonary
+  
+  #dupes-header.row.faded.hidden: .col-xs-12: h3 No longer active
+  
+  #dupes.row.faded.masonary
+  
+  #mismatch-header.row.hidden: .col-xs-12: h3 Collaboration not found
+  
+  #mismatch.row.masonary
+  
+  template#collab
+    .collab: .tile.panel.panel-default: .panel-body
+      h4: a
+      div.files
+  
+  template#file
+    .file
+      .filename
+      pre.diff: code.java
+  
+  script.
+    var shareURL = !{JSON.stringify(shareURL)};
+    var project = !{JSON.stringify(project)};
+    var milestone = false;
+    var cutoff = false;
+  script(src='/public/sharedb.js')
+  script(src='/public/diff.js')
+  script(src='/static/dashboard/collabs.js')
+  script(src='/static/dashboard/diffs.js')

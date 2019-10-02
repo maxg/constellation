@@ -17,6 +17,9 @@ block content
         if milestone
           small: a(href=`/dashboard/${project}/live/m/${milestone}`)
             |  #[span.glyphicon.glyphicon-flag] live checkoff
+        else
+          |  #[small: a(href=`/dashboard/${project}/diffs`) #[span.glyphicon.glyphicon-pencil] diffs]
+          |  #[small: a(href=`/dashboard/${project}/checkoffs`) #[span.glyphicon.glyphicon-ok] checkoffs]
   
   #collabs.row
   

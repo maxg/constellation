@@ -227,6 +227,12 @@ exports.createFrontend = async function createFrontend(config, db) {
     });
   });
   
+  app.get('/dashboard/:project/diffs', authenticate, staffonly, function(req, res, next) {
+    res.render('dashboard/diffs', {
+      project: req.params.project,
+    });
+  });
+    
   app.get('/dashboard/:project/checkoffs:csv(.csv)?', authenticate, staffonly, function(req, res, next) {
     db.getCheckoffs(req.params.project, function(err, milestones, users) {
       if (req.params.csv) {

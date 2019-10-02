@@ -100,6 +100,14 @@ textarea.text-editor {
   border-color: #357ebd;
 }
 
+.masonary {
+  columns: 50ex;
+  column-gap: 20px;
+}
+.masonary .tile {
+  display: inline-block;
+}
+
 .tile.panel .panel-body {
   padding: 10px;
 }
@@ -121,11 +129,14 @@ textarea.text-editor {
   opacity: 0.33;
 }
 
+h4 + .diff {
+  margin-top: 10px;
+}
 .diff {
   background: none;
   border: none;
   margin: 0;
-  padding: 10px 0 0 0;
+  padding: 0;
   line-height: .9;
   overflow: inherit;
 }
