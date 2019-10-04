@@ -8,7 +8,7 @@ html
       script(src='//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js')
       script(src='//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js')
   body
-    .container
+    div(class=fullwidth ? 'container-fluid' : 'container')
       span#user.badge(class=authstaff ? 'staff' : null)= locals.authusername
       block content
     

@@ -1,6 +1,7 @@
 extends ../layout
 
 append head
+  - let fullwidth = true
   title #{project} Diffs - Constellation
 
 block content
@@ -8,15 +9,15 @@ block content
     a#back(href=`/dashboard/${project}`) all #{project} collaborations
     h2 #{project} diffs
   
-  #collabs.row.masonary
+  #collabs.masonary
   
   #dupes-header.row.faded.hidden: .col-xs-12: h3 No longer active
   
-  #dupes.row.faded.masonary
+  #dupes.faded.masonary
   
   #mismatch-header.row.hidden: .col-xs-12: h3 Collaboration not found
   
-  #mismatch.row.masonary
+  #mismatch.masonary
   
   template#collab
     .collab: .tile.panel.panel-default: .panel-body
