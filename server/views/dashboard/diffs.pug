@@ -8,6 +8,9 @@ block content
   .row: .col-xs-12
     a#back(href=`/dashboard/${project}`) all #{project} collaborations
     h2 #{project} diffs
+      br
+      if filepath
+        small #{filepath}
   
   #collabs.masonary
   
@@ -26,12 +29,13 @@ block content
   
   template#file
     .file
-      .filename
+      strong.filename
       pre.diff: code.java
   
   script.
     var shareURL = !{JSON.stringify(shareURL)};
     var project = !{JSON.stringify(project)};
+    var filepath = !{JSON.stringify(filepath || false)};
     var milestone = false;
     var cutoff = false;
   script(src='/public/sharedb.js')

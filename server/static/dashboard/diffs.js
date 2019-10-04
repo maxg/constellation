@@ -1,6 +1,7 @@
 collabs.on('ready', function() {
   var files = connection.createSubscribeQuery('files', {
     project: project,
+    filepath: filepath || undefined,
   }, {});
   
   files.on('ready', function() { insertFiles(files.results); });
@@ -18,7 +19,9 @@ function insertFiles(files) {
     var item = document.importNode(document.querySelector('#file').content, true);
     var root = item.querySelector('.file');
     root.setAttribute('id', 'file-' + file.id);
-    root.querySelector('.filename').textContent = file.data.filepath;
+    if ( ! filepath) {
+      root.querySelector('.filename').textContent = file.data.filepath;
+    }
     var diff = root.querySelector('.diff code');
     baselines[file.data.filepath].done(function(baseline) {
       file.subscribe(function() {
@@ -40,7 +43,7 @@ function updateDiff(node, baseline, text) {
     elt.classList.add('diff-part');
     if (part.added) {
       elt.classList.add('diff-added');
-      elt.append(part.value);
+      elt.append(document.createTextNode(part.value));
     } else {
       elt.append('...');
     }
