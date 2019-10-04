@@ -9,6 +9,7 @@ collabs.on('ready', function() {
 });
 
 var baselines = {};
+var scheduled = {};
 
 function insertFiles(files) {
   files.forEach(function(file) {
@@ -26,14 +27,23 @@ function insertFiles(files) {
     baselines[file.data.filepath].done(function(baseline) {
       file.subscribe(function() {
         updateDiff(diff, baseline, file.data.text);
-        file.on('op', function() {
-          updateDiff(diff, baseline, file.data.text);
-        })
+        file.on('op', function(op) {
+          if (op[0].p[0] === 'text') {
+            scheduled[file.id] = [ diff, baseline, file.data.text ];
+          }
+        });
       });
     });
     parent.querySelector('.files').append(item);
   });
 }
+
+setInterval(function() {
+  Object.keys(scheduled).forEach(function(id) {
+    updateDiff.apply(null, scheduled[id]);
+    delete scheduled[id];
+  });
+}, 500);
 
 function updateDiff(node, baseline, text) {
   if (baseline === undefined || text === undefined) { return; }
@@ -49,6 +59,6 @@ function updateDiff(node, baseline, text) {
     }
     elements.push(elt);
   });
-  while (node.firstChild) { node.remove(node.firstChild); }
+  node.innerHTML = '';
   node.append.apply(node, elements);
 }
