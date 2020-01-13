@@ -5,15 +5,6 @@
     "aws_source_ami": "",
     "aws_instance_type": "",
     
-    "openstack_auth_url": "",
-    "openstack_username": "",
-    "openstack_password": "",
-    "openstack_tenant": "",
-    "openstack_region": "",
-    "openstack_source_image": "",
-    "openstack_flavor": "",
-    "openstack_secgroup": "",
-    
     "rev": null,
     "tar": null,
     "app": null
@@ -36,18 +27,6 @@
       "owners": [ "099720109477" ], "most_recent": true
     },
     "instance_type": "{{user `aws_instance_type`}}",
-    "ssh_username": "ubuntu"
-  }, {
-    "type": "openstack",
-    "username": "{{user `openstack_username`}}",
-    "password": "{{user `openstack_password`}}",
-    "tenant_name": "{{user `openstack_tenant`}}",
-    "identity_endpoint": "{{user `openstack_auth_url`}}",
-    "region": "{{user `openstack_region`}}",
-    "image_name": "{{user `app`}}-{{timestamp}}-{{user `rev`}}",
-    "source_image": "{{user `openstack_source_image`}}",
-    "flavor": "{{user `openstack_flavor`}}",
-    "security_groups": "{{user `openstack_secgroup`}}",
     "ssh_username": "ubuntu"
   } ],
   
