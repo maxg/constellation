@@ -36,15 +36,15 @@ done
 sudo -u $ADMIN npm install --production
 
 # Daemon
-cat > /lib/systemd/system/constellation.service <<EOD
+cat > /lib/systemd/system/$APP.service <<EOD
 [Unit]
 After=network.target mongod.service
 Requires=mongod.service
 
 [Service]
-User=constellation
-ExecStart=/var/constellation/server/bin/constellation
-ExecStartPre=/var/constellation/server/bin/wait-for-mongo
+User=$APP
+ExecStart=/var/$APP/server/bin/$APP
+ExecStartPre=/var/$APP/server/bin/wait-for-mongo
 
 [Install]
 WantedBy=multi-user.target

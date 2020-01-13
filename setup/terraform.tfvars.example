@@ -1,5 +1,5 @@
-bucket = "...-terraform-state"
-key = "constellation"
+bucket = "...-terraform" # S3 bucket & SSM parameter root
+key = "constellation"    # app name
 region = "us-east-1"
 access_key = "..."
 secret_key = "..."
