@@ -11,6 +11,12 @@ sleep 1
 
 instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 
+# Output and tag SSH host key fingerprints
+grep --only-matching 'ec2: .*' /var/log/syslog | sed -n '/BEGIN SSH/,/END/p' | tee /dev/fd/2 |
+grep --only-matching '.\+ .\+:.\+ .\+ (.\+)' |
+while read _ _ hash _ type; do echo "Key=SSH $type,Value=$hash"; done |
+xargs -d "\n" aws --region $region ec2 create-tags --resources $instance_id --tags
+
 # Mount MongoDB storage
 sudo aws --region $region ec2 attach-volume --instance-id $instance_id --volume-id $mongodb_volume_id --device /dev/sdf
 while [ ! -b /dev/nvme1n1 ]; do sleep 2; done
@@ -21,6 +27,3 @@ sudo chown -R mongodb:mongodb /var/lib/mongodb
 
 # Start daemon
 sudo systemctl start constellation
-
-# Output SSH host key fingerprints
-grep --only-matching 'ec2:.*' /var/log/syslog

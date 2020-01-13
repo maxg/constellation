@@ -153,7 +153,7 @@ resource "aws_instance" "web" {
   provisioner "remote-exec" {
     inline = ["/var/${var.app}/setup/production-provision.sh ${var.region} ${aws_ebs_volume.mongodb.id}"]
   }
-  lifecycle { ignore_changes = [volume_tags] }
+  lifecycle { ignore_changes = [tags, volume_tags] }
 }
 
 resource "aws_ebs_volume" "mongodb" {
@@ -228,6 +228,10 @@ resource "aws_iam_role" "web" {
 }
 
 data "aws_iam_policy_document" "web_access" {
+  statement {
+    actions = ["ec2:CreateTags"]
+    resources = ["arn:aws:ec2:${var.region}:*:instance/*"]
+  }
   statement {
     actions = ["ec2:AttachVolume"]
     resources = ["arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:instance/*", aws_ebs_volume.mongodb.arn]
