@@ -27,6 +27,8 @@ In `/vagrant/server`...
   - `userFakery` enabled: usernames will be mangled so that the same user has a different username in different browsers
   - `secret` can be any string
 
+Make sure MongoDB is running with `sudo systemctl start mongod`.
+
 Run `node app` to start the server, and visit it at https://10.18.6.121:4443/. Safari will not open WebSocket connections with the self-signed SSL cert, use Chrome instead to visit pages with WebSockets.
 
 With `userFakery` on, note your mangled username in the upper right corner of the landing page to add it to the `staff` list.
