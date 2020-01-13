@@ -5,8 +5,8 @@ set -v
 # Apt Repositories
 cat > /etc/apt/sources.list.d/nodesource.list <<< 'deb https://deb.nodesource.com/node_12.x bionic main'
 wget -qO - https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
-cat > /etc/apt/sources.list.d/mongodb-org.list <<< 'deb https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse'
-apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
+cat > /etc/apt/sources.list.d/mongodb-org.list <<< 'deb https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse'
+wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
 apt-get update
 
 # Development
