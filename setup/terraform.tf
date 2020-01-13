@@ -163,7 +163,6 @@ resource "aws_ebs_volume" "mongodb" {
 }
 
 resource "aws_eip" "web" {
-  instance = aws_instance.web.id
   vpc = true
   tags = {
     Name = local.name
@@ -171,26 +170,21 @@ resource "aws_eip" "web" {
   }
 }
 
-data "template_cloudinit_config" "config_web" {
-  part {
-    content_type = "text/cloud-config"
-    content = <<EOF
-runcmd:
-- systemctl enable ${local.app}
-EOF
-  }
+resource "aws_eip_association" "web_address" {
+  instance_id = aws_instance.web.id
+  allocation_id = aws_eip.web.id
 }
 
-resource "null_resource" "web_provision" {
-  triggers = { web = aws_instance.web.id }
-  connection {
-    type = "ssh"
-    host = aws_eip.web.public_ip
-    user = "ubuntu"
-    private_key = file("~/.ssh/aws_${local.app}")
-  }
-  provisioner "remote-exec" {
-    inline = ["/var/${local.app}/setup/production-provision.sh ${local.app} ${var.region} ${aws_ebs_volume.mongodb.id} ${var.web_host} ${var.le_contact}"]
+data "template_cloudinit_config" "config_web" {
+  part {
+    content_type = "text/x-shellscript"
+    content = <<-EOF
+      #!/bin/bash
+      APP=${local.app} AWS_DEFAULT_REGION=${var.region} \
+      EIP=${aws_eip.web.public_ip} HOST=${var.web_host} CONTACT=${var.le_contact} \
+      MONGO_VOL=${aws_ebs_volume.mongodb.id} \
+      /var/${local.app}/setup/production-provision.sh
+    EOF
   }
 }
 
