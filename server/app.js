@@ -14,21 +14,17 @@ const logger = require('./logger');
   const web = await require('./web').createFrontend(config, db);
   
   const servers = {
-    web: https.createServer({
-      key: fs.readFileSync(`${config.dir}/ssl-private-key.pem`),
-      cert: fs.readFileSync(`${config.dir}/ssl-certificate.pem`),
-      ca: fs.readdirSync(config.dir)
-            .filter(f => /ssl-intermediate/.test(f))
-            .map(f => fs.readFileSync(`${config.dir}/${f}`)),
-    }, web),
-    websocket: https.createServer({
-      key: fs.readFileSync(`${config.dir}/ssl-private-key.pem`),
-      cert: fs.readFileSync(`${config.dir}/ssl-certificate.pem`),
-      ca: fs.readdirSync(config.dir)
-            .filter(f => /ssl-intermediate/.test(f))
-            .map(f => fs.readFileSync(`${config.dir}/${f}`)),
-    }),
+    web: https.createServer(web),
+    websocket: https.createServer(),
   };
+  const certify = () => Object.values(servers).forEach(server => {
+    server.setSecureContext && server.setSecureContext({
+      key: fs.readFileSync(`${config.dir}/tls/privkey.pem`),
+      cert: fs.readFileSync(`${config.dir}/tls/fullchain.pem`),
+    });
+  });
+  certify();
+  setInterval(certify, 1000 * 60 * 60 * 24).unref();
   
   // connect websocket to share
   

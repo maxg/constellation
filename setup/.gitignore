@@ -1,4 +1,5 @@
 .terraform
 packer.conf.json
 *.tfvars
-production/*
+production/config/env-production.js
+production/install/

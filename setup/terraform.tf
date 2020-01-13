@@ -4,6 +4,9 @@ variable "region" {}
 variable "access_key" {}
 variable "secret_key" {}
 
+variable "web_host" {}
+variable "le_contact" {}
+
 # terraform init -backend-config=terraform.tfvars
 terraform {
   required_version = ">= 0.12"
@@ -145,9 +148,6 @@ resource "aws_instance" "web" {
     source = "production/"
     destination = "/var/${local.app}/server"
   }
-  provisioner "remote-exec" {
-    inline = ["/var/${local.app}/setup/production-provision.sh ${var.region} ${aws_ebs_volume.mongodb.id}"]
-  }
   lifecycle { ignore_changes = [tags, volume_tags] }
 }
 
@@ -178,6 +178,19 @@ data "template_cloudinit_config" "config_web" {
 runcmd:
 - systemctl enable ${local.app}
 EOF
+  }
+}
+
+resource "null_resource" "web_provision" {
+  triggers = { web = aws_instance.web.id }
+  connection {
+    type = "ssh"
+    host = aws_eip.web.public_ip
+    user = "ubuntu"
+    private_key = file("~/.ssh/aws_${local.app}")
+  }
+  provisioner "remote-exec" {
+    inline = ["/var/${local.app}/setup/production-provision.sh ${local.app} ${var.region} ${aws_ebs_volume.mongodb.id} ${var.web_host} ${var.le_contact}"]
   }
 }
 

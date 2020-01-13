@@ -2,8 +2,11 @@
 
 set -ex
 
-region=$1
-mongodb_volume_id=$2
+APP=$1
+region=$2
+mongodb_volume_id=$3
+HOST=$4
+CONTACT=$5
 
 # Wait for instance configuration to finish
 while [ ! -f /var/lib/cloud/instance/boot-finished ]; do sleep 2; done
@@ -25,5 +28,20 @@ sudo tee -a /etc/fstab <<< '/dev/nvme1n1 /var/lib/mongodb xfs noatime,noexec 0 0
 sudo mount /var/lib/mongodb
 sudo chown -R mongodb:mongodb /var/lib/mongodb
 
+# Start Certbot
+sudo certbot certonly --standalone --non-interactive --agree-tos --email $CONTACT --domains $HOST
+(
+  cd /etc/letsencrypt
+  sudo tee renewal-hooks/post/permit <<EOD
+cd /etc/letsencrypt
+chmod o+x archive live
+chown -R $APP archive/$HOST
+EOD
+  sudo chmod +x renewal-hooks/post/permit
+  sudo renewal-hooks/post/permit
+)
+sudo systemctl --now enable certbot.timer
+ln -s /etc/letsencrypt/live/$HOST /var/$APP/server/config/tls
+
 # Start daemon
-sudo systemctl start constellation
+sudo systemctl start $APP
