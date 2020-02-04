@@ -28,8 +28,11 @@ const logger = require('./logger');
   
   // connect websocket to share
   
-  new ws.Server({ server: servers.websocket }).on('connection', function(connection, req) {
+  let websocketserver = new ws.Server({ server: servers.websocket });
+  websocketserver.on('connection', function(connection, req) {
     connection.on('error', err => log.error({ err }, 'WebSocket error'));
+    connection._heartbeat = true;
+    connection.on('pong', () => connection._heartbeat = true);
     let stream = new websocketjsonstream(connection);
     stream.authusername = db.tokenUsername(req.url.substr(1));
     stream.push = function push(chunk, encoding) {
@@ -46,6 +49,13 @@ const logger = require('./logger');
     };
     db.share.listen(stream);
   });
+  setInterval(() => websocketserver.clients.forEach(connection => {
+    connection.ping();
+  }), 1000 * 60 * 5).unref();
+  setInterval(() => websocketserver.clients.forEach(connection => {
+    if ( ! connection._heartbeat) { return connection.terminate(); }
+    connection._heartbeat = false;
+  }), 1000 * 60 * 30).unref();
   
   // start listening
   
