@@ -50,7 +50,9 @@ const logger = require('./logger');
     db.share.listen(stream);
   });
   setInterval(() => websocketserver.clients.forEach(connection => {
-    connection.ping();
+    if (connection.readyState === ws.OPEN) {
+      connection.ping();
+    }
   }), 1000 * 60 * 5).unref();
   setInterval(() => websocketserver.clients.forEach(connection => {
     if ( ! connection._heartbeat) { return connection.terminate(); }
