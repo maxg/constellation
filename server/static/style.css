@@ -63,6 +63,9 @@ h3 small .label {
 .alert > :first-child {
   margin-top: 0;
 }
+.alert > :first-child:last-child {
+  margin-bottom: 0;
+}
 
 #error:empty {
   display: none;
@@ -149,6 +152,76 @@ h4 + .diff {
   background: rgba(252, 248, 227, .3);
 }
 .diff .diff-removed + .diff-added {
+}
+
+h4 + .code {
+  margin-top: 10px;
+}
+.code {
+  background: none;
+  border: none;
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  line-height: 16px;
+  overflow: inherit;
+}
+
+.code-marker-0::before, .code-marker-1::before, .code-marker-2::before {
+  content: '';
+  display: block;
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background-size: 12px;
+  margin-left: -12px;
+  margin-top: 2px;
+}
+.code-marker-0::before {
+  background-image: url(icons/eclipse-info.png);
+}
+.code-marker-1::before {
+  background-image: url(icons/eclipse-warn.png);
+}
+.code-marker-2::before {
+  background-image: url(icons/eclipse-error.png);
+}
+.code-marker-0, .code-marker-1, .code-marker-2 {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+}
+.code-marker-0 {
+  text-decoration-color: rgb(130, 160, 190);
+}
+.code-marker-1 {
+  text-decoration-color: rgb(244, 200, 46);
+}
+.code-marker-2 {
+  text-decoration-color: rgb(255, 0, 128);
+}
+
+.code-cursor {
+  background-color: rgb(232, 242, 254);
+}
+
+.subscription {
+  padding-left: 10px;
+  display: inline-block;
+}
+.subscription.subscription-eclipse {
+  color: rgba(44, 34, 85, .75);
+}
+.subscription.subscription-eclipse::before {
+  content: '';
+  display: inline-block;
+  position: relative;
+  width: 16px;
+  height: 16px;
+  background-size: 16px;
+  background-image: url(icons/eclipse.png);
+  top: 4px;
+  margin-right: 2px;
 }
 
 /* syntax highlighting with Eclipse colors */

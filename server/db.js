@@ -11,6 +11,7 @@ const FILES = 'files';
 const CHECKOFFS = 'checkoffs';
 const PINGS = 'pings';
 const SETUP = 'setup';
+const SUBS = 'subs';
 
 exports.createBackend = async function createBackend(config) {
   
@@ -90,6 +91,11 @@ exports.createBackend = async function createBackend(config) {
       background: true,
       partialFilterExpression: { 'create.data.project': { $exists: true } },
     });
+  });
+  
+  // clear old subscriptions when server starts
+  db.getCollection(SUBS, function(err, subs) {
+    subs.remove({});
   });
   
   let backend = {
@@ -176,6 +182,44 @@ exports.createBackend = async function createBackend(config) {
           user.submitOp([ { p: [ COLLABS, 0 ], li: collabid } ], done);
         },
       }, callback);
+    },
+    
+    subscribed(connectionid, username, useragent, fileid) {
+      async.autoInject({
+        sub(done) {
+          let sub = connection.get(SUBS, connectionid);
+          sub.fetch(err => done(err, sub));
+        },
+        sub_created(sub, done) {
+          if ( ! sub.type) {
+            sub.create({ username, useragent, [FILES]: [] }, done);
+          } else { done(); }
+        },
+        add(sub, sub_created, done) {
+          if ( ! sub.data[FILES].includes(fileid)) {
+            sub.submitOp([ { p: [ FILES, 0 ], li: fileid } ], done);
+          } else { done(); }
+        },
+      });
+    },
+    
+    unsubscribed(connectionid, fileid) {
+      async.autoInject({
+        sub(done) {
+          let sub = connection.get(SUBS, connectionid);
+          sub.fetch(err => done(err, sub));
+        },
+        remote(sub, done) {
+          if (sub.data && sub.data[FILES].includes(fileid)) {
+            sub.submitOp([ { p: [ FILES, FILES.indexOf(fileid) ], ld: fileid } ], done);
+          } else { done(); }
+        },
+      });
+    },
+    
+    closed(connectionid) {
+      let sub = connection.get(SUBS, connectionid);
+      sub.fetch(err => sub.del(err => {}));
     },
     
     getCheckoffs(project, callback) {

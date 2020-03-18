@@ -1,6 +1,7 @@
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
+const mongodb = require('mongodb');
 const ws = require('ws');
 const websocketjsonstream = require('websocket-json-stream');
 
@@ -30,14 +31,29 @@ const logger = require('./logger');
   
   let websocketserver = new ws.Server({ server: servers.websocket });
   websocketserver.on('connection', function(connection, req) {
+    let connectionid = mongodb.ObjectID().toString();
+    let useragent = req.headers['user-agent'];
     connection.on('error', err => log.error({ err }, 'WebSocket error'));
     connection._heartbeat = true;
     connection.on('pong', () => connection._heartbeat = true);
     let stream = new websocketjsonstream(connection);
     stream.authusername = db.tokenUsername(req.url.substr(1));
     stream.push = function push(chunk, encoding) {
-      if (chunk && chunk.a === 'ping') {
-        return db.ping(chunk.collabid);
+      if (chunk) {
+        if (chunk.a === 'ping') {
+          return db.ping(chunk.collabid);
+        }
+        if (chunk.a === 's' && chunk.c === 'files') {
+          db.subscribed(connectionid, stream.authusername, useragent, chunk.d);
+        } else if (chunk.a === 'bs' && chunk.c === 'files') {
+          let b = Array.isArray(chunk.b) ? chunk.b : Object.keys(chunk.b);
+          b.forEach(d => db.subscribed(connectionid, stream.authusername, useragent, d));
+        } else if (chunk.a === 'u' && chunk.c === 'files') {
+          db.unsubscribed(connectionid, chunk.d);
+        } else if (chunk.a === 'bu' && chunk.c === 'files') {
+          let b = Array.isArray(chunk.b) ? chunk.b : Object.keys(chunk.b);
+          b.forEach(d => db.unsubscribed(connectionid, d));
+        }
       }
       websocketjsonstream.prototype.push.call(this, chunk, encoding);
     };
@@ -47,6 +63,7 @@ const logger = require('./logger');
       }
       websocketjsonstream.prototype._write.call(this, msg, encoding, next);
     };
+    connection.on('close', () => db.closed(connectionid));
     db.share.listen(stream);
   });
   setInterval(() => websocketserver.clients.forEach(connection => {

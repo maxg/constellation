@@ -129,6 +129,10 @@ exports.createFrontend = async function createFrontend(config, db) {
       return res.render('setup-join');
     }
     
+    if (req.params.project.startsWith('ps')) {
+      return res.render('lab-join', { project: req.params.project });
+    }
+    
     res.render('join', {
       project: req.params.project,
       joincode: join.code({ username: res.locals.authusername, project: req.params.project }),
@@ -145,6 +149,15 @@ exports.createFrontend = async function createFrontend(config, db) {
       });
       paired.emit(req.params.userid, { me, token });
       return res.send({ redirect: '/setup-done' });
+    }
+    
+    if (req.params.project.startsWith('ps')) {
+      let project = req.params.project;
+      let collabid = mongodb.ObjectID().toString();
+      return db.addUserToCollaboration(me, project, collabid, function(err) {
+        paired.emit(req.params.userid, { me, token, partner: me, project, collabid });
+        res.send({ redirect: '/lab' });
+      });
     }
     
     join.rendezvous(req.body.me, req.body.partner, function(err, agreed) {
@@ -186,6 +199,13 @@ exports.createFrontend = async function createFrontend(config, db) {
     res.render('edit', {
       filepath: req.params.filepath,
     });
+  });
+  
+  app.get('/lab', authenticate, collaboration, function(req, res, next) {
+    if ( ! res.locals.collabid) {
+      return res.status(400).render('400', { error: 'No current collaboration' });
+    }
+    res.render('lab');
   });
   
   app.get('/show/:project/:collabid/:cutoff', authenticate, function(req, res, next) {
@@ -283,6 +303,13 @@ exports.createFrontend = async function createFrontend(config, db) {
       collabid: req.params.collabid,
       milestone: req.params.milestone,
       cutoff: req.params.cutoff,
+    });
+  });
+  
+  app.get('/dashboard/:project/lab/:username', authenticate, staffonly, function(req, res, next) {
+    res.render('dashboard/lab', {
+      project: req.params.project,
+      username: req.params.username,
     });
   });
   

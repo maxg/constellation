@@ -1,0 +1,29 @@
+extends layout
+
+append head
+  title Remote Lab - Constellation
+
+block content
+  .row: .col-xs-12
+    h2 Remote Lab #[small#project]
+  .row: .col-xs-12
+    p
+      | You can keep this page open and your Eclipse &ldquo;collaborating&rdquo; for an entire lab session.
+      | If you close this page or Eclipse is disconnected, restart the collaboration.
+  
+  .row: .col-xs-12: #error.alert.alert-danger
+  
+  .row: .col-xs-12
+    h3 Shared scratchpad #[small: span#connection-status.label]
+    textarea#scratch.form-control.text-editor(rows=8)
+  
+  .row: .col-xs-12
+    h3 Eclipse files
+    #files
+  
+  script.
+    var shareURL = !{JSON.stringify(shareURL)};
+    var collabid = !{JSON.stringify(collabid)};
+  script(src='/public/sharedb.js')
+  script(src='/static/lab.js')
+  script(src='/static/connected.js')

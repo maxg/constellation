@@ -1,0 +1,22 @@
+extends layout
+
+append head
+  title Remote Lab - Constellation
+  script(src='/static/join.js')
+
+block content
+  .row: .col-xs-12
+    h2 Remote Lab
+    h3 Individual assignment: #{project}
+  
+  .row: .col-xs-10.col-sm-8.col-md-6.col-lg-4
+    form#join
+      .form-group
+        h3 Start sharing with staff...
+      .form-group
+        input#partner(type='hidden')
+        button.btn.btn-primary.btn-lg Go!
+    h3#status.text-primary
+  
+  script.
+    rendezvous('', $('#join'), $('#partner'), $('#status'));
