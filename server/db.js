@@ -211,7 +211,7 @@ exports.createBackend = async function createBackend(config) {
         },
         remote(sub, done) {
           if (sub.data && sub.data[FILES].includes(fileid)) {
-            sub.submitOp([ { p: [ FILES, FILES.indexOf(fileid) ], ld: fileid } ], done);
+            sub.submitOp([ { p: [ FILES, sub.data[FILES].indexOf(fileid) ], ld: fileid } ], done);
           } else { done(); }
         },
       });
