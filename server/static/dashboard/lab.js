@@ -76,7 +76,7 @@ function updateCode(node, data) {
     var elt = document.createElement('div');
     elt.classList.add('code-line');
     elt.setAttribute('data-offset', offset);
-    elt.textContent = line + '\n';
+    elt.textContent = line.replace(/\r$/, '') + '\n';
     offset += line.length + 1;
     node.appendChild(elt);
   });
