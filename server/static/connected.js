@@ -3,7 +3,7 @@ connection.on('state', function(state) {
   status.classList.remove('label-success');
   status.classList.remove('label-danger');
   status.classList.remove('label-warning');
-  status.textContent = state;
+  status.textContent = 'page ' + state;
   switch (state) {
     case 'connected':
       status.classList.add('label-success'); break;

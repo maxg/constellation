@@ -5,7 +5,7 @@ append head
 
 block content
   .row: .col-xs-12
-    h2 Remote Lab #[small#project]
+    h2 Remote Lab #[small#project] #[small: span#connection-status.label]
   .row: .col-xs-12
     p
       | You can keep this page open and your Eclipse &ldquo;collaborating&rdquo; for an entire lab session.
@@ -14,7 +14,7 @@ block content
   .row: .col-xs-12: #error.alert.alert-danger
   
   .row: .col-xs-12
-    h3 Shared scratchpad #[small: span#connection-status.label]
+    h3 Shared scratchpad
     textarea#scratch.form-control.text-editor(rows=8)
   
   .row: .col-xs-12
