@@ -60,7 +60,7 @@ function insertFiles(files, atIndex) {
     
     file.subscribe(function() {
       updateCode(code, file.data);
-      file.on('op', function() { updateCode(code, file.data); });
+      file.on('op', function(op) { updateCode(code, file.data, op); });
     });
     
     var subs = connection.createSubscribeQuery('subs', { files: file.id });
@@ -69,17 +69,28 @@ function insertFiles(files, atIndex) {
   });
 }
 
-function updateCode(node, data) {
-  node.innerHTML = '';
-  var offset = 0;
-  data.text.split('\n').forEach(function(line) {
-    var elt = document.createElement('div');
-    elt.classList.add('code-line');
-    elt.setAttribute('data-offset', offset);
-    elt.textContent = line.replace(/\r$/, '') + '\n';
-    offset += line.length + 1;
-    node.appendChild(elt);
-  });
+function updateCode(node, data, op) {
+  var changed = new Set(op ? op.map(function(op) { return op.p[0]; }) : [ 'all' ]);
+  
+  // update text, clear markers and cursors
+  if (changed.has('all') || changed.has('text')) {
+    node.innerHTML = '';
+    var offset = 0;
+    data.text.split('\n').forEach(function(line) {
+      var elt = document.createElement('div');
+      elt.classList.add('code-line');
+      elt.setAttribute('data-offset', offset);
+      elt.textContent = line.replace(/\r$/, '') + '\n';
+      offset += line.length + 1;
+      node.appendChild(elt);
+    });
+  } else {
+    node.querySelectorAll('.code-line').forEach(function(line) {
+      line.className = 'code-line';
+    });
+  }
+  
+  // update markers
   Object.values(data.markers).forEach(function(markers) {
     markers.forEach(function(marker) {
       var elt = node.children[marker.lineNumber - 1];
@@ -87,17 +98,33 @@ function updateCode(node, data) {
       elt.setAttribute('title', marker.message.replace(/"/g, "'"));
     });
   });
+  
+  // update cursors
   var deletion = op && op.find(function(op) { return op.p[0] === 'text' && op.sd; });
   Object.values(data.cursors).forEach(function(cursor) {
-    var offset = cursor[0] - (deletion && deletion.p[1] < cursor[0] ? deletion.sd.length : 0);
-    for (var ii = 0; ii < node.children.length; ii++) {
-      if (ii+1 >= node.children.length || node.children[ii+1].getAttribute('data-offset') > offset) {
+    if (node.children.length && cursor.length === 3 && ! changed.has('text')) {
+      var ii = 0;
+      for ( ; ii+1 < node.children.length && node.children[ii+1].getAttribute('data-offset') < cursor[1]; ii++) {
+      }
+      node.children[ii].classList.add('code-cursor-line');
+      for ( ; ii < node.children.length && node.children[ii].getAttribute('data-offset') < cursor[1] + cursor[2]; ii++) {
         node.children[ii].classList.add('code-cursor-line');
-        return;
+      }
+    } else {
+      var offset = cursor[0] - (deletion && deletion.p[1] < cursor[0] ? deletion.sd.length : 0);
+      for (var ii = 0; ii < node.children.length; ii++) {
+        if (ii+1 >= node.children.length || node.children[ii+1].getAttribute('data-offset') > offset) {
+          node.children[ii].classList.add('code-cursor-line');
+          return;
+        }
       }
     }
   });
-  hljs.highlightBlock(node);
+  
+  // apply syntax highlighting
+  if (changed.has('all') || changed.has('text')) {
+    hljs.highlightBlock(node);
+  }
 }
 
 function updateSubs(node, results) {
