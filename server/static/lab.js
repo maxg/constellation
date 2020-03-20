@@ -6,6 +6,17 @@ collab.fetch(function(err) {
   
   document.querySelector('#project').textContent = 'for ' + collab.data.project;
   
+  var user = connection.get('users', authusername);
+  user.subscribe(function(err) {
+    if (err) { throw err; }
+    
+    user.on('op', function() {
+      if (user.data.collabs[0] !== collabid) {
+        document.querySelector('#error').textContent = 'this collaboration is no longer current, please reload the page';
+      }
+    });
+  });
+  
   setupScratch();
 });
 
