@@ -45,6 +45,10 @@ exports.createBackend = async function createBackend(config) {
       authorize.read[FILES](req, cb);
     });
   };
+  // users can read their own subscriptions
+  authorize.read[SUBS] = function(req, cb) {
+    return req.snapshot.username === req.agent.authusername ? cb() : deny(req, cb);
+  };
   // users can query for files in a collab (authorization above applies to results)
   authorize.query[FILES] = function(req, cb) {
     return req.query.collabid ? cb() : deny(req, cb);
@@ -52,6 +56,10 @@ exports.createBackend = async function createBackend(config) {
   // users can query for published checkoffs on collabs (authorization above applies to results)
   authorize.query[CHECKOFFS] = function(req, cb) {
     return req.query.published && req.query.collabid ? cb() : deny(req, db);
+  };
+  // users can query for their own subscriptions (authorization above applies to results)
+  authorize.query[SUBS] = function(req, cb) {
+    return req.query.username ? cb() : deny(req, cb);
   };
   
   function deny(req, cb) {

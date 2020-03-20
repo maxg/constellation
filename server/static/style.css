@@ -212,6 +212,9 @@ h4 + .code {
 .subscription.subscription-eclipse {
   color: rgba(44, 34, 85, .75);
 }
+.subscription.subscription-self {
+  color: rgba(93, 184, 93, .5);
+}
 .subscription.subscription-eclipse::before {
   content: '';
   display: inline-block;

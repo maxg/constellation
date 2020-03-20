@@ -24,6 +24,7 @@ var scratcharea = document.querySelector('#scratch');
 var scratchpath = 'lab-scratchpad';
 
 function setupScratch() {
+  document.querySelector('#scratch-title').setAttribute('data-fileid', collabid + '-' + scratchpath);
   var scratchdoc = connection.get('files', collabid + '-' + scratchpath);
   scratchdoc.on('create', function(created) { updateScratch(); });
   scratchdoc.subscribe(updateScratch);
@@ -45,17 +46,63 @@ function setupScratch() {
   }
 }
 
+var filelist = document.querySelector('#files');
 var files = connection.createSubscribeQuery('files', { collabid: collabid }, {});
-files.on('ready', updateFiles);
-files.on('insert', updateFiles);
+var allsubs = [];
+files.on('ready', function() {
+  var subs = connection.createSubscribeQuery('subs', { username: authusername }, {});
+  subs.on('ready', function() { updateAllSubs(subs.results); });
+  subs.on('insert', updateAllSubs);
+  subs.on('remove', updateSubs);
+  updateFiles();
+});
+files.on('changed', updateFiles);
 
 function updateFiles() {
-  var list = document.querySelector('#files');
-  while (list.firstChild) { list.removeChild(list.firstChild); }
+  filelist.innerHTML = '';
   files.results.filter(function(file) {
     return file && file.data && file.data.filepath !== scratchpath;
   }).forEach(function(file) {
-    var item = list.appendChild(document.createElement('h4'));
+    var item = document.createElement('h4');
+    item.setAttribute('data-fileid', file.id);
     item.textContent = file.data.filepath;
+    item.appendChild(document.createElement('small'));
+    var item = filelist.appendChild(item);
+  });
+  updateSubs();
+}
+
+function updateAllSubs(subs) {
+  subs.forEach(function(sub) {
+    sub.subscribe(function(err) {
+      if (err) { throw err; }
+      allsubs.push(sub);
+      updateSubs();
+      sub.on('op', updateSubs);
+    });
+  });
+}
+
+function updateSubs() {
+  document.querySelectorAll('[data-fileid] small').forEach(function(item) {
+    item.innerHTML = '';
+  });
+  
+  allsubs.forEach(function(sub) {
+    if ( ! sub.data) { return; }
+    sub.data.files.forEach(function(fileid) {
+      var item = document.querySelector('[data-fileid="' + fileid + '"]');
+      if ( ! item) { return; }
+      var connections = item.querySelector('small');
+      var elt = document.createElement('div');
+      elt.classList.add('subscription');
+      if (sub.data.useragent.startsWith('Jetty/')) {
+        elt.classList.add('subscription-eclipse');
+      } else {
+        elt.classList.add('subscription-self');
+      }
+      elt.textContent = 'connected';
+      connections.appendChild(elt);
+    });
   });
 }
