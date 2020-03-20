@@ -18,12 +18,17 @@ block content
   
   .row: .col-xs-12
     h3 Eclipse files
-    #files
+    ul#file-tabs.nav.nav-tabs
+    #file-panes.tab-content
   
-  template#file
-    .col-xs-12.col-md-6: .tile.panel.panel-default: .panel-body
-      h4: small
-      pre.code: code.java
+  template#file-tab
+    li: a(data-toggle='tab'): h4
+      span.glyphicon.glyphicon-asterisk.invisible.file-indicator
+      span.filename
+      small
+  
+  template#file-pane
+    div.tab-pane.panel.panel-default: .panel-body: pre.code: code.java
   
   script.
     var shareURL = !{JSON.stringify(shareURL)};

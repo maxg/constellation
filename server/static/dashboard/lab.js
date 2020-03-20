@@ -33,9 +33,10 @@ var scratcharea = document.querySelector('#scratch');
 var scratchpath = 'lab-scratchpad';
 var scratchconnections = document.querySelector('#scratch-connections');
 
+var tabs = document.querySelector('#file-tabs');
+var panes = document.querySelector('#file-panes');
+
 function insertFiles(files, atIndex) {
-  var list = document.querySelector('#files');
-  
   var skip = 0;
   files.forEach(function(file, idx) {
     if (file.data.filepath === scratchpath) {
@@ -51,16 +52,36 @@ function insertFiles(files, atIndex) {
       return;
     }
     
-    var item = document.importNode(document.querySelector('#file').content, true);
-    var heading = item.querySelector('h4');
-    var code = item.querySelector('.code code');
-    var connections = item.querySelector('h4 small');
-    heading.insertBefore(document.createTextNode(file.data.filepath), heading.children[0]);
-    list.insertBefore(item, list.children[atIndex + idx - skip]);
+    // create tab
+    var tab = document.importNode(document.querySelector('#file-tab').content, true);
+    var link = tab.querySelector('a');
+    link.setAttribute('href', '#file-pane-' + file.id.replace(/\W/g, '_'));
+    link.querySelector('.filename').textContent = file.data.filepath;
+    var connections = link.querySelector('small');
+    if ( ! tabs.children.length) {
+      tab.querySelector('li').classList.add('active');
+    }
+    tabs.insertBefore(tab, tabs.children[atIndex + idx - skip]);
+    
+    // create content
+    var pane = document.importNode(document.querySelector('#file-pane').content, true);
+    var code = pane.querySelector('.code code');
+    var container = pane.querySelector('.tab-pane');
+    container.setAttribute('id', 'file-pane-' + file.id.replace(/\W/g, '_'));
+    if ( ! panes.children.length) {
+      container.classList.add('active');
+    }
+    panes.appendChild(pane);
     
     file.subscribe(function() {
       updateCode(code, file.data);
-      file.on('op', function(op) { updateCode(code, file.data, op); });
+      file.on('op', function(op) {
+        tabs.querySelectorAll('.file-indicator').forEach(function (indicator) {
+          indicator.classList.add('invisible');
+        });
+        link.querySelector('.file-indicator').classList.remove('invisible');
+        updateCode(code, file.data, op);
+      });
     });
     
     var subs = connection.createSubscribeQuery('subs', { files: file.id });
@@ -130,6 +151,9 @@ function updateCode(node, data, op) {
 function updateSubs(node, results) {
   node.innerHTML = '';
   results.forEach(function(result) {
+    if (result.data.username === authusername && result.data.useragent === navigator.userAgent) {
+      return;
+    }
     var elt = document.createElement('div');
     elt.classList.add('subscription');
     if (result.data.useragent.startsWith('Jetty/')) {
