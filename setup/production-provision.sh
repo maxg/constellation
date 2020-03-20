@@ -21,6 +21,10 @@ sudo tee -a /etc/fstab <<< '/dev/nvme1n1 /var/lib/mongodb xfs noatime,noexec 0 0
 sudo mount /var/lib/mongodb
 sudo chown -R mongodb:mongodb /var/lib/mongodb
 
+# Mount TLS filesystem
+sudo tee --append /etc/fstab <<< "$TLS_FS:/ /etc/letsencrypt efs tls,_netdev 0 0"
+sudo mount /etc/letsencrypt
+
 # Start Certbot
 sudo certbot certonly --standalone --non-interactive --agree-tos --email $CONTACT --domains $HOST
 (
