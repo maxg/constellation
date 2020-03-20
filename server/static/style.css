@@ -201,7 +201,7 @@ h4 + .code {
   text-decoration-color: rgb(255, 0, 128);
 }
 
-.code-cursor {
+.code-cursor-line {
   background-color: rgb(232, 242, 254);
 }
 

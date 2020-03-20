@@ -87,10 +87,12 @@ function updateCode(node, data) {
       elt.setAttribute('title', marker.message.replace(/"/g, "'"));
     });
   });
+  var deletion = op && op.find(function(op) { return op.p[0] === 'text' && op.sd; });
   Object.values(data.cursors).forEach(function(cursor) {
-    for (var ii = 1; ii < node.children.length; ii++) {
-      if (node.children[ii].getAttribute('data-offset') > cursor[0]) {
-        node.children[ii-1].classList.add('code-cursor');
+    var offset = cursor[0] - (deletion && deletion.p[1] < cursor[0] ? deletion.sd.length : 0);
+    for (var ii = 0; ii < node.children.length; ii++) {
+      if (ii+1 >= node.children.length || node.children[ii+1].getAttribute('data-offset') > offset) {
+        node.children[ii].classList.add('code-cursor-line');
         return;
       }
     }
