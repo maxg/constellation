@@ -174,15 +174,27 @@ h4 + .code {
   overflow: inherit;
 }
 
-.code-marker-0::before, .code-marker-1::before, .code-marker-2::before {
-  content: '';
+code {
+  counter-reset: code-line;
+}
+.code-line {
+  margin-left: 24px;
+}
+.code-line::before {
   display: block;
   position: absolute;
-  width: 12px;
-  height: 12px;
+  counter-increment: code-line;
+  content: counter(code-line);
+  color: rgba(119, 119, 119, .5);
+  font-size: 12px;
+  text-align: right;
+  width: 36px;
+  height: 14px;
+  margin-left: -48px;
+  margin-top: 0px;
   background-size: 12px;
-  margin-left: -12px;
-  margin-top: 2px;
+  background-position-y: 2px;
+  background-repeat: no-repeat;
 }
 .code-marker-0::before {
   background-image: url(icons/eclipse-info.png);
