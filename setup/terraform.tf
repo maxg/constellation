@@ -4,7 +4,7 @@ variable "region" {}
 variable "access_key" {}
 variable "secret_key" {}
 
-variable "web_host" {}
+variable "web_hosts" {}
 variable "le_contact" {}
 
 # terraform init -backend-config=terraform.tfvars
@@ -227,7 +227,7 @@ data "template_cloudinit_config" "config_web" {
     content = <<-EOF
       #!/bin/bash
       APP=${local.app} AWS_DEFAULT_REGION=${var.region} \
-      EIP=${aws_eip.web.public_ip} HOST=${var.web_host} CONTACT=${var.le_contact} \
+      EIP=${aws_eip.web.public_ip} HOSTS=${join(",", var.web_hosts)} CONTACT=${var.le_contact} \
       TLS_FS=${aws_efs_file_system.tls.id} \
       MONGO_VOL=${aws_ebs_volume.mongodb.id} \
       /var/${local.app}/setup/production-provision.sh

@@ -26,19 +26,19 @@ sudo tee --append /etc/fstab <<< "$TLS_FS:/ /etc/letsencrypt efs tls,_netdev 0 0
 sudo mount /etc/letsencrypt
 
 # Start Certbot
-sudo certbot certonly --standalone --non-interactive --agree-tos --email $CONTACT --domains $HOST
+sudo certbot certonly --standalone --non-interactive --agree-tos --email $CONTACT --domains $HOSTS --cert-name $APP
 (
   cd /etc/letsencrypt
   sudo tee renewal-hooks/post/permit <<EOD
 cd /etc/letsencrypt
 chmod o+x archive live
-chown -R $APP archive/$HOST
+chown -R $APP archive/$APP
 EOD
   sudo chmod +x renewal-hooks/post/permit
   sudo renewal-hooks/post/permit
 )
 sudo systemctl --now enable certbot.timer
-ln -s /etc/letsencrypt/live/$HOST /var/$APP/server/config/tls
+ln -s /etc/letsencrypt/live/$APP /var/$APP/server/config/tls
 
 # Start daemon
 sudo systemctl enable --now $APP
