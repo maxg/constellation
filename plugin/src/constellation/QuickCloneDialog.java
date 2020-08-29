@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Optional;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -26,8 +27,12 @@ import org.eclipse.jface.dialogs.IInputValidator;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.lib.Config;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.widgets.Display;
@@ -135,14 +140,32 @@ public class QuickCloneDialog extends InputDialog {
         if (config.getString("core", null, "autocrlf") != null) {
             config.setString("core", null, "autocrlf", "input");
         }
-        // JGit clone-without-checkout doesn't set up default branch, assume master
-        git.checkout().setName("master").setStartPoint("refs/remotes/origin/master")
+        // JGit clone-without-checkout doesn't set up default branch, and the logic is inaccessible
+        final String name = guessRemoteHeadRef(git).getName();
+        git.checkout().setName(name.split("/", 4)[3]).setStartPoint(name)
                 .setCreateBranch(true)
                 .call();
         progress.worked(3);
         git.getRepository().close(); // git.close() alone keeps a pack file lock
         git.close();
         progress.worked(1);
+    }
+    
+    private Ref guessRemoteHeadRef(Git git) throws GitAPIException {
+        List<Ref> branches = git.branchList().setListMode(ListMode.REMOTE).call();
+        if (branches.isEmpty()) {
+            throw new InvalidRemoteException("No remote refs");
+        }
+        if (branches.size() == 1) {
+            return branches.get(0);
+        }
+        final Ref head = git.fetch().call().getAdvertisedRef(Constants.HEAD);
+        for (Ref branch : branches) {
+            if (branch.getObjectId().equals(head.getObjectId())) {
+                return branch;
+            }
+        }
+        return branches.get(0);
     }
     
     private String getProjectName(File projectDir) throws IOException {
