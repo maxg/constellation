@@ -129,13 +129,15 @@ exports.createFrontend = async function createFrontend(config, db) {
       return res.render('setup-join');
     }
     
-    if (req.params.project.startsWith('ps')) {
-      return res.render('lab-join', { project: req.params.project });
-    }
+    let individual = config.lab && config.lab.individual && config.lab.individual.test(req.params.project);
+    let day = moment().format('ddd');
+    let labhour = config.lab && (config.lab[day] || []).includes(moment().hour());
     
     res.render('join', {
       project: req.params.project,
       joincode: join.code({ username: res.locals.authusername, project: req.params.project }),
+      individual,
+      labhour,
     });
   });
   
@@ -151,7 +153,7 @@ exports.createFrontend = async function createFrontend(config, db) {
       return res.send({ redirect: '/setup-done' });
     }
     
-    if (req.params.project.startsWith('ps')) {
+    if (req.body.lab) {
       let project = req.params.project;
       let collabid = mongodb.ObjectID().toString();
       return db.addUserToCollaboration(me, project, collabid, function(err) {

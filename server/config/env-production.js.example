@@ -1,5 +1,11 @@
 module.exports = {
   staff: [ ... ],
+  lab: {
+    individual: /^ps/,
+    Mon: [ 19, 20, 21 ],
+    Tue: [ 19, 20, 21 ],
+    Wed: [ 19, 20, 21 ],
+  },
   oidc: {
     server: 'https://oidc.example.com',
     client: {

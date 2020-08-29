@@ -1,10 +1,24 @@
 extends layout
 
 append head
-  title Find a Partner - Constellation
+  title #{individual ? 'Remote Lab' : 'Find a Partner'} - Constellation
   script(src='/static/join.js')
 
 block content
+  if ! individual
+    +partner
+    if labhour
+      .row: .col-xs-12
+        br
+        p &mdash;or&mdash;
+  if labhour
+    +lab
+  else if individual
+    .row: .col-xs-12
+      h2 Remote lab
+      h3 Not available right now
+
+mixin partner
   .row: .col-xs-12
     h2 Find a partner
     h3 Collaborating on: #{project}
@@ -18,7 +32,24 @@ block content
           input#partner.form-control.input-lg(type='text', autofocus=true, placeholder="Enter your partner's joincode")
           span.input-group-btn
             button.btn.btn-danger.btn-lg Join
-    h3#status.text-primary
+    h3#status.text-primary &nbsp;
   
   script.
     rendezvous(!{JSON.stringify(joincode.join(' '))}, $('#join'), $('#partner'), $('#status'));
+
+mixin lab
+  .row: .col-xs-12
+    h2 Remote lab hours
+    h3 Working on: #{project}
+  
+  .row: .col-xs-10.col-sm-8.col-md-6.col-lg-4
+    form#lab-join
+      .form-group
+        h3 Start sharing with staff...
+      .form-group
+        input#lab-partner(type='hidden')
+        button.btn.btn-primary.btn-lg Go!
+    h3#lab-status.text-primary
+  
+  script.
+    rendezvous('', $('#lab-join'), $('#lab-partner'), $('#lab-status'), true);
