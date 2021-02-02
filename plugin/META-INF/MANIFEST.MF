@@ -24,8 +24,13 @@ Require-Bundle: org.eclipse.platform;bundle-version="4.8.0",
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
-Bundle-ClassPath: lib/jetty-client.jar,
+Bundle-ClassPath: lib/asm-commons.jar,
+ lib/asm-tree.jar,
+ lib/asm-util.jar,
+ lib/asm.jar,
+ lib/jetty-client.jar,
  lib/jetty-util-ajax.jar,
+ lib/nashorn-core.jar,
  lib/websocket-api.jar,
  lib/websocket-client.jar,
  lib/websocket-common.jar,

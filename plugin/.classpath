@@ -6,6 +6,26 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/asm-commons.jar" sourcepath="lib/sources/asm-commons-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/asm-commons-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/asm-tree.jar" sourcepath="lib/sources/asm-tree-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/asm-tree-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/asm-util.jar" sourcepath="lib/sources/asm-util-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/asm-util-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/asm.jar" sourcepath="lib/sources/asm-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/asm-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="lib/jetty-client.jar" sourcepath="lib/sources/jetty-client-sources.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/jetty-client-javadoc.jar!/"/>
@@ -16,6 +36,11 @@
 		<attributes>
 			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/jetty-util-ajax-javadoc.jar!/"/>
 			<attribute name="annotationpath" value="/constellation-plugin/eea"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/nashorn-core.jar" sourcepath="lib/sources/nashorn-core-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/constellation-plugin/lib/javadoc/nashorn-core-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/websocket-api.jar" sourcepath="lib/sources/websocket-api-sources.jar">
