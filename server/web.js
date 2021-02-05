@@ -198,8 +198,15 @@ exports.createFrontend = async function createFrontend(config, db) {
     if ( ! res.locals.collabid) {
       return res.status(400).render('400', { error: 'No current collaboration' });
     }
+    let extras = [];
+    if (req.params.filepath.endsWith('.snap')) {
+      extras.push(
+        'https://cdn.jsdelivr.net/gh/uid/snapdown@constellation/snapdown.js',
+        'https://cdn.jsdelivr.net/gh/uid/snapdown@constellation/constellation.js');
+    }
     res.render('edit', {
       filepath: req.params.filepath,
+      extras,
     });
   });
   

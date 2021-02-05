@@ -10,8 +10,11 @@ block content
   
   .row: .col-xs-12: #error.alert.alert-danger
   
-  .row: .col-xs-12
-    textarea#text.form-control.text-editor(rows=20)
+  .row
+    div(class=extras.length ? 'col-xs-6' : 'col-xs-12')
+      textarea#text.form-control.text-editor(rows=20)
+    if extras.length
+      #extra.col-xs-6
   
   if config.env == 'development'
     .row: .col-xs-12: div#debug.navbar.navbar-default: .container-fluid
@@ -26,3 +29,5 @@ block content
     var filepath = !{JSON.stringify(filepath)};
   script(src='/public/sharedb.js')
   script(src='/static/edit.js')
+  each extra in extras
+    script(src=extra)
