@@ -74,6 +74,7 @@ function open(path, contents, callback) {
     
     if (err) { throw err; }
     if ( ! doc.type) {
+      // duplicated in server/static/edit.js
       return doc.create({
         collabid: CollaborationInstance.collabid,
         project: CollaborationInstance.project.getName(),
