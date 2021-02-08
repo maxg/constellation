@@ -18,8 +18,20 @@ doc.subscribe(update);
 function update(err) {
   if (err) { throw err; }
   if ( ! doc.type) {
-    document.querySelector('#error').textContent = 'file does not exist';
-    return;
+    if ( ! collab.data) {
+      return collab.on('load', update);
+    }
+    // duplicated in plugin/src/constellation/js/sharedb.js
+    return doc.create({
+      collabid: collabid,
+      project: collab.data.project,
+      filepath: filepath,
+      text: '',
+      cursors: {},
+      markers: {}
+    }, function(err) {
+      if (err && err.code !== 4016) { throw err; }
+    });
   }
   var binding = new window.sharedb.StringBinding(textarea, doc, [ 'text' ]);
   binding.setup();
