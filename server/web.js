@@ -201,8 +201,8 @@ exports.createFrontend = async function createFrontend(config, db) {
     let extras = [];
     if (req.params.filepath.endsWith('.snap')) {
       extras.push(
-        'https://cdn.jsdelivr.net/gh/uid/snapdown@constellation/snapdown.js',
-        'https://cdn.jsdelivr.net/gh/uid/snapdown@constellation/constellation.js');
+        '/static/snapdown/snapdown.js',
+        '/static/snapdown/constellation.js');
     }
     res.render('edit', {
       filepath: req.params.filepath,
