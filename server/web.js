@@ -124,7 +124,7 @@ exports.createFrontend = async function createFrontend(config, db) {
     res.render('index');
   });
   
-  app.get('/pair/:project/:id', authenticate, function(req, res, next) {
+  app.get('/pair/:project/:id/:filepath(*)?', authenticate, function(req, res, next) {
     if (req.params.project == setupproject) {
       return res.render('setup-join');
     }
@@ -135,13 +135,18 @@ exports.createFrontend = async function createFrontend(config, db) {
     
     res.render('join', {
       project: req.params.project,
+      filepath: req.params.filepath,
       joincode: join.code({ username: res.locals.authusername, project: req.params.project }),
       individual,
       labhour,
     });
   });
   
-  app.post('/pair/:project/:userid', authenticate, function(req, res, next) {
+  app.get('/pair-and-edit/:project/:filepath(*)', authenticate, function(req, res, next) {
+    res.redirect(`/pair/${req.params.project}/${mongodb.ObjectID().toString()}/${req.params.filepath}`);
+  });
+  
+  app.post('/pair/:project/:userid/:filepath(*)?', authenticate, function(req, res, next) {
     let me = res.locals.authusername;
     let token = db.usernameToken(res.locals.authusername);
     
@@ -178,7 +183,7 @@ exports.createFrontend = async function createFrontend(config, db) {
       
       db.addUserToCollaboration(me, project, collabid, function(err) {
         paired.emit(req.params.userid, { me, token, partner, project, collabid });
-        res.send({ redirect: '/edit' });
+        res.send({ redirect: req.params.filepath ? `/edit/${req.params.filepath}` : '/edit' });
       });
     });
   });

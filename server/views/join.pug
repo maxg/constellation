@@ -22,6 +22,8 @@ mixin partner
   .row: .col-xs-12
     h2 Find a partner
     h3 Collaborating on: #{project}
+      if filepath
+        |  / #{filepath}
   
   .row: .col-xs-10.col-sm-8.col-md-6.col-lg-4
     form#join
