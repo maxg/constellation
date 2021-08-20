@@ -73,12 +73,16 @@ export class CollabCommand {
       this.#collab.connection.on('state', this.#onConnectionState);
     } catch (e) {
       this.#update('none');
-      throw e;
+      if (e instanceof vscode.CancellationError) {
+        util.log('CollabCommand.start canceled');
+      } else {
+        util.error('CollabCommand.start error', e);
+      }
     }
   }
   
   async #pair(folder: string, progress: TaskProgress, token: vscode.CancellationToken) {
-    const host = vscode.workspace.getConfiguration('constellation').get<string>('host')?.split(':')[0];
+    const host = vscode.workspace.getConfiguration('constellation').get<string>('host');
     if ( ! host) { throw new Error('no constellation.host configured'); }
     
     progress.report({ message: 'Constellation: authenticating' });
@@ -86,7 +90,7 @@ export class CollabCommand {
     if (update) {
       util.browse(host, `update/${this.config.version}`);
       vscode.window.showErrorMessage('Please update to the latest version of Contellation');
-      throw new Error('extension requires update');
+      throw new vscode.CancellationError();
     }
     progress.report({ increment: 10 });
     

@@ -2,8 +2,6 @@ import * as vscode from 'vscode';
 
 import * as sharedb from 'sharedb/lib/client';
 import { Socket } from 'sharedb/lib/sharedb';
-const WebSocket = require('ws');
-const ReconnectingWebSocket = require('reconnecting-websocket');
 
 import * as util from './util';
 
@@ -19,8 +17,8 @@ export class Collaboration {
   constructor(readonly folder: vscode.WorkspaceFolder, readonly settings: Settings, progress: TaskProgress) {
     util.log('Collaboration.new', folder.name, settings.me, settings.partner, settings.collabid);
     
-    const host = vscode.workspace.getConfiguration('constellation').get('host');
-    this.#socket = new ReconnectingWebSocket(`wss://${host}/${settings.token}`, [], { WebSocket });
+    const [ host, port ] = vscode.workspace.getConfiguration('constellation').get<string>('host')!.split(':');
+    this.#socket = util.connect(`${host}:${(port ? parseInt(port) : 443) + 1}`, settings.token);
     this.connection = new sharedb.Connection(this.#socket);
     this.connection.on('state', (newState, reason) => util.log('Connection state', newState));
     this.#subscriptions = [

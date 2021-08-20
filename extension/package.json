@@ -32,7 +32,7 @@
       "properties": {
         "constellation.host": {
           "type": "string",
-          "default": "constellation.mit.edu:444"
+          "default": "constellation.mit.edu"
         }
       }
     }
