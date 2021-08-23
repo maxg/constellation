@@ -6,8 +6,6 @@ import * as util from './util';
 
 type StringOp = sharedb.StringInsertOp | sharedb.StringDeleteOp;
 
-const opEvent = 'before op';
-
 const cursorDecoration = vscode.window.createTextEditorDecorationType({
   borderWidth: '1px',
   borderStyle: 'solid',
@@ -25,6 +23,26 @@ export class EditorDoc {
   #localtext: string;
   #applied = Promise.resolve();
   #pending: { op: StringOp }[] = [];
+  
+  constructor(readonly sharedoc: sharedb.Doc, readonly localdoc: vscode.TextDocument, readonly settings: Settings) {
+    this.#localtext = localdoc.getText();
+    sharedoc.on('before op batch', this.#onOps);
+    sharedoc.on('before op', this.#onOp);
+  }
+  
+  #onOps = (ops: any[], source: any) => {
+    if (source) { return; } // local op is not in doc yet
+    if (this.#pending.length) { return; } // there are remote ops committed but not applied
+    if (this.localdoc.getText() !== this.sharedoc.data.text) {
+      util.error('EditorDoc.onOps mismatch', {
+        doc: { id: this.sharedoc.id, version: this.sharedoc.version },
+        ops, source,
+        local: this.localdoc.getText().replace(/\n/g, '⏎'),
+        remote: this.sharedoc.data.text.replace(/\n/g, '⏎'),
+      });
+    }
+  };
+  
   #onOp = ([ op ]: [ any ], source: any) => {
     if (source) { return; } // local op, ignore
     if (op.p[0] === 'text') {
@@ -35,20 +53,7 @@ export class EditorDoc {
     }
   };
   
-  constructor(readonly sharedoc: sharedb.Doc, readonly localdoc: vscode.TextDocument, readonly settings: Settings) {
-    this.#localtext = localdoc.getText();
-    sharedoc.on(opEvent, this.#onOp);
-  }
-  
   async #onRemoteChange(op: StringOp) {
-    if (this.localdoc.getText() !== this.sharedoc.data.text) {
-      util.error('EditorDoc.onRemoteChange mismatch', {
-        op,
-        local: this.localdoc.getText().replace(/\n/g, '\\n'),
-        remote: this.sharedoc.data.text.replace(/\n/g, '\\n'),
-      });
-    }
-    
     const cell = { op };
     this.#pending.push(cell);
     
@@ -145,6 +150,7 @@ export class EditorDoc {
   }
   
   stop() {
-    this.sharedoc.removeListener(opEvent, this.#onOp);
+    this.sharedoc.removeListener('before op batch', this.#onOps);
+    this.sharedoc.removeListener('before op', this.#onOp);
   }
 }
