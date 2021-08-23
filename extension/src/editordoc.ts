@@ -22,7 +22,7 @@ export class EditorDoc {
   
   #localtext: string;
   #applied = Promise.resolve();
-  #pending: { op: StringOp }[] = [];
+  #pending: StringOp[][] = [];
   
   constructor(readonly sharedoc: sharedb.Doc, readonly localdoc: vscode.TextDocument, readonly settings: Settings) {
     this.#localtext = localdoc.getText();
@@ -54,26 +54,28 @@ export class EditorDoc {
   };
   
   async #onRemoteChange(op: StringOp) {
-    const cell = { op };
-    this.#pending.push(cell);
+    const ops = [ op ];
+    this.#pending.push(ops);
     
     this.#applied = this.#applied.then(async () => {
       // until it succeeds:
       //   convert the possibly-translated op into an edit and attempt to apply it
-      while ( ! await vscode.workspace.applyEdit(this.#opToEdit(cell.op))) {
+      while ( ! await vscode.workspace.applyEdit(this.#opsToEdit(ops))) {
       }
     });
   }
   
-  #opToEdit(op: StringOp) {
-    const offset = op.p[1] as number;
+  #opsToEdit(ops: StringOp[]) {
     const edits = new vscode.WorkspaceEdit();
-    const start = this.localdoc.positionAt(offset);
-    if ('si' in op) { // insertion
-      edits.insert(this.localdoc.uri, start, op.si);
-    } else { // deletion
-      const end = this.localdoc.positionAt(offset + op.sd.length);
-      edits.delete(this.localdoc.uri, new vscode.Range(start, end));
+    for (const op of ops) {
+      const offset = op.p[1] as number;
+      const start = this.localdoc.positionAt(offset);
+      if ('si' in op) { // insertion
+        edits.insert(this.localdoc.uri, start, op.si);
+      } else { // deletion
+        const end = this.localdoc.positionAt(offset + op.sd.length);
+        edits.delete(this.localdoc.uri, new vscode.Range(start, end));
+      }
     }
     return edits;
   }
@@ -81,11 +83,6 @@ export class EditorDoc {
   async onLocalChange(changes: readonly vscode.TextDocumentContentChangeEvent[]) {
     const prevtext = this.#localtext;
     this.#localtext = this.localdoc.getText();
-    
-    if (this.#changeEqualsOp(changes, this.#pending[0]?.op)) {
-      this.#pending.shift();
-      return;
-    }
     
     let localops: StringOp[] = [];
     
@@ -98,9 +95,28 @@ export class EditorDoc {
       }
     }
     
+    // determine whether these changes are remote edits or new local edits
+    while (this.#pending[0] && localops[0]) {
+      if ( ! this.#pending[0].length) {
+        this.#pending.shift();
+      } else {
+        const rem = this.#pending[0][0]!;
+        const loc = localops[0];
+        if (rem.p[1] === loc.p[1] && ('si' in rem ? 'si' in loc && rem.si === loc.si : 'sd' in loc && rem.sd === loc.sd)) {
+          this.#pending[0].shift();
+          localops.shift();
+        } else {
+          break;
+        }
+      }
+    }
+    if ( ! localops.length) {
+      return;
+    }
+    
     if (this.#pending.length) {
       const originallocalops = localops;
-      const originalpending = this.#pending.map(cell => cell.op);
+      const originalpending = this.#pending.flat();
       
       // in the local doc, these local ops preceed the ops in #pending
       // but in the remote doc, the #pending ops are already committed
@@ -110,18 +126,16 @@ export class EditorDoc {
       // and in the local doc, the #pending ops must be transformed to follow these local ops
       // (their applyEdit calls will fail and be retried using these versions)
       const pending: StringOp[] = this.sharedoc.type!.transform(originalpending, originallocalops, 'right');
-      for (const [ idx, op ] of pending.entries()) { this.#pending[idx]!.op = op; }
+      
+      for (const ops of this.#pending) { ops.splice(0, ops.length, ...pending.splice(0, ops.length)); }
+      // if there are fewer transformed #pending ops, the last #pending entry(ies) are now shorter or empty
+      // if there are more transformed #pending ops, add them to the last entry
+      this.#pending[this.#pending.length-1]!.push(...pending);
     }
     
     for (const localop of localops) {
       this.sharedoc.submitOp(localop);
     }
-  }
-  
-  #changeEqualsOp(changes: readonly vscode.TextDocumentContentChangeEvent[], op?: StringOp) {
-    if (changes.length !== 1 || ! op) { return false; }
-    const change = changes[0]!;
-    return (change.rangeOffset === op.p[1]) && ('si' in op ? change.text === op.si : change.rangeLength === op.sd.length);
   }
   
   #onRemoteCursor(username: string) {
