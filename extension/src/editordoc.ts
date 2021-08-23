@@ -52,8 +52,6 @@ export class EditorDoc {
     const cell = { op };
     this.#pending.push(cell);
     
-    await this.#applied; // serialize workspace edits
-    
     this.#applied = this.#applied.then(async () => {
       // until it succeeds:
       //   convert the possibly-translated op into an edit and attempt to apply it
