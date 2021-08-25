@@ -113,12 +113,6 @@ export class CollabCommand {
       this.#update('none');
     }
   }
-  
-  provider() {
-    return {
-      provideTextDocumentContent(uri: vscode.Uri): string { return decodeURIComponent(uri.path); }
-    };
-  }
 }
 
 async function selectFolder() {

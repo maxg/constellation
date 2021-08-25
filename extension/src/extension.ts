@@ -22,7 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
   
   context.subscriptions.push(vscode.commands.registerCommand(collabCommandId, cmd.handleCollab, cmd));
   context.subscriptions.push(vscode.commands.registerCommand(setupCommandId, cmd.handleSetup, cmd));
-  context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('constellation', cmd.provider()));
+  context.subscriptions.push(util.registerStringDocProvider());
   
   status.command = collabCommandId;
   status.show();

@@ -9,6 +9,7 @@ const ReconnectingWebSocket = require('reconnecting-websocket');
 const channel = vscode.window.createOutputChannel('Constellation');
 const fetchOptions: OptionsOfJSONResponseBody = {};
 const socketOptions = { WebSocket };
+const stringDocScheme = 'constellation';
 
 export function log(...args: any[]) {
   channel.appendLine(new Date().toISOString() + ' ℹ️ ' + util.format(...args));
@@ -51,4 +52,14 @@ export function connect(host: string, path: string) {
 
 export async function browse(host: string, path: string) {
   vscode.env.openExternal(vscode.Uri.parse(`https://${host}/${path}`));
+}
+
+export function registerStringDocProvider() {
+  return vscode.workspace.registerTextDocumentContentProvider(stringDocScheme, {
+    provideTextDocumentContent(uri: vscode.Uri) { return decodeURIComponent(uri.path); }
+  });
+}
+
+export function stringDoc(text: string) {
+  return vscode.Uri.parse(`${stringDocScheme}:${encodeURIComponent(text)}`);
 }

@@ -57,7 +57,7 @@ export class Collaboration {
         // in case the just-opened editor is not pinned and would be replaced by the diff
         await vscode.window.showTextDocument(localdoc, { preserveFocus: true, preview: false });
         const filename = vscode.workspace.asRelativePath(localdoc.uri, false)
-        await vscode.commands.executeCommand('vscode.diff', localdoc.uri, vscode.Uri.parse(`constellation:${encodeURIComponent(sharedoc.data.text)}`), `Constellation: local ${filename} ↔ remote ${filename}`, { preview: true });
+        await vscode.commands.executeCommand('vscode.diff', localdoc.uri, util.stringDoc(sharedoc.data.text), `Constellation: local ${filename} ↔ remote ${filename}`, { preview: true });
         const overwrite = 'Continue, overwrite with remote';
         const choice = await vscode.window.showWarningMessage(`Constellation: ${filename} has remote changes (in green). You must overwrite your local version (in red) in order to collaborate.`, 'Cancel, keep local', overwrite);
         if (vscode.window.activeTextEditor?.document.uri.scheme === 'constellation') {
