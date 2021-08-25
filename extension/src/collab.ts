@@ -12,6 +12,7 @@ export class Collaboration {
   readonly #socket: Socket;
   readonly connection: sharedb.Connection;
   readonly #docs = new Map<vscode.Uri, EditorDoc>();
+  readonly #waiting = new WeakSet<vscode.Uri>();
   readonly #subscriptions: vscode.Disposable[];
   
   constructor(readonly folder: vscode.WorkspaceFolder, readonly settings: Settings, progress: TaskProgress) {
@@ -26,12 +27,17 @@ export class Collaboration {
       vscode.workspace.onDidCloseTextDocument(this.#onLocalClose, this),
       vscode.workspace.onDidChangeTextDocument(this.#onLocalChange, this),
       vscode.window.onDidChangeTextEditorSelection(this.#onLocalCursor, this),
+      vscode.window.onDidChangeActiveTextEditor(this.#onEditor, this),
     ];
     vscode.workspace.textDocuments.forEach(doc => this.#onLocalOpen(doc));
   }
   
   #onLocalOpen(localdoc: vscode.TextDocument) {
     if ( ! localdoc.uri.toString().startsWith(this.folder.uri.toString())) { return; }
+    
+    if ( ! this.#docs.has(localdoc.uri)) {
+      this.#waiting.add(localdoc.uri);
+    }
     
     const path = vscode.workspace.asRelativePath(localdoc.uri, false);
     const sharedoc = this.connection.get('files', this.settings.collabid + '-' + path);
@@ -64,6 +70,10 @@ export class Collaboration {
           vscode.commands.executeCommand('workbench.action.closeActiveEditor');
         }
         if (choice !== overwrite) {
+          this.#waiting.delete(localdoc.uri);
+          if (vscode.window.activeTextEditor?.document.uri === localdoc.uri) {
+            vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+          }
           return;
         }
         
@@ -73,6 +83,7 @@ export class Collaboration {
         await vscode.workspace.applyEdit(edit);
       }
       
+      this.#waiting.delete(localdoc.uri);
       this.#docs.set(localdoc.uri, new EditorDoc(sharedoc, localdoc, this.settings));
     }
     sharedoc.once('create', () => update());
@@ -92,6 +103,14 @@ export class Collaboration {
     if ( ! doc.uri.toString().startsWith(this.folder.uri.toString())) { return; }
     this.#docs.get(doc.uri)?.stop();
     this.#docs.delete(doc.uri);
+  }
+  
+  #onEditor(editor?: vscode.TextEditor) {
+    if ( ! editor) { return; }
+    if ( ! editor.document.uri.toString().startsWith(this.folder.uri.toString())) { return; }
+    if (this.#docs.has(editor.document.uri)) { return; }
+    if (this.#waiting.has(editor.document.uri)) { return; }
+    vscode.commands.executeCommand('workbench.action.closeActiveEditor');
   }
   
   stop() {
