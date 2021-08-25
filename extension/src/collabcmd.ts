@@ -86,9 +86,9 @@ export class CollabCommand {
     if ( ! host) { throw new Error('no constellation.host configured'); }
     
     progress.report({ message: 'Constellation: authenticating' });
-    const { update, userid } = await util.fetch<Metadata>(host, `hello/${this.config.version}`, token);
+    const { update, userid } = await util.fetch<Metadata>(host, `hello/vscode/${this.config.version}`, token);
     if (update) {
-      util.browse(host, `update/${this.config.version}`);
+      util.browse(host, `update/vscode/${this.config.version}`);
       vscode.window.showErrorMessage('Please update to the latest version of Contellation');
       throw new vscode.CancellationError();
     }
@@ -97,7 +97,7 @@ export class CollabCommand {
     util.browse(host, `pair/${folder}/${userid}`);
     progress.report({ message: 'Constellation: waiting for pair...', increment: 10 });
     return util.fetch<Settings>(host, `await-collaboration/${userid}`, token);
-  }  
+  }
   
   async stop() {
     assert(this.#collab);

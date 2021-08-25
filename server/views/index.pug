@@ -7,11 +7,14 @@ block content
   //
     Eclipse logo copyright (c) 2014 Eclipse Foundation, Inc. All Rights Reserved.
     http://www.eclipse.org/artwork/
+  //
+    Visual Studio Code, VS Code, and the Visual Studio Code icon are trademarks of Microsoft Corporation. All rights reserved.
+    https://code.visualstudio.com/brand
     
   svg#big-logo(xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 100 100" preserveAspectRatio="xMinYMin slice")
     - for (let ii = 50+Math.random()*50; ii > 0; ii--)
-      image(x=Math.random()*99, y=Math.random()*99, xlink:href="/static/eclipse.svg"
-            height=5+Math.random()*5 width=10 transform=`translate(-3,-2)`)
+      image(x=Math.random()*99, y=Math.random()*99, xlink:href=Math.random()>.5?"/static/eclipse.svg":"/static/vscode.svg"
+            height=1+Math.random()*2 transform=`translate(-3,-2)`)
   
   #big-text.text-center
     if authstaff
@@ -20,6 +23,8 @@ block content
       p You are in a collaboration
       p: a.btn.btn-large.btn-primary(href='/edit') Edit files on the web
     h2 Constellation
-    p Classroom collaborative coding in Eclipse
-    p: a.btn.btn-large(class=collabid ? 'btn-default' : 'btn-primary', href='/install')
-      | Install the <br> Constellation plug-in
+    p Classroom collaborative coding
+    p: a.btn.btn-large(class=collabid ? 'btn-default' : 'btn-primary', href='/install/eclipse')
+      | Install the <br> Eclipse plug-in
+    p: a.btn.btn-large(class=collabid ? 'btn-default' : 'btn-primary', href='/install/vscode')
+      | Install the <br> VS Code extension

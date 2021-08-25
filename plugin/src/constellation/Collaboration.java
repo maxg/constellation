@@ -62,10 +62,10 @@ public class Collaboration {
         
         progress.subTask("Authenticating");
         Version version = Activator.getDefault().bundle().getVersion();
-        Map<String, String> metadata = new Cancelable<>(progress, () -> get("/hello/" + version)).get();
+        Map<String, String> metadata = new Cancelable<>(progress, () -> get("/hello/eclipse/" + version)).get();
         
         if (metadata.containsKey("update")) {
-            browse("/update/" + version);
+            browse("/update/eclipse/" + version);
             throw new IOException("Please update to the latest version of Constellation");
         }
         

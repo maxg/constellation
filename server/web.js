@@ -73,6 +73,7 @@ exports.createFrontend = async function createFrontend(config, db) {
   app.param('collabid', validate(/[0-9a-f]{24}/));
   app.param('milestone', validate(/\w+/));
   app.param('cutoff', validate(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d/));
+  app.param('client', validate(/eclipse|vscode/));
   
   function authenticate(req, res, next) {
     if ( ! req.user) {
@@ -337,7 +338,7 @@ exports.createFrontend = async function createFrontend(config, db) {
     });
   });
   
-  app.get('/hello/:version', function(req, res, next) {
+  app.get('/hello/:client/:version', function(req, res, next) {
     getPluginVersion(function(err, version) {
       res.send({
         update: req.params.version < version ? version : undefined,
@@ -352,7 +353,7 @@ exports.createFrontend = async function createFrontend(config, db) {
     setTimeout(() => paired.removeListener(req.params.userid, send), 1000 * 60 * 15);
   });
   
-  app.get('/install', function(req, res, next) {
+  app.get('/install/:client', function(req, res, next) {
     getPluginVersion(function(err, version) {
       if (err) {
         return res.status(400).render('400', { error: 'Install server not configured' });
@@ -360,9 +361,9 @@ exports.createFrontend = async function createFrontend(config, db) {
       let protocol = config.web.httpUpdateSite ? 'http' : 'https';
       let port = config.web.httpUpdateSite ? `:${config.web.httpUpdateSite}`
                                            : config.web.https != 443 ? `:${config.web.https}` : '';
-      res.render('install', {
+      res.render(`install/${req.params.client}`, {
         version,
-        url: `${protocol}://${req.hostname}${port}${req.path}`
+        url: `${protocol}://${req.hostname}${port}/install`
       });
     });
   });
@@ -375,12 +376,12 @@ exports.createFrontend = async function createFrontend(config, db) {
     return app;
   };
   
-  app.get('/update/:oldversion', function(req, res, next) {
+  app.get('/update/:client/:oldversion', function(req, res, next) {
     getPluginVersion(function(err, version) {
       if (err) {
         return res.status(400).render('400', { error: 'Install server not configured' });
       }
-      res.render('update', {
+      res.render(`update/${req.params.client}`, {
         oldversion: req.params.oldversion.split('.', 3).join('.'),
         version,
       });

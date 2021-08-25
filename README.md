@@ -1,9 +1,9 @@
 Constellation
 =============
 
-**Classroom collaborative coding in Eclipse**
+**Classroom collaborative coding**
 
-Enables collaborative programming in the Eclipse IDE -- think *Google Docs for Eclipse*.
+Enables collaborative programming in the IDE -- think *Google Docs for code*.
 Designed for active learning in the classroom, with students working in pairs on small exercises.
 
 http://maxg.github.io/constellation
@@ -35,8 +35,8 @@ With `userFakery` on, note your mangled username in the upper right corner of th
 Restart the server and visit it again as staff to see a link to *All projects*.
 
 
-Client Development
-------------------
+Eclipse Plug-in Development
+---------------------------
 
 Install the current [JDK] and [Eclipse for RCP and RAP Developers][Eclipse]. Use a separate workspace from *e.g.* Eclipse for Java.
 

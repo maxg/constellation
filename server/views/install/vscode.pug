@@ -1,0 +1,16 @@
+extends ../layout
+
+append head
+  block title
+    title Install Extension - Constellation
+
+block content
+  .row: .col-xs-12
+    block heading
+      h1 Install Constellation #[small version #{version}]
+    ol
+      - let vsix = `constellation-vscode-${version}.vsix`
+      li: h2 Download #[a(href=`/install/${vsix}`)= vsix]
+      li: h2 VS Code #[span.glyphicon.glyphicon-arrow-right] View menu #[span.glyphicon.glyphicon-arrow-right] Extensions
+      li: h2 Top of EXTENSIONS bar #[span.glyphicon.glyphicon-arrow-right] &middot;&middot;&middot; #[span.glyphicon.glyphicon-arrow-right] Install from VSIX...
+      li: h2 Pick #[span.bg-danger= vsix]
