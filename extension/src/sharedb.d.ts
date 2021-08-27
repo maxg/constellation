@@ -19,5 +19,7 @@ declare module 'sharedb/lib/client' {
     state: (newState: ConnectionState, reason: string) => void,
     error: (err: sharedb.Error) => void,
   }> {
+    //@ts-expect-error @types/sharedb has arbitrary string state
+    state: ConnectionState;
   }
 }

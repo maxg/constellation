@@ -71,6 +71,7 @@ export class CollabCommand {
         return new Collaboration(folder, settings, progress);
       });
       this.#collab.connection.on('state', this.#onConnectionState);
+      this.#onConnectionState(this.#collab.connection.state as sharedb.ConnectionState);
     } catch (e) {
       this.#update('none');
       if (e instanceof vscode.CancellationError) {
