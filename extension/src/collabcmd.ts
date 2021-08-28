@@ -7,6 +7,7 @@ import * as sharedb from 'sharedb/lib/client';
 import * as util from './util';
 
 import { Collaboration } from './collab';
+import { Feedback } from './feedback';
 
 type State = 'none' | 'pairing' | sharedb.ConnectionState;
 
@@ -27,7 +28,7 @@ export class CollabCommand {
   #collab: Collaboration|undefined;
   #onConnectionState = (newState: sharedb.ConnectionState) => this.#update(newState);
   
-  constructor(readonly config: Config, readonly status: vscode.StatusBarItem) {
+  constructor(readonly config: Config, readonly status: vscode.StatusBarItem, readonly feedback: Feedback) {
     this.#update(this.#state = 'none');
   }
   
@@ -68,7 +69,7 @@ export class CollabCommand {
         cancellable: true,
       }, async (progress, token) => {
         const settings = await this.#pair(folder.name, progress, token);
-        return new Collaboration(folder, settings, progress);
+        return new Collaboration(folder, settings, this.feedback, progress);
       });
       this.#collab.connection.on('state', this.#onConnectionState);
       this.#onConnectionState(this.#collab.connection.state as sharedb.ConnectionState);

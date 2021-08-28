@@ -1,0 +1,50 @@
+.tile-panel-body {
+  margin-top: 1em;
+  border-radius: 4px;
+  padding: 0 1em;
+}
+.vscode-light .tile-panel-body {
+  border: 1px solid #ddd;
+  box-shadow: 0 1px 1px rgba(0,0,0,.05);
+}
+.vscode-dark .tile-panel-body,
+.vscode-high-contrast .tile-panel-body {
+  border: 1px solid #555;
+  box-shadow: 0 1px 1px rgba(255,255,255,.15);
+}
+.label {
+  display:inline;
+  padding: .2em .6em .3em;
+  font-size: 75%;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: .25em
+}
+.vscode-light .label-primary {
+  background-color: #337ab7;
+}
+.vscode-light .label-success {
+  background-color: #5cb85c;
+}
+.vscode-light .label-warning {
+  background-color: #f0ad4e;
+}
+.vscode-dark .label-primary,
+.vscode-high-contrast .label-primary {
+  background-color: #337ab7dd;
+}
+.vscode-dark .label-success,
+.vscode-high-contrast .label-success {
+  background-color: #5cb85cdd;
+}
+.vscode-dark .label-warning,
+.vscode-high-contrast .label-warning {
+  background-color: #f0ad4edd;
+}
+.comment-text {
+  white-space: pre-line;
+}

@@ -35,6 +35,24 @@
           "default": "constellation.mit.edu"
         }
       }
+    },
+    "views": {
+      "constellation": [
+        {
+          "type": "webview",
+          "id": "constellation-feedback",
+          "name": "Constellation"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "constellation",
+          "title": "Constellation",
+          "icon": "$(telescope)"
+        }
+      ]
     }
   },
   "main": "./dist/constellation.js",

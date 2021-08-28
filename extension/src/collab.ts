@@ -6,22 +6,26 @@ import { Socket } from 'sharedb/lib/sharedb';
 import * as util from './util';
 
 import { EditorDoc } from './editordoc';
+import { Feedback } from './feedback';
 
 export class Collaboration {
   
   readonly #socket: Socket;
   readonly connection: sharedb.Connection;
+  readonly #user: sharedb.Doc;
+  readonly #checkoffs: Promise<sharedb.Query>;
   readonly #docs = new Map<vscode.Uri, EditorDoc>();
   readonly #waiting = new WeakSet<vscode.Uri>();
   readonly #subscriptions: vscode.Disposable[];
   
-  constructor(readonly folder: vscode.WorkspaceFolder, readonly settings: Settings, progress: TaskProgress) {
+  constructor(readonly folder: vscode.WorkspaceFolder, readonly settings: Settings, readonly feedback: Feedback, progress: TaskProgress) {
     util.log('Collaboration.new', folder.name, settings.me, settings.partner, settings.collabid);
-    
     const [ host, port ] = vscode.workspace.getConfiguration('constellation').get<string>('host')!.split(':');
     this.#socket = util.connect(`${host}:${(port ? parseInt(port) : 443) + 1}`, settings.token);
     this.connection = new sharedb.Connection(this.#socket);
     this.connection.on('state', (newState, reason) => util.log('Connection state', newState));
+    this.#user = this.connection.get('users', settings.me);
+    this.#checkoffs = new Promise(resolve => this.#user.fetch(() => resolve(this.#setupCheckoffs())));
     this.#subscriptions = [
       vscode.workspace.onDidOpenTextDocument(this.#onLocalOpen, this),
       vscode.workspace.onDidCloseTextDocument(this.#onLocalClose, this),
@@ -30,6 +34,20 @@ export class Collaboration {
       vscode.window.onDidChangeActiveTextEditor(this.#onEditor, this),
     ];
     vscode.workspace.textDocuments.forEach(doc => this.#onLocalOpen(doc));
+  }
+  
+  #setupCheckoffs() {
+    const now = new Date();
+    const query = this.connection.createSubscribeQuery('checkoffs', {
+      published: true,
+      comment: { $ne: '' },
+      modified: { $gt: new Date(now.valueOf() - now.getTimezoneOffset()*60*1000).toISOString().substr(0, 10) },
+      collabid: { $in: this.#user.data.collabs.slice(0, 10) },
+      $sort: { modified: -1 },
+    });
+    query.on('ready', () => this.feedback.update(query.results, false));
+    query.on('insert', () => this.feedback.update(query.results, true));
+    return query;
   }
   
   #onLocalOpen(localdoc: vscode.TextDocument) {
@@ -115,8 +133,19 @@ export class Collaboration {
   
   stop() {
     util.log('Collaboration.stop', this.settings.collabid);
-    for (const doc of this.#docs.values()) { doc.stop(); }
+    for (const doc of this.#docs.values()) {
+      doc.stop();
+      doc.sharedoc.destroy();
+    }
+    this.#checkoffs.then(query => {
+      query.removeAllListeners('ready');
+      query.removeAllListeners('insert');
+      query.destroy();
+    });
+    this.#user.destroy();
     this.connection.close();
-    for (const subscription of this.#subscriptions) { subscription.dispose(); }
+    for (const subscription of this.#subscriptions) {
+      subscription.dispose();
+    }
   }
 }
