@@ -115,6 +115,10 @@ export class CollabCommand {
       this.#update('none');
     }
   }
+  
+  dispose() {
+    this.#collab?.stop();
+  }
 }
 
 async function selectFolder() {

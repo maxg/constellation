@@ -22,6 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
   const feedback = new Feedback(context.extension.extensionUri);
   const cmd = new CollabCommand({ version: context.extension.packageJSON.version }, status, feedback);
   
+  context.subscriptions.push(cmd);
   context.subscriptions.push(vscode.commands.registerCommand(collabCommandId, cmd.handleCollab, cmd));
   context.subscriptions.push(vscode.commands.registerCommand(setupCommandId, cmd.handleSetup, cmd));
   context.subscriptions.push(feedback.registerViewProvider());
