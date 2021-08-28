@@ -26,11 +26,12 @@ export class EditorDoc {
   
   constructor(readonly sharedoc: sharedb.Doc, readonly localdoc: vscode.TextDocument, readonly settings: Settings) {
     this.#localtext = localdoc.getText();
-    sharedoc.on('before op batch', this.#onOps);
-    sharedoc.on('before op', this.#onOp);
+    sharedoc.on('before op batch', this.#beforeOps);
+    sharedoc.on('before op', this.#beforeOp);
+    sharedoc.on('op', this.#afterOp);
   }
   
-  #onOps = (ops: any[], source: any) => {
+  #beforeOps = (ops: any[], source: any) => {
     if (source) { return; } // local op is not in doc yet
     if (this.#pending.length) { return; } // there are remote ops committed but not applied
     if (this.localdoc.getText() !== this.sharedoc.data.text) {
@@ -43,11 +44,15 @@ export class EditorDoc {
     }
   };
   
-  #onOp = ([ op ]: [ any ], source: any) => {
+  #beforeOp = ([ op ]: [any], source: any) => {
     if (source) { return; } // local op, ignore
     if (op.p[0] === 'text') {
       this.#onRemoteChange(op);
     }
+  };
+  
+  #afterOp = ([ op ]: [any], source: any) => {
+    if (source) { return; } // local op, ignore
     if (op.p[0] === 'cursors') {
       this.#onRemoteCursor(op.p[op.p.length - 1]);
     }
@@ -164,7 +169,8 @@ export class EditorDoc {
   }
   
   stop() {
-    this.sharedoc.removeListener('before op batch', this.#onOps);
-    this.sharedoc.removeListener('before op', this.#onOp);
+    this.sharedoc.removeListener('before op batch', this.#beforeOps);
+    this.sharedoc.removeListener('before op', this.#beforeOp);
+    this.sharedoc.removeListener('op', this.#afterOp);
   }
 }
