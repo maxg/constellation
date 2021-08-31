@@ -60,13 +60,15 @@ export class Collaboration {
     const path = vscode.workspace.asRelativePath(localdoc.uri, false);
     const sharedoc = this.connection.get('files', this.settings.collabid + '-' + path);
     const update = async (err?: sharedb.Error) => {
+      const text = localdoc.getText().replace(/\r\n/g, '\n');
+      
       if ( ! sharedoc.type) {
         // duplicated in server/static/edit.js
         return sharedoc.create({
           collabid: this.settings.collabid,
           project: this.folder.name,
           filepath: path,
-          text: localdoc.getText(),
+          text,
           cursors: {},
           markers: {},
         }, err => {
@@ -76,7 +78,7 @@ export class Collaboration {
         });
       }
       
-      if (localdoc.getText() !== sharedoc.data.text) {
+      if (text !== sharedoc.data.text) {
         util.log('Collaboration.onLocalOpen mismatch');
         // in case the just-opened editor is not pinned and would be replaced by the diff
         await vscode.window.showTextDocument(localdoc, { preserveFocus: true, preview: false });
@@ -94,11 +96,24 @@ export class Collaboration {
           }
           return;
         }
-        
+      }
+      
+      if (localdoc.eol !== vscode.EndOfLine.LF) {
+        const edit = new vscode.WorkspaceEdit();
+        edit.set(localdoc.uri, [ vscode.TextEdit.setEndOfLine(vscode.EndOfLine.LF) ]);
+        await vscode.workspace.applyEdit(edit);
+      }
+      
+      if (localdoc.getText() !== sharedoc.data.text) {
+        util.log('Collaboration.onLocalOpen overwrite');
         const edit = new vscode.WorkspaceEdit();
         const all = new vscode.Range(new vscode.Position(0, 0), localdoc.positionAt(localdoc.getText().length));
         edit.replace(localdoc.uri, all, sharedoc.data.text);
         await vscode.workspace.applyEdit(edit);
+      }
+      
+      if (localdoc.isDirty) {
+        await localdoc.save();
       }
       
       this.#waiting.delete(localdoc.uri);
