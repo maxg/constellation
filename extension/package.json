@@ -61,7 +61,7 @@
     "bundle": "npm run bundle-base -- --sourcemap",
     "bundle-watch": "npm run bundle-base -- --sourcemap --watch",
     "vscode:prepublish": "npm run bundle-base -- --minify",
-    "package": "vsce package"
+    "package": "git status --short --branch . && vsce package"
   },
   "devDependencies": {
     "@types/node": "^16.6.1",
