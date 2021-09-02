@@ -9,7 +9,11 @@ variable "le_contact" {}
 
 # terraform init -backend-config=terraform.tfvars
 terraform {
-  required_version = ">= 0.12"
+  required_version = "~> 1.0.5"
+  required_providers {
+    aws = { source = "hashicorp/aws" }
+    template = { source = "hashicorp/template" }
+  }
   backend "s3" {}
 }
 
