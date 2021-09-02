@@ -9,6 +9,7 @@ get_version() {
 }
 
 uniq -f 1 <<EOD
+extension $(get_version '"version": ".*"' extension/package.json)
 plug-in $(get_version 'Bundle-Version: .*.qualifier' plugin/META-INF/MANIFEST.MF)
 feature $(get_version 'version=".*.qualifier"' feature/feature.xml)
 site_jar $(get_version '<feature .*url="features/constellation.feature_.*.qualifier.jar"' feature/category.xml)
