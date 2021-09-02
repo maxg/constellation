@@ -219,6 +219,7 @@ resource "aws_eip" "web" {
 resource "aws_eip_association" "web_address" {
   instance_id = aws_instance.web.id
   allocation_id = aws_eip.web.id
+  provisioner "local-exec" { command = "sleep 15" } // wait for EIP to switch
 }
 
 data "template_cloudinit_config" "config_web" {
