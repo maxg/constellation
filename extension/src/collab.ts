@@ -120,8 +120,10 @@ export class Collaboration {
         await vscode.window.showTextDocument(localdoc, { preserveFocus: true, preview: false });
         const filename = vscode.workspace.asRelativePath(localdoc.uri, false)
         await vscode.commands.executeCommand('vscode.diff', localdoc.uri, util.stringDoc(sharedoc.data.text), `Constellation: local ${filename} ↔ remote ${filename}`, { preview: true });
+        const warning = `Constellation: ${filename} has remote changes (in green). You must overwrite your local version (in red) in order to collaborate.`;
+        const detail = 'Cancel to keep your local version.';
         const overwrite = 'Continue, overwrite with remote';
-        const choice = await vscode.window.showWarningMessage(`Constellation: ${filename} has remote changes (in green). You must overwrite your local version (in red) in order to collaborate.`, 'Cancel, keep local', overwrite);
+        const choice = await vscode.window.showWarningMessage(warning, { modal: true, detail }, overwrite);
         if (vscode.window.activeTextEditor?.document.uri.scheme === 'constellation') {
           await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
         }
