@@ -8,7 +8,23 @@ import * as util from './util';
 import { EditorDoc } from './editordoc';
 import { Feedback } from './feedback';
 
+// type of 'files.exclude' setting
+type FilesExclude = { [_: string]: boolean };
+
+// partial type of 'vscode.git' extension, exposing implementation API to check .gitignore matches
+interface GitExtension {
+  getAPI(version: 1): {
+    getRepository(uri: vscode.Uri): null | {
+      readonly _repository?: {
+        checkIgnore?(filePaths: string[]): Promise<Set<string>>;
+      }
+    }
+  }
+}
+
 export class Collaboration {
+  
+  readonly #git = vscode.extensions.getExtension<GitExtension>('vscode.git');
   
   readonly #socket: Socket;
   readonly connection: sharedb.Connection;
@@ -50,11 +66,31 @@ export class Collaboration {
     return query;
   }
   
-  #onLocalOpen(localdoc: vscode.TextDocument) {
+  async #onLocalOpen(localdoc: vscode.TextDocument) {
+    // files outside the collaboration folder are always ignored
     if ( ! localdoc.uri.toString().startsWith(this.folder.uri.toString())) { return; }
     
     if ( ! this.#docs.has(localdoc.uri)) {
       this.#waiting.add(localdoc.uri);
+    }
+    
+    // files ignored for other reasons are left in #waiting so they may be edited
+    const exclude = vscode.workspace.getConfiguration('files', localdoc).get<FilesExclude>('exclude');
+    if (exclude) {
+      const globs = Object.keys(exclude).filter(glob => exclude[glob]);
+      const patterns = globs.map(glob => new vscode.RelativePattern(this.folder, glob));
+      if (vscode.languages.match(patterns.map(pattern => ({ pattern })), localdoc)) {
+        util.log('Collaboration.onLocalOpen files.exclude match', localdoc.uri.path);
+        return;
+      }
+    }
+    if (this.#git?.isActive) {
+      const repo = this.#git.exports.getAPI(1).getRepository(localdoc.uri)?._repository;
+      const ignored = await repo?.checkIgnore?.([ localdoc.uri.path ]);
+      if (ignored?.size) {
+        util.log('Collaboration.onLocalOpen .gitignore match', localdoc.uri.path);
+        return;
+      }
     }
     
     const path = vscode.workspace.asRelativePath(localdoc.uri, false);
