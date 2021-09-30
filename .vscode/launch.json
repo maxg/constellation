@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": [ "${workspaceFolder}/extension/test-folder", "--extensionDevelopmentPath=${workspaceFolder}/extension" ],
+      "outFiles": [ "${workspaceFolder}/extension/dist/**/*.js" ],
+      "preLaunchTask": "npm: bundle-watch"
+    }
+  ]
+}
