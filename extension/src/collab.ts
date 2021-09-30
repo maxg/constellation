@@ -123,11 +123,11 @@ export class Collaboration {
         const overwrite = 'Continue, overwrite with remote';
         const choice = await vscode.window.showWarningMessage(`Constellation: ${filename} has remote changes (in green). You must overwrite your local version (in red) in order to collaborate.`, 'Cancel, keep local', overwrite);
         if (vscode.window.activeTextEditor?.document.uri.scheme === 'constellation') {
-          vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+          await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
         }
         if (choice !== overwrite) {
           this.#waiting.delete(localdoc.uri);
-          if (vscode.window.activeTextEditor?.document.uri === localdoc.uri) {
+          if (vscode.window.activeTextEditor?.document.uri.toString() === localdoc.uri.toString()) {
             vscode.commands.executeCommand('workbench.action.closeActiveEditor');
           }
           return;
