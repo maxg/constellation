@@ -56,10 +56,10 @@ export async function browse(host: string, path: string) {
 
 export function registerStringDocProvider() {
   return vscode.workspace.registerTextDocumentContentProvider(stringDocScheme, {
-    provideTextDocumentContent(uri: vscode.Uri) { return decodeURIComponent(uri.path); }
+    provideTextDocumentContent(uri: vscode.Uri) { return decodeURIComponent(uri.path.substr(1)); }
   });
 }
 
 export function stringDoc(text: string) {
-  return vscode.Uri.parse(`${stringDocScheme}:${encodeURIComponent(text)}`);
+  return vscode.Uri.parse(`${stringDocScheme}:!${encodeURIComponent(text)}`);
 }
