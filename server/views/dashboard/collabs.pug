@@ -20,6 +20,8 @@ block content
         else
           |  #[small: a(href=`/dashboard/${project}/diffs`) #[span.glyphicon.glyphicon-pencil] diffs]
           |  #[small: a(href=`/dashboard/${project}/checkoffs`) #[span.glyphicon.glyphicon-ok] checkoffs]
+      if filepath
+        |  #[small #[span.label.label-info= filepath]]
   
   #collabs.row
   
@@ -47,6 +49,7 @@ block content
     var project = !{JSON.stringify(project)};
     var milestone = !{JSON.stringify(milestone || false)};
     var cutoff = !{JSON.stringify(cutoff || false)};
+    var filepath = !{JSON.stringify(filepath || false)};
   script(src='/public/sharedb.js')
   script(src='/public/moment.js')
   script(src='/static/dashboard/collabs.js')

@@ -7,8 +7,13 @@ collab.fetch(function(err) {
   document.querySelector('#partners').textContent = collab.data.users.slice().sort().join(' & ')
 });
 
-connection.createFetchQuery('files', { collabid: collabid }, {}, function(err, files) {
+var limit = 10;
+connection.createFetchQuery('files', { collabid: collabid, filepath: filepathQuery(), $limit: limit }, {}, function(err, files) {
   if (err) { throw err; }
+  
+  if (files.length === limit) {
+    document.getElementById('limited').textContent = 'limiting to ' + limit + ' files';
+  }
   
   var list = document.querySelector('#files');
   files.sort(function(a, b) { return a.data.filepath.localeCompare(b.data.filepath); });

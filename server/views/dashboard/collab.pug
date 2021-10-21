@@ -14,6 +14,9 @@ block content
         |  #[small #[span.label.label-warning= cutoff] work]
       else
         |  #[small #[span.label.label-success current] work]
+      if filepath
+        |  #[small #[span.label.label-info= filepath]]
+      |  #[small: span#limited.label.label-danger]
   
   if milestone
     .row: .col-xs-12: .form-horizontal
@@ -49,6 +52,7 @@ block content
     var collabid = !{JSON.stringify(collabid)};
     var milestone = !{JSON.stringify(milestone || false)};
     var cutoff = !{JSON.stringify(cutoff || false)};
+    var filepath = !{JSON.stringify(filepath || false)};
   script(src='/public/sharedb.js')
   script(src='/public/moment.js')
   script(src='/public/diff.js')

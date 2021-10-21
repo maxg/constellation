@@ -1,15 +1,26 @@
 collabs.on('ready', function() {
+  var limit = 500;
   var files = connection.createSubscribeQuery('files', {
     project: project,
-    filepath: filepath || undefined,
+    filepath: filepathQuery(),
+    $limit: limit,
   }, {});
   
   files.on('ready', function() { insertFiles(files.results); });
   files.on('insert', insertFiles);
+  
+  files.on('ready', warnLimit);
+  files.on('insert', warnLimit);
+  function warnLimit() {
+    if (files.results.length === limit) {
+      document.getElementById('limited').textContent = 'limiting to ' + limit + ' files';
+    }
+  }
 });
 
 var baselines = {};
 var scheduled = {};
+var singlefile = filepath && (filepath === filepathQuery());
 
 function insertFiles(files) {
   files.forEach(function(file) {
@@ -20,7 +31,7 @@ function insertFiles(files) {
     var item = document.importNode(document.querySelector('#file').content, true);
     var root = item.querySelector('.file');
     root.setAttribute('id', 'file-' + file.id);
-    if ( ! filepath) {
+    if ( ! singlefile) {
       root.querySelector('.filename').textContent = file.data.filepath;
     }
     var diff = root.querySelector('.diff code');

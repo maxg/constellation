@@ -10,7 +10,8 @@ block content
     h2 #{project} diffs
       br
       if filepath
-        small #{filepath}
+        small #[span.label.label-info= filepath]
+      |  #[small: span#limited.label.label-danger]
   
   #collabs.masonary
   

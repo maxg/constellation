@@ -75,6 +75,8 @@ exports.createFrontend = async function createFrontend(config, db) {
   app.param('cutoff', validate(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d/));
   app.param('client', validate(/eclipse|vscode/));
   
+  const optionalCutoffFilepath = ':cutoff(\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d)?/:filepath(*)?';
+  
   function authenticate(req, res, next) {
     if ( ! req.user) {
       if (req.method === 'POST') {
@@ -289,28 +291,31 @@ exports.createFrontend = async function createFrontend(config, db) {
     });
   });
   
-  app.get('/dashboard/:project/m/:milestone/:cutoff?', authenticate, staffonly, function(req, res, next) {
+  app.get('/dashboard/:project/m/:milestone/' + optionalCutoffFilepath, authenticate, staffonly, function(req, res, next) {
     res.render('dashboard/collabs', {
       project: req.params.project,
       milestone: req.params.milestone,
       cutoff: req.params.cutoff,
+      filepath: req.params.filepath,
     });
   });
   
-  app.get('/dashboard/:project/:collabid/:cutoff?', authenticate, staffonly, function(req, res, next) {
-    res.render('dashboard/collab', {
-      project: req.params.project,
-      collabid: req.params.collabid,
-      cutoff: req.params.cutoff,
-    });
-  });
-  
-  app.get('/dashboard/:project/:collabid/m/:milestone/:cutoff?', authenticate, staffonly, function(req, res, next) {
+  app.get('/dashboard/:project/:collabid/m/:milestone/' + optionalCutoffFilepath, authenticate, staffonly, function(req, res, next) {
     res.render('dashboard/collab', {
       project: req.params.project,
       collabid: req.params.collabid,
       milestone: req.params.milestone,
       cutoff: req.params.cutoff,
+      filepath: req.params.filepath,
+    });
+  });
+  
+  app.get('/dashboard/:project/:collabid/' + optionalCutoffFilepath, authenticate, staffonly, function(req, res, next) {
+    res.render('dashboard/collab', {
+      project: req.params.project,
+      collabid: req.params.collabid,
+      cutoff: req.params.cutoff,
+      filepath: req.params.filepath,
     });
   });
   
