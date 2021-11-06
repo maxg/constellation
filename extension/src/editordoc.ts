@@ -35,7 +35,7 @@ export class EditorDoc {
     if (source) { return; } // local op is not in doc yet
     if (this.#pending.length) { return; } // there are remote ops committed but not applied
     if (this.localdoc.getText() !== this.sharedoc.data.text) {
-      util.error('EditorDoc.onOps mismatch', {
+      util.error('EditorDoc.beforeOps mismatch', {
         doc: { id: this.sharedoc.id, version: this.sharedoc.version },
         ops, source,
         local: this.localdoc.getText().replace(/\n/g, '⏎'),
@@ -169,6 +169,7 @@ export class EditorDoc {
   }
   
   stop() {
+    if (this.#pending[0]?.length) { util.error('EditorDoc.stop pending', ...this.#pending); }
     this.sharedoc.removeListener('before op batch', this.#beforeOps);
     this.sharedoc.removeListener('before op', this.#beforeOp);
     this.sharedoc.removeListener('op', this.#afterOp);

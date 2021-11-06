@@ -15,7 +15,7 @@ export function log(...args: any[]) {
 }
 
 export function error(...args: any[]) {
-  channel.show();
+  channel.show(true);
   channel.appendLine(new Date().toISOString() + ' ❌ ' + util.format(...args));
 }
 
