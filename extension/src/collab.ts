@@ -30,6 +30,7 @@ export class Collaboration {
   readonly connection: sharedb.Connection;
   readonly #user: sharedb.Doc;
   readonly #checkoffs: Promise<sharedb.Query>;
+  readonly #remoteTextScheme: string;
   readonly #docs = new Map<vscode.Uri, EditorDoc>();
   readonly #waiting = new WeakSet<vscode.Uri>();
   readonly #subscriptions: vscode.Disposable[];
@@ -42,7 +43,11 @@ export class Collaboration {
     this.connection.on('state', (newState, reason) => util.log('Connection state', newState));
     this.#user = this.connection.get('users', settings.me);
     this.#checkoffs = new Promise(resolve => this.#user.fetch(() => resolve(this.#setupCheckoffs())));
+    this.#remoteTextScheme = `constellation-${settings.collabid}`;
     this.#subscriptions = [
+      vscode.workspace.registerTextDocumentContentProvider(this.#remoteTextScheme, {
+        provideTextDocumentContent: (uri: vscode.Uri) => this.#remoteText(uri.path),
+      }),
       vscode.workspace.onDidOpenTextDocument(this.#onLocalOpen, this),
       vscode.workspace.onDidCloseTextDocument(this.#onLocalClose, this),
       vscode.workspace.onDidChangeTextDocument(this.#onLocalChange, this),
@@ -64,6 +69,10 @@ export class Collaboration {
     query.on('ready', () => this.feedback.update(query.results, false));
     query.on('insert', () => this.feedback.update(query.results, true));
     return query;
+  }
+  
+  #remoteText(path: string): string|undefined {
+    return this.connection.get('files', this.settings.collabid + '-' + path).data?.text;
   }
   
   async #onLocalOpen(localdoc: vscode.TextDocument) {
@@ -119,12 +128,13 @@ export class Collaboration {
         // in case the just-opened editor is not pinned and would be replaced by the diff
         await vscode.window.showTextDocument(localdoc, { preserveFocus: true, preview: false });
         const filename = vscode.workspace.asRelativePath(localdoc.uri, false);
-        await vscode.commands.executeCommand('vscode.diff', localdoc.uri, util.stringDoc(sharedoc.data.text), `Constellation: local ${filename} ↔ remote ${filename}`, { preview: true });
+        const remoteTextUri = vscode.Uri.parse(`${this.#remoteTextScheme}:${path}`);
+        await vscode.commands.executeCommand('vscode.diff', localdoc.uri, remoteTextUri, `Constellation: local ${filename} ↔ remote ${filename}`, { preview: true });
         const warning = `Constellation: ${filename} has remote changes (in green). You must overwrite your local version (in red) in order to collaborate.`;
         const detail = 'Cancel to keep your local version.';
         const overwrite = 'Continue, overwrite with remote';
         const choice = await vscode.window.showWarningMessage(warning, { modal: true, detail }, overwrite);
-        if (vscode.window.activeTextEditor?.document.uri.scheme === 'constellation') {
+        if (vscode.window.activeTextEditor?.document.uri.scheme === this.#remoteTextScheme) {
           await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
         }
         if (choice !== overwrite) {
