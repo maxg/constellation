@@ -160,12 +160,12 @@ export class Collaboration {
         await vscode.workspace.applyEdit(edit);
       }
       
+      this.#waiting.delete(localdoc.uri);
+      this.#docs.set(localdoc.uri, new EditorDoc(sharedoc, localdoc, this.settings));
+      
       if (localdoc.isDirty) {
         await localdoc.save();
       }
-      
-      this.#waiting.delete(localdoc.uri);
-      this.#docs.set(localdoc.uri, new EditorDoc(sharedoc, localdoc, this.settings));
     }
     sharedoc.once('create', () => update());
     sharedoc.subscribe(update);
