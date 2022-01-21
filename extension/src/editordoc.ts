@@ -85,6 +85,15 @@ export class EditorDoc {
     return edits;
   }
   
+  #isIdentical(prevtext: string, remote: StringOp, local: StringOp) {
+    if ('si' in remote ? 'si' in local && remote.si === local.si : 'sd' in local && remote.sd === local.sd) {
+      if (remote.p[1] === local.p[1]) { return true; }
+      // offsets are clamped on apply by both VS Code and ShareDB
+      if (remote.p[1] as number > prevtext.length && local.p[1] === prevtext.length) { return true; }
+    }
+    return false;
+  }
+  
   async onLocalChange(changes: readonly vscode.TextDocumentContentChangeEvent[]) {
     const prevtext = this.#localtext;
     this.#localtext = this.localdoc.getText();
@@ -105,9 +114,7 @@ export class EditorDoc {
       if ( ! this.#pending[0].length) {
         this.#pending.shift();
       } else {
-        const rem = this.#pending[0][0]!;
-        const loc = localops[0];
-        if (rem.p[1] === loc.p[1] && ('si' in rem ? 'si' in loc && rem.si === loc.si : 'sd' in loc && rem.sd === loc.sd)) {
+        if (this.#isIdentical(prevtext, this.#pending[0][0]!, localops[0])) {
           this.#pending[0].shift();
           localops.shift();
         } else {
