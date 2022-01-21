@@ -11,7 +11,7 @@
   "displayName": "Constellation",
   "publisher": "mit-up-group",
   "engines": {
-    "vscode": "^1.59.0"
+    "vscode": "^1.63.2"
   },
   "activationEvents": [
     "onStartupFinished"
@@ -64,18 +64,18 @@
     "package": "git status --short --branch . && vsce package"
   },
   "devDependencies": {
-    "@types/node": "^16.6.1",
+    "@types/node": "^16.11.21",
     "@types/sharedb": "^1.0.21",
-    "@types/vscode": "^1.59.0",
-    "@types/ws": "^7.4.7",
-    "esbuild": "^0.12.20",
-    "typescript": "^4.3.5",
-    "vsce": "^1.96.1"
+    "@types/vscode": "^1.63.1",
+    "@types/ws": "^8.2.2",
+    "esbuild": "^0.12.29",
+    "typescript": "^4.5.5",
+    "vsce": "^2.6.3"
   },
   "dependencies": {
-    "got": "^11.8.2",
+    "got": "^11.8.3",
     "reconnecting-websocket": "^4.4.0",
     "sharedb": "^1.9.2",
-    "ws": "^7.5.3"
+    "ws": "^8.4.2"
   }
 }
