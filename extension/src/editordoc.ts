@@ -59,6 +59,7 @@ export class EditorDoc {
   };
   
   async #onRemoteChange(op: StringOp) {
+    util.info('EditorDoc.onRemoteChange', op);
     const ops = [ op ];
     this.#pending.push(ops);
     
@@ -108,6 +109,7 @@ export class EditorDoc {
         localops.push({ p: [ 'text', change.rangeOffset ], si: change.text });
       }
     }
+    util.info('EditorDoc.onLocalChange <-', ...localops);
     
     // determine whether these changes are remote edits or new local edits
     while (this.#pending[0] && localops[0]) {
@@ -122,8 +124,16 @@ export class EditorDoc {
         }
       }
     }
+    util.info('EditorDoc.onLocalChange ->', ...localops, '|', ...this.#pending);
     if ( ! localops.length) {
       return;
+    }
+    if (this.#pending.length > 8) {
+      util.errorOnce(`${this.sharedoc.id} runaway`, 'EditorDoc.onLocalChange runaway', {
+        doc: { id: this.sharedoc.id, version: this.sharedoc.version },
+        local: this.localdoc.getText().replace(/\n/g, '⏎'),
+        remote: this.sharedoc.data.text.replace(/\n/g, '⏎'),
+      });
     }
     
     if (this.#pending.length) {

@@ -6,17 +6,46 @@ import got, { CancelError, OptionsOfJSONResponseBody } from 'got';
 const WebSocket = require('ws');
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
+const infoRing = new Array(128);
+let errorHelp = true;
+const errorOnceIds = new Set<string>();
 const channel = vscode.window.createOutputChannel('Constellation');
 const fetchOptions: OptionsOfJSONResponseBody = {};
 const socketOptions = { WebSocket };
 
+export function info(...args: any[]) {
+  infoRing.shift();
+  infoRing.push(new Date().toISOString() + ' 🟪 ' + util.format(...args));
+}
+
 export function log(...args: any[]) {
-  channel.appendLine(new Date().toISOString() + ' ℹ️ ' + util.format(...args));
+  channel.appendLine(new Date().toISOString() + ' 🟦 ' + util.format(...args));
 }
 
 export function error(...args: any[]) {
   channel.show(true);
-  channel.appendLine(new Date().toISOString() + ' ❌ ' + util.format(...args));
+  channel.appendLine('[begin info ring]');
+  for (const msg of infoRing) {
+    if (msg) { channel.appendLine(msg); }
+  }
+  channel.appendLine('[end info ring] see above for intervening log messages');
+  channel.appendLine(new Date().toISOString() + ' 🟥 ' + util.format(...args));
+  if (errorHelp) {
+    errorHelp = false;
+    channel.appendLine(`🐛 Please report this Constellation bug (include all log output & info)`);
+    channel.appendLine(`🐛 vscode ${vscode.version} (${process.platform})`);
+    channel.appendLine('🐛 ' + vscode.extensions.all.filter(ext => {
+      return ext.isActive && ! ext.id.startsWith('vscode.');
+    }).map(ext => {
+      return `${ext.id} ${ext.packageJSON.version}`;
+    }).join(', '));
+  }
+}
+
+export function errorOnce(id: string, ...args: any[]) {
+  if (errorOnceIds.has(id)) { return; }
+  errorOnceIds.add(id);
+  error(...args);
 }
 
 export function development() {
