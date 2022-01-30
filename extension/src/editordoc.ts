@@ -35,9 +35,9 @@ export class EditorDoc {
     if (source) { return; } // local op is not in doc yet
     if (this.#pending.length) { return; } // there are remote ops committed but not applied
     if (this.localdoc.getText() !== this.sharedoc.data.text) {
-      util.error('EditorDoc.beforeOps mismatch', {
+      util.errorOnce(`${this.sharedoc.id} mismatch`, 'EditorDoc.beforeOps mismatch', ...ops, {
         doc: { id: this.sharedoc.id, version: this.sharedoc.version },
-        ops, source,
+        source,
         local: this.localdoc.getText().replace(/\n/g, '⏎'),
         remote: this.sharedoc.data.text.replace(/\n/g, '⏎'),
       });
@@ -67,6 +67,7 @@ export class EditorDoc {
       // until it succeeds:
       //   convert the possibly-translated op into an edit and attempt to apply it
       while ( ! await vscode.workspace.applyEdit(this.#opsToEdit(ops))) {
+        util.info('EditorDoc.onRemoteChange will retry', op, 'as', ...ops);
       }
     });
   }
@@ -128,7 +129,7 @@ export class EditorDoc {
     if ( ! localops.length) {
       return;
     }
-    if (this.#pending.length > 8) {
+    if (this.#pending.length > 16) {
       util.errorOnce(`${this.sharedoc.id} runaway`, 'EditorDoc.onLocalChange runaway', {
         doc: { id: this.sharedoc.id, version: this.sharedoc.version },
         local: this.localdoc.getText().replace(/\n/g, '⏎'),
