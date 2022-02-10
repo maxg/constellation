@@ -23,12 +23,7 @@ export function log(...args: any[]) {
 }
 
 export function error(...args: any[]) {
-  channel.show(true);
-  channel.appendLine('[begin info ring]');
-  for (const msg of infoRing) {
-    if (msg) { channel.appendLine(msg); }
-  }
-  channel.appendLine('[end info ring] see above for intervening log messages');
+  debugDumpInfo();
   channel.appendLine(new Date().toISOString() + ' 🟥 ' + util.format(...args));
   if (errorHelp) {
     errorHelp = false;
@@ -46,6 +41,15 @@ export function errorOnce(id: string, ...args: any[]) {
   if (errorOnceIds.has(id)) { return; }
   errorOnceIds.add(id);
   error(...args);
+}
+
+export function debugDumpInfo() {
+  channel.show(true);
+  channel.appendLine('[begin info ring] ' + new Date().toISOString());
+  for (const msg of infoRing) {
+    if (msg) { channel.appendLine(msg); }
+  }
+  channel.appendLine('[end info ring] see above for intervening log messages');
 }
 
 export function development() {

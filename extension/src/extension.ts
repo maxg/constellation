@@ -17,6 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
   if (context.extensionMode !== vscode.ExtensionMode.Production) {
     util.development();
   }
+  context.subscriptions.push(vscode.commands.registerCommand('constellation.debugDumpInfo', util.debugDumpInfo));
   
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1);
   const feedback = new Feedback(context.extension.extensionUri);

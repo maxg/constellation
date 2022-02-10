@@ -25,6 +25,10 @@
       {
         "command": "constellation.setup",
         "title": "Set up Constellation"
+      },
+      {
+        "command": "constellation.debugDumpInfo",
+        "title": "🛠 Dump Constellation info logs"
       }
     ],
     "configuration": {
