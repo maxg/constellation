@@ -173,7 +173,7 @@ export class Collaboration {
   
   #onLocalChange(change: vscode.TextDocumentChangeEvent) {
     if (change.contentChanges.length === 0) { return; }
-    this.#docs.get(change.document.uri)?.onLocalChange(change.contentChanges);
+    this.#docs.get(change.document.uri)?.onLocalChanges(change.contentChanges);
   }
   
   #onLocalCursor(change: vscode.TextEditorSelectionChangeEvent) {
