@@ -21,7 +21,10 @@ const selectionDecoration = vscode.window.createTextEditorDecorationType({
 export class EditorDoc {
   
   #localtext: string;
-  #pending: TextOp[] = [];
+  readonly #pending: { remote: TextOp[], local: TextOp[] } = {
+    remote: [],
+    local: [],
+  };
   
   constructor(readonly sharedoc: sharedb.Doc, readonly localdoc: vscode.TextDocument, readonly settings: Settings) {
     this.#localtext = localdoc.getText();
@@ -32,10 +35,10 @@ export class EditorDoc {
   
   #beforeOps = (ops: any[], source: any) => {
     if (source) { return; } // local op is not in doc yet
-    if (this.#pending.length) { return; } // there are remote ops committed but not applied
+    if (this.#pending.remote.length) { return; } // there are remote ops committed but not applied
     if (this.localdoc.getText() !== this.sharedoc.data.text) {
-      util.errorOnce(`${this.sharedoc.id} mismatch`, 'EditorDoc.beforeOps mismatch', ...ops, {
-        doc: { id: this.sharedoc.id, version: this.sharedoc.version },
+      util.errorOnce(`${this.sharedoc.id} beforeOps mismatch`, 'EditorDoc.beforeOps mismatch', ...ops, {
+        doc: { id: this.sharedoc.id, version: this.sharedoc.version, pending: this.sharedoc.hasWritePending() },
         source,
         local: this.localdoc.getText().replace(/\n/g, '⏎'),
         remote: this.sharedoc.data.text.replace(/\n/g, '⏎'),
@@ -45,6 +48,7 @@ export class EditorDoc {
   
   #beforeOp = ([ op ]: [any], source: any) => {
     if (source) { return; } // local op, ignore
+    if ( ! op) { return; } // no-op
     if (op.p[0] === 'text') {
       this.#onRemoteChange(op);
     }
@@ -52,27 +56,49 @@ export class EditorDoc {
   
   #afterOp = ([ op ]: [any], source: any) => {
     if (source) { return; } // local op, ignore
+    if ( ! op) { return; } // no-op
     if (op.p[0] === 'cursors') {
       this.#onRemoteCursor(op.p[op.p.length - 1]);
     }
   };
   
   async #onRemoteChange(op: TextOp) {
-    util.info('EditorDoc.onRemoteChange', op);
-    if (this.#pending.length) {
-      // add to existing queue
-      this.#pending.push(op);
-    } else {
-      // create a new queue and start a loop to apply its ops
-      const pending = this.#pending = [ op ];
-      // until it succeeds:
-      //   convert the possibly-transformed next op into an edit and attempt to apply it
-      while (pending[0]) {
-        const op = pending[0];
-        if ( ! await vscode.workspace.applyEdit(this.#opToEdit(op))) {
-          util.info('EditorDoc.onRemoteChange will retry', op, 'as', pending[0]);
-        }
+    util.info('EditorDoc ops   .<-', op);
+    this.#pending.remote.push(op);
+    if (this.#pending.remote.length > 1) {
+      return; // an apply loop is already running
+    }
+    // start an apply loop
+    while (this.#pending.remote[0]) {
+      const remote = this.#pending.remote[0];
+      // give up control to apply remote op, during which:
+      // onLocalChanges callback will occur, appending to #pending.local
+      // onRemoteChange callback may occur, appending to nonempty #pending.remote
+      const applied = await vscode.workspace.applyEdit(this.#opToEdit(remote));
+      if (applied) {
+        // local change contains remote
+        this.#pending.remote.shift();
+        this.#subtractApplied(remote);
+      } else {
+        util.info('EditorDoc ops xx.  ', ...this.#pending.local, 'nope', remote, '|', ...this.#pending.remote);
       }
+      if ( ! this.#pending.local.length) {
+        // local change was entirely application of remote edits, or applyEdit failed with no intervening local edits
+        continue;
+      }
+      util.info('EditorDoc ops ~>.  ', ...this.#pending.local, '|', ...this.#pending.remote);
+      // in the local doc, these local ops preceed the ops in #pending.remote
+      // but in the remote doc, the #pending.remote ops are already committed
+      // so these local ops must be transformed past the remote ops for the remote doc
+      const xformedlocal: TextOp[] = this.sharedoc.type!.transform(this.#pending.local, this.#pending.remote, 'left');
+      // and in the local doc, the remote ops must be transformed to follow these local ops
+      const xformedremote: TextOp[] = this.sharedoc.type!.transform(this.#pending.remote, this.#pending.local, 'right');
+      this.#pending.remote = xformedremote;
+      this.#pending.local = [];
+      util.info('EditorDoc ops   .~>', ...xformedlocal, '|', ...this.#pending.remote);
+      this.sharedoc.submitOp(xformedlocal, undefined, err => {
+        if (err) { util.error('EditorDoc xform submitOp', err, ...xformedlocal, '|', ...xformedremote); }
+      });
     }
   }
   
@@ -89,29 +115,29 @@ export class EditorDoc {
     return edits;
   }
   
-  #isIdentical(prevtext: string, remote: TextOp, local: TextOp) {
-    if ('si' in remote ? 'si' in local && remote.si === local.si : 'sd' in local && remote.sd === local.sd) {
-      if (remote.p[1] === local.p[1]) { return true; }
-      // offsets are clamped on apply by both VS Code and ShareDB
-      if (remote.p[1] as number > prevtext.length && local.p[1] === prevtext.length) { return true; }
-    }
-    return false;
-  }
-  
-  #areIdentical(prevtext: string, remote: TextOp[], local: TextOp[]) {
-    function* ops() {
-      const remoteIter = remote[Symbol.iterator](), localIter = local[Symbol.iterator]();
-      while (true) {
-        const remote = remoteIter.next(), local = localIter.next();
-        if (remote.done && local.done) { return; }
-        yield [ remote, local ] as const;
+  #subtractApplied(remote: TextOp) {
+    const origremote = remote;
+    // try the fast path: remote appears (possibly translated) in #pending.local
+    for (const [ idx, op ] of this.#pending.local.entries()) {
+      if (op.p[1] === remote.p[1] && ('si' in op ? 'si' in remote && op.si === remote.si : 'sd' in remote && op.sd === remote.sd)) {
+        util[idx ? 'log' : 'info']('EditorDoc ops >>.  ', ...this.#pending.local, `[${idx}]=`, origremote, '|', ...this.#pending.remote);
+        // fast path success: remove the remote op, and for any local ops that preceeded it,
+        // transform them past the remote op since it is already committed in the remote doc
+        const preceeding: TextOp[] = this.sharedoc.type!.transform(this.#pending.local.slice(0, idx), [ remote ], 'left');
+        this.#pending.local.splice(0, idx+1, ...preceeding);
+        return;
       }
+      // now looking for remote after this local op...
+      const [ first, ...rest ]: [ TextOp|undefined, TextOp[] ] = this.sharedoc.type!.transform([ remote ], [ op ], 'right');
+      if ( ! first || rest.length) {
+        break; // ... but if remote op is shattered by the transform, take the slow path
+      }
+      remote = first;
     }
-    for (const [ remote, local ] of ops()) {
-      if (remote.done !== local.done) { return false; }
-      if ( ! this.#isIdentical(prevtext, remote.value, local.value)) { return false; }
-    }
-    return true;
+    util.log('EditorDoc ops __.  ', ...this.#pending.local, 'incl', origremote, '|', ...this.#pending.remote);
+    // slow path: remote has been subsumed by local edits,
+    // unapply it in the remote doc and then allow it to be reapplied the course of applying the local edits
+    this.#pending.local.unshift(...this.sharedoc.type!.invert!([ origremote ]));
   }
   
   onLocalChanges(changes: readonly vscode.TextDocumentContentChangeEvent[]) {
@@ -128,65 +154,24 @@ export class EditorDoc {
         localops.push({ p: [ 'text', change.rangeOffset ], si: change.text });
       }
     }
-    util.info('EditorDoc.onLocalChange <-', ...localops, '|', ...this.#pending);
     
-    canceling:
-    while (this.#pending[0]) {
-      let remoteops = [ this.#pending[0] ];
-      for (let idx = 0; idx <= localops.length-remoteops.length; idx++) {
-        if (this.#areIdentical(prevtext, remoteops, localops.slice(idx, idx+remoteops.length))) {
-          // localops includes the next pending remote op: remove it,
-          // and since remoteop is already committed in the remote doc,
-          // any local ops that preceeded it must be transformed past remoteop for the remote doc
-          if (localops.length > remoteops.length) {
-            util.log('EditorDoc.onLocalChange cancel', ...localops, 'merged with', this.#pending[0]);
-          }
-          const preceeding: TextOp[] = this.sharedoc.type!.transform(localops.slice(0, idx), remoteops, 'left');
-          localops = [ ...preceeding, ...localops.slice(idx+remoteops.length) ];
-          if (localops.length) {
-            util.log('EditorDoc.onLocalChange canceled to', ...localops, 'after', ...remoteops);
-          }
-          this.#pending.shift();
-          continue canceling;
-        } else {
-          // now looking for remoteop after this localop
-          remoteops = this.sharedoc.type!.transform(remoteops, localops.slice(idx, idx+1), 'right');
-        }
+    if (this.#pending.remote.length) {
+      // a remote op is pending and localops might include it
+      util.info('EditorDoc ops ->.  ', ...localops, '|', ...this.#pending.remote);
+      this.#pending.local.push(...localops);
+    } else {
+      // since no remote ops are pending, these local ops are ready to send
+      util.info('EditorDoc ops ->.->', ...localops);
+      if (prevtext !== this.sharedoc.data.text) {
+        util.errorOnce(`${this.sharedoc.id} onLocalChanges mismatch`, 'EditorDoc.onLocalChanges mismatch', ...localops, {
+          doc: { id: this.sharedoc.id, version: this.sharedoc.version, pending: this.sharedoc.hasWritePending() },
+          local: prevtext.replace(/\n/g, '⏎'),
+          remote: this.sharedoc.data.text.replace(/\n/g, '⏎'),
+        });
       }
-      // localops does not include the next pending remote op
-      break;
-    }
-    
-    util.info('EditorDoc.onLocalChange ->', ...localops, '|', ...this.#pending);
-    if ( ! localops.length) {
-      return;
-    }
-    if (this.#pending.length > 16) {
-      util.errorOnce(`${this.sharedoc.id} runaway`, 'EditorDoc.onLocalChange runaway', {
-        doc: { id: this.sharedoc.id, version: this.sharedoc.version },
-        local: this.localdoc.getText().replace(/\n/g, '⏎'),
-        remote: this.sharedoc.data.text.replace(/\n/g, '⏎'),
+      this.sharedoc.submitOp(localops, undefined, err => {
+        if (err) { util.error('EditorDoc clean submitOp', err, ...localops, '|', ...this.#pending.remote); }
       });
-    }
-    
-    if (this.#pending.length) {
-      const originallocalops = localops;
-      const originalpending = this.#pending;
-      
-      // in the local doc, these local ops preceed the ops in #pending
-      // but in the remote doc, the #pending ops are already committed
-      // so these local ops must be transformed past the #pending ops for the remote doc
-      localops = this.sharedoc.type!.transform(originallocalops, originalpending, 'left');
-      
-      // and in the local doc, the #pending ops must be transformed to follow these local ops
-      // (their applyEdit calls will fail and be retried using these versions)
-      const pending: TextOp[] = this.sharedoc.type!.transform(originalpending, originallocalops, 'right');
-      this.#pending.splice(0, this.#pending.length, ...pending);
-    }
-    
-    util.info('EditorDoc.onLocalChange =>', ...localops, '|', ...this.#pending);
-    for (const localop of localops) {
-      this.sharedoc.submitOp(localop);
     }
   }
   
@@ -216,7 +201,9 @@ export class EditorDoc {
   }
   
   stop() {
-    if (this.#pending.length) { util.error('EditorDoc.stop pending', ...this.#pending); }
+    if (this.#pending.remote.length || this.#pending.local.length) {
+      util.error('EditorDoc.stop pending', ...this.#pending.local, '|', ...this.#pending.remote);
+    }
     this.sharedoc.removeListener('before op batch', this.#beforeOps);
     this.sharedoc.removeListener('before op', this.#beforeOp);
     this.sharedoc.removeListener('op', this.#afterOp);
