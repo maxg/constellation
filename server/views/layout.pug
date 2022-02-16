@@ -12,4 +12,5 @@ html
       var authusername = !{JSON.stringify(locals.authusername || null)};
     div(class=fullwidth ? 'container-fluid' : 'container')
       span#user.badge(class=authstaff ? 'staff' : null)= locals.authusername
+      span#connection-status.label
       block content
