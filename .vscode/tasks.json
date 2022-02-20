@@ -32,5 +32,37 @@
         "isDefault": true
       }
     },
+    {
+      "type": "npm",
+      "script": "build-test-watch",
+      "options": {
+        "cwd": "extension"
+      },
+      "problemMatcher": {
+        "fileLocation": [ "relative", "${workspaceFolder}/extension" ],
+        "pattern": {
+          "regexp": "^ > (.*?):(\\d+):(\\d+): (warning|error): (.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\[watch\\] build started",
+          "endsPattern": "^\\[watch\\] build finished",
+        }
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "dependsOn": [ "npm: bundle-watch" ]
+    },
   ]
 }

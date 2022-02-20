@@ -6,12 +6,15 @@ import got, { CancelError, OptionsOfJSONResponseBody } from 'got';
 const WebSocket = require('ws');
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
+const constellation = '🌌 Constellation';
 const infoRing = new Array(128);
 let errorHelp = true;
 const errorOnceIds = new Set<string>();
 const channel = vscode.window.createOutputChannel('Constellation');
 const fetchOptions: OptionsOfJSONResponseBody = {};
 const socketOptions = { WebSocket };
+
+log(constellation);
 
 export function info(...args: any[]) {
   infoRing.shift();
@@ -50,6 +53,17 @@ export function debugDumpInfo() {
     if (msg) { channel.appendLine(msg); }
   }
   channel.appendLine('[end info ring] see above for intervening log messages');
+}
+
+export function debugGetLog() {
+  debugDumpInfo();
+  return new Promise<string|undefined>(resolve => {
+    setTimeout(() => {
+      resolve(vscode.workspace.textDocuments.find(doc => {
+        return doc.uri.scheme === 'output' && doc.getText().includes(constellation);
+      })?.getText());
+    }, 1000);
+  });
 }
 
 export function development() {

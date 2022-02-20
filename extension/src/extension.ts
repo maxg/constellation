@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import * as util from './util';
 
 import { CollabCommand } from './collabcmd';
+import { EditorDoc } from './editordoc';
 import { Feedback } from './feedback';
 
 const collabCommandId = 'constellation.collaborate';
@@ -34,3 +35,5 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() {
 }
+
+export const internal = { EditorDoc, util };

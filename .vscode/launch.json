@@ -6,9 +6,26 @@
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
-      "args": [ "${workspaceFolder}/extension/test-folder", "--extensionDevelopmentPath=${workspaceFolder}/extension" ],
+      "args": [
+        "${workspaceFolder}/test-workspace",
+        "--extensionDevelopmentPath=${workspaceFolder}/extension"
+      ],
       "outFiles": [ "${workspaceFolder}/extension/dist/**/*.js" ],
       "preLaunchTask": "npm: bundle-watch"
-    }
+    },
+    {
+      "name": "Test extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": [
+        "${workspaceFolder}/test-workspace",
+        "--extensionDevelopmentPath=${workspaceFolder}/extension",
+        "--extensionTestsPath=${workspaceFolder}/extension/dist-test/index"
+      ],
+      "outFiles": [ "${workspaceFolder}/extension/dist-test/**/*.js" ],
+      "preLaunchTask": "npm: build-test-watch",
+      "internalConsoleOptions": "openOnSessionStart"
+    },
   ]
 }

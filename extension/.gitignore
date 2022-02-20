@@ -1,4 +1,4 @@
-/dist
+/dist/*.js*
+/dist-test/*.js*
 /node_modules
 /out
-/test-folder
