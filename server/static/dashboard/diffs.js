@@ -59,6 +59,14 @@ setInterval(function() {
 function updateDiff(node, baseline, text) {
   if (baseline === undefined || text === undefined) { return; }
   var elements = [];
+  var limit = 10000;
+  if (text.length > limit) {
+    text = text.substring(0, limit);
+    var elt = document.createElement('span');
+    elt.classList.add('label', 'label-default');
+    elt.textContent = 'limiting to ' + limit + ' characters';
+    elements.push(elt);
+  }
   window.diff.diffLines(baseline.trim(), text.trim()).forEach(function(part) {
     var elt = document.createElement('div');
     elt.classList.add('diff-part');
