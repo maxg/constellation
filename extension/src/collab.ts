@@ -171,9 +171,20 @@ export class Collaboration {
     sharedoc.subscribe(update);
   }
   
-  #onLocalChange(change: vscode.TextDocumentChangeEvent) {
+  async #onLocalChange(change: vscode.TextDocumentChangeEvent) {
     if (change.contentChanges.length === 0) { return; }
-    this.#docs.get(change.document.uri)?.onLocalChanges(change.contentChanges);
+    const doc = this.#docs.get(change.document.uri);
+    if ( ! doc) { return; }
+    if (change.contentChanges.some(change => change.text.includes('\r'))) {
+      this.#onLocalClose(change.document);
+      const filename = vscode.workspace.asRelativePath(change.document.uri, false);
+      const warning = `Constellation: ${filename} was modified to contain Windows end-of-line characters.`;
+      const detail = `Collaboration on ${filename} will restart with these characters removed.`
+      await vscode.window.showWarningMessage(warning, { modal: true, detail });
+      this.#onLocalOpen(change.document);
+      return;
+    }
+    doc.onLocalChanges(change.contentChanges);
   }
   
   #onLocalCursor(change: vscode.TextEditorSelectionChangeEvent) {
