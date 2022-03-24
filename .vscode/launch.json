@@ -6,7 +6,7 @@
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
-      "args": [ "${workspaceFolder}/extension/test-folder", "--extensionDevelopmentPath=${workspaceFolder}/extension" ],
+      "args": [ "${workspaceFolder}/../run-constellation-dev", "--extensionDevelopmentPath=${workspaceFolder}/extension" ],
       "outFiles": [ "${workspaceFolder}/extension/dist/**/*.js" ],
       "preLaunchTask": "npm: bundle-watch"
     }

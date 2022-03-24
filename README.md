@@ -40,7 +40,9 @@ Visual Studio Code Extension Development
 
 In `extension`, run `npm install`.
 
-Editing the `constellation` folder in VS Code, run the *Launch extension* target to start an extension development VS Code with Constellation. If necessary, adjust the workspace path in `.vscode/launch.json` and create that directory (or `.code-workspace` file) before launching.
+Editing the `constellation` folder in VS Code, run the *Launch extension* target to start an extension development VS Code with Constellation.
+
+- Before launching, create directory `run-constellation-dev` adjacent to `constellation`, or adjust the workspace path in `.vscode/launch.json` and create that directory (or `.code-workspace` file) before launching.
 
 To connect to the development server:
 
