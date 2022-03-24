@@ -19,7 +19,7 @@
       "request": "launch",
       "runtimeExecutable": "${execPath}",
       "args": [
-        "${workspaceFolder}/test-workspace",
+        "${workspaceFolder}/../run-constellation-test",
         "--extensionDevelopmentPath=${workspaceFolder}/extension",
         "--extensionTestsPath=${workspaceFolder}/extension/dist-test/index"
       ],

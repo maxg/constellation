@@ -64,7 +64,7 @@
     "bundle-base": "esbuild ./src/extension.ts --bundle --outfile=dist/constellation.js --external:vscode --format=cjs --platform=node",
     "bundle": "npm run bundle-base -- --sourcemap",
     "bundle-watch": "npm run bundle-base -- --sourcemap --watch",
-    "build-test-watch": "esbuild ./test/*.ts --outdir=dist-test --format=cjs --platform=node --sourcemap --watch",
+    "build-test-watch": "mkdir -p ../../run-constellation-test && esbuild ./test/*.ts --outdir=dist-test --format=cjs --platform=node --sourcemap --watch",
     "vscode:prepublish": "npm run bundle-base -- --minify",
     "package": "git status --short --branch . && vsce package"
   },
