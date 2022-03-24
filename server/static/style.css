@@ -13,6 +13,16 @@ body {
   background-color: #6f5499;
 }
 
+#connection-status {
+  position: absolute;
+  top: 33px;
+  right: 10px;
+  border-radius: 10px;
+}
+#connection-status.label-success {
+  opacity: .5;
+}
+
 #back {
   position: relative;
   top: 10px;
@@ -243,10 +253,6 @@ code {
   background-image: url(icons/eclipse.png);
   top: 3px;
   margin-right: 2px;
-}
-
-#connection-status.label-success {
-  opacity: .5;
 }
 
 /* syntax highlighting with Eclipse colors */

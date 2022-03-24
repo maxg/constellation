@@ -35,6 +35,26 @@ With `userFakery` on, note your mangled username in the upper right corner of th
 Restart the server and visit it again as staff to see a link to *All projects*.
 
 
+Visual Studio Code Extension Development
+----------------------------------------
+
+In `extension`, run `npm install`.
+
+Editing the `constellation` folder in VS Code, run the *Launch extension* target to start an extension development VS Code with Constellation.
+
+- Before launching, create directory `run-constellation-dev` adjacent to `constellation`, or adjust the workspace path in `.vscode/launch.json` and create that directory (or `.code-workspace` file) before launching.
+
+To connect to the development server:
+
+- Settings &rarr; Workspace &rarr; Extensions &rarr; Constellation &rarr; Host: `10.18.6.121:4443`
+
+Let's collaborate!
+
+- With `userFakery` on, click *Collaborate* and note the URL that opens in the default browser. Visit a similar URL in an alternative browser, replacing the long pairing ID with an arbitrary different ID. Use joincodes to pair.
+
+- With lab hours configured, click *Collaborate* and choose to share with staff. As a staff user or the same user, visit `/edit` to collaborate.
+
+
 Eclipse Plug-in Development
 ---------------------------
 

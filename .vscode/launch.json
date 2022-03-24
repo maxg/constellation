@@ -7,7 +7,7 @@
       "request": "launch",
       "runtimeExecutable": "${execPath}",
       "args": [
-        "${workspaceFolder}/test-workspace",
+        "${workspaceFolder}/../run-constellation-dev",
         "--extensionDevelopmentPath=${workspaceFolder}/extension"
       ],
       "outFiles": [ "${workspaceFolder}/extension/dist/**/*.js" ],
