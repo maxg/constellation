@@ -8,11 +8,13 @@ get_version() {
   grep --only-matching "$1" "$2" | grep --only-matching '\d\+\.\d\+\.\d\+'
 }
 
-uniq -f 1 <<EOD
+uniq -c -f 1 <<EOD
+server $(get_version '"version": ".*"' server/package.json)
+server_lock $(get_version '"version": ".*"' <(grep -A 1 '"constellation"' server/package-lock.json) | uniq)
 extension $(get_version '"version": ".*"' extension/package.json)
+extension_lock $(get_version '"version": ".*"' <(grep -A 1 '"constellation-vscode"' extension/package-lock.json) | uniq)
 plug-in $(get_version 'Bundle-Version: .*.qualifier' plugin/META-INF/MANIFEST.MF)
 feature $(get_version 'version=".*.qualifier"' feature/feature.xml)
 site_jar $(get_version '<feature .*url="features/constellation.feature_.*.qualifier.jar"' feature/category.xml)
 site_feature $(get_version 'id="constellation.feature" .*version=".*.qualifier"' feature/category.xml)
-server $(get_version '"version": ".*"' server/package.json)
 EOD
