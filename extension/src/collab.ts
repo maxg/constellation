@@ -108,6 +108,7 @@ export class Collaboration {
       const text = localdoc.getText().replace(/\r\n/g, '\n');
       
       if ( ! sharedoc.type) {
+        sharedoc.once('create', () => update());
         // duplicated in server/static/edit.js
         return sharedoc.create({
           collabid: this.settings.collabid,
@@ -167,7 +168,6 @@ export class Collaboration {
         await localdoc.save();
       }
     }
-    sharedoc.once('create', () => update());
     sharedoc.subscribe(update);
   }
   
