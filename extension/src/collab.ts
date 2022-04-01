@@ -134,7 +134,7 @@ export class Collaboration {
       }
       
       if (text !== sharedoc.data.text) {
-        util.log('Collaboration.onLocalOpen mismatch');
+        util.log('Collaboration.onLocalOpen mismatch', path);
         // in case the just-opened editor is not pinned and would be replaced by the diff
         await vscode.window.showTextDocument(localdoc, { preserveFocus: true, preview: false });
         const filename = vscode.workspace.asRelativePath(localdoc.uri, false);
@@ -157,17 +157,33 @@ export class Collaboration {
       }
       
       if (localdoc.eol !== vscode.EndOfLine.LF) {
+        util.log('Collaboration.onLocalOpen setEOL', path);
         const edit = new vscode.WorkspaceEdit();
         edit.set(localdoc.uri, [ vscode.TextEdit.setEndOfLine(vscode.EndOfLine.LF) ]);
         await vscode.workspace.applyEdit(edit);
       }
       
-      if (localdoc.getText() !== sharedoc.data.text) {
-        util.log('Collaboration.onLocalOpen overwrite');
+      for (let attempts = 3; attempts && (localdoc.getText() !== sharedoc.data.text); attempts--) {
+        util.log('Collaboration.onLocalOpen overwrite', path);
         const edit = new vscode.WorkspaceEdit();
         const all = new vscode.Range(new vscode.Position(0, 0), localdoc.positionAt(localdoc.getText().length));
         edit.replace(localdoc.uri, all, sharedoc.data.text);
+        // give up control to apply overwrite edit, during which:
+        // local or remote changes may occur, necessitating another overwrite edit
         await vscode.workspace.applyEdit(edit);
+      }
+      
+      if (localdoc.getText() !== sharedoc.data.text) {
+        util.log('Collaboration.onLocalOpen cannot sync', path);
+        const filename = vscode.workspace.asRelativePath(localdoc.uri, false);
+        const error = `Constellation: could not set up collaboration on ${filename}.`;
+        const detail = 'Failed to synchronize local file with remote version.';
+        await vscode.window.showErrorMessage(error, { modal: true, detail });
+        this.#waiting.delete(localdoc.uri);
+        if (vscode.window.activeTextEditor?.document.uri.toString() === localdoc.uri.toString()) {
+          vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+        }
+        return;
       }
       
       this.#waiting.delete(localdoc.uri);
