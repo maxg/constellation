@@ -29,7 +29,7 @@ function sendRandomEdits(port: number, name: string) {
   sharedoc.subscribe(async err => {
     if (err) { throw err; }
     const text = 'ABC\nDEF\nGHIJKLMNOPQRSTUVWXYZ\n';
-    for (let ii = 0; ii < 1000; ii++) {
+    for (let ii = 0; ii < 100; ii++) {
       const ops: any[] = [];
       const { del, rem, ins, add } = randomEdit(sharedoc.data.text.length);
       if (rem) {

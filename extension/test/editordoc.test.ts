@@ -141,7 +141,7 @@ describe('EditorDoc', function() {
   });
   
   it('random', async function() {
-    this.timeout(1000 * 60 * 5);
+    this.timeout(1000 * 30);
     const fix: Fix = await setup(this.test!);
     const { name, port, localdoc, changes } = fix;
     
@@ -150,7 +150,7 @@ describe('EditorDoc', function() {
       fork(path.resolve(__dirname, 'editordoc.random.js')).send({ port, name });
       
       const text = 'abcdefghijklmnopqrstuvwx\ny\nz\n';
-      for (let ii = 0; ii < 1000; ii++) {
+      for (let ii = 0; ii < 100; ii++) {
         const edit = new vscode.WorkspaceEdit();
         const { del, rem, ins, add } = randomEdit(localdoc.getText().length);
         if (rem) {
