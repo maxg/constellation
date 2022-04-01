@@ -124,6 +124,15 @@ export class Collaboration {
         });
       }
       
+      if (this.#docs.has(localdoc.uri)) {
+        util.log('Collaboration.onLocalOpen already open in update', path);
+        return;
+      }
+      if (localdoc.isClosed) {
+        util.log('Collaboration.onLocalOpen already closed in update', path);
+        return;
+      }
+      
       if (text !== sharedoc.data.text) {
         util.log('Collaboration.onLocalOpen mismatch');
         // in case the just-opened editor is not pinned and would be replaced by the diff
