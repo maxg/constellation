@@ -78,6 +78,9 @@ export class CollabCommand {
       this.#update('none');
       if (e instanceof vscode.CancellationError) {
         util.log('CollabCommand.start canceled');
+      } else if (e instanceof util.RequestError) {
+        util.log('CollabCommand.start request error', e);
+        vscode.window.showErrorMessage(`Error connecting to the Constellation server: ${e.message}`, 'OK');
       } else {
         util.error('CollabCommand.start error', e);
       }

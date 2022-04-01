@@ -3,6 +3,7 @@ import * as util from 'util';
 import * as vscode from 'vscode';
 
 import got, { CancelError, OptionsOfJSONResponseBody } from 'got';
+export { RequestError } from 'got';
 const WebSocket = require('ws');
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
