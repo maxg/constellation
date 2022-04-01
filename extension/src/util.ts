@@ -7,6 +7,7 @@ const WebSocket = require('ws');
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
 const constellation = '🌌 Constellation';
+let developmentMode = false;
 const infoRing = new Array(128);
 let errorHelp = true;
 const errorOnceIds = new Set<string>();
@@ -15,6 +16,12 @@ const fetchOptions: OptionsOfJSONResponseBody = {};
 const socketOptions = { WebSocket };
 
 log(constellation);
+
+export function debug(... args: any[]) {
+  if (developmentMode) {
+    channel.appendLine(new Date().toISOString() + ' 🟧 ' + util.format(...args));
+  }
+}
 
 export function info(...args: any[]) {
   infoRing.shift();
@@ -68,6 +75,7 @@ export function debugGetLog() {
 
 export function development() {
   log('🛠', 'warning: development mode');
+  developmentMode = true;
   fetchOptions.https = { rejectUnauthorized: false };
   socketOptions.WebSocket = class extends WebSocket {
     constructor(url: string, protocols?: string[]) {

@@ -69,6 +69,7 @@ export class CollabCommand {
         cancellable: true,
       }, async (progress, token) => {
         const settings = await this.#pair(folder.name, progress, token);
+        util.debug('CollabCommand.start settings', settings);
         return new Collaboration(folder, settings, this.feedback, progress);
       });
       this.#collab.connection.on('state', this.#onConnectionState);
