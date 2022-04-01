@@ -25,6 +25,7 @@ export class EditorDoc {
     remote: [],
     local: [],
   };
+  #stopped = false;
   
   constructor(readonly sharedoc: sharedb.Doc, readonly localdoc: vscode.TextDocument, readonly settings: Settings) {
     this.#localtext = localdoc.getText();
@@ -74,7 +75,11 @@ export class EditorDoc {
       // give up control to apply remote op, during which:
       // onLocalChanges callback will occur, appending to #pending.local
       // onRemoteChange callback may occur, appending to nonempty #pending.remote
+      // stop may be called
       const applied = await vscode.workspace.applyEdit(this.#opToEdit(remote));
+      if (this.#stopped) {
+        return;
+      }
       if (applied) {
         // local change contains remote
         this.#pending.remote.shift();
@@ -201,8 +206,9 @@ export class EditorDoc {
   }
   
   stop() {
+    this.#stopped = true;
     if (this.#pending.remote.length || this.#pending.local.length) {
-      util.error('EditorDoc.stop pending', ...this.#pending.local, '|', ...this.#pending.remote);
+      util.log('EditorDoc.stop pending', ...this.#pending.local, '|', ...this.#pending.remote);
     }
     this.sharedoc.removeListener('before op batch', this.#beforeOps);
     this.sharedoc.removeListener('before op', this.#beforeOp);
