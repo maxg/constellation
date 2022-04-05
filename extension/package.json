@@ -1,7 +1,7 @@
 {
   "name": "constellation-vscode",
   "description": "Classroom collaborative coding in VS Code",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "private": true,
   "repository": {
     "type": "git",
