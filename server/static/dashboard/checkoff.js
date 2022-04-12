@@ -80,9 +80,22 @@ function updateScore() {
 }
 
 function setGrader() {
-  if (checkoff.data.grader == authusername) { return; }
-  checkoff.submitOp({ p: ['grader'], od: checkoff.data.grader, oi: authusername });
-  updateGrader();
+  if (checkoff.data.grader !== authusername) {
+    checkoff.submitOp({ p: ['grader'], od: checkoff.data.grader, oi: authusername });
+    updateGrader();
+  }
+  var status = document.querySelector('#save-status');
+  var unsaved = setTimeout(function() {
+    status.textContent = 'saving...';
+    status.classList.remove('label-success');
+    status.classList.add('label-warning');
+  }, 100);
+  checkoff.whenNothingPending(function() {
+    clearTimeout(unsaved);
+    status.textContent = '   saved   ';
+    status.classList.remove('label-warning');
+    status.classList.add('label-success');
+  });
 }
 
 function updateGrader() {

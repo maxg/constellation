@@ -17,10 +17,20 @@ body {
   position: absolute;
   top: 33px;
   right: 10px;
+}
+#save-status {
+  white-space: pre;
+}
+#connection-status,
+#save-status {
   border-radius: 10px;
 }
-#connection-status.label-success {
+#connection-status.label-success,
+#save-status.label-success {
   opacity: .5;
+}
+#save-status.label-warning {
+  transition: background-color 1s 1s, opacity 1s 1s;
 }
 
 #back {
